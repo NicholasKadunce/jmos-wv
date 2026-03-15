@@ -281,8 +281,7 @@ function registerRoutes() {
   // ══════════════════════════════════════════
   // ── DAILY EMAIL REPORT ──
   // ══════════════════════════════════════════
-  const DT_CODES={1:'Tooling',2:'Hydraulic Issues',3:'Air Issues',4:'Water Issues',5:'Electrical Issues',6:'Sensor Issues',7:'Encoder Issues',8:'Mechanical Issues',9:'Lubrication Issues',10:'Changeover',11:'Loading Material',12:'Unloading Material',13:'Material Issues',14:'QC',15:'Assisting Operator',16:'Scheduled Downtime',17:'Programming Issues',18:'Vibration Issues',19:'Robot Issues',20:'Welder Issues',21:'Vision Issues'};
-  const DEF_CODES={1:'Bent Bar',2:'Burr',3:'Bad Ribs',4:'Failing Bar Length',5:'Failing Peel Length',6:'Failing Diameter',7:'Cross Thread',8:'Incomplete Starter Thread',9:'Cracked Threads',10:'Failing Thread Length',11:'Failing Stamp',12:'Head Off-Center',13:'Failing Washer',14:'Failing Tensile',15:'Failing Yield',16:'Bad Break',17:'Rounded Head',18:'Improper Assembly',19:'Failing Width',20:'Failing Length',21:'Cracked Steel',22:'Bend Cable',23:'Broken Strand',24:'Broken Housing',25:'Failing Cable Length',26:'Failing Bird Cage',27:'Failing Crimp',28:'Failing Teeth Depth',29:'Failing Weld',30:'Hole Alignment',31:'Missing Component'};
+  const EQUIP_NAMES={'WV-SHEAR-AS1':'Autoshear #1','WV-SHEAR-AS2':'Autoshear #2','WV-PRESS-400':'400 Press','WV-PRESS-500A':'500A Press','WV-PRESS-500B':'500B Press','WV-HEAD-H1':'Header #1','WV-HEAD-H2':'Header #2','WV-HEAD-H3':'Header #3','WV-HEAD-AUTO':'Auto Header','WV-THREAD-T1':'Threader #1','WV-THREAD-T2':'Threader #2','WV-THREAD-AT':'Autothreader','WV-PEEL-MAN':'Manual Peeler','WV-PEEL-AUTO':'AutoPeeler','WV-PEEL-SWAG':'Swager','WV-ASSY-A1':'Assembly #1','WV-ASSY-A2':'Assembly #2','WV-ASSY-A3':'Assembly #3','WV-ASSY-A4':'Assembly #4','WV-CABLE-C1':'Cable Line #1','WV-CABLE-C2':'Cable Line #2','WV-CABLE-C3':'Cable Line #3','WV-CABLE-C4':'Cable Line #4','WV-MISC-BIGSAW':'Big Saw','WV-MISC-TIELINE':'Tie Line','WV-MISC-OFFWELD':'Offline Welding','WV-MISC-EYEBOLT':'Eyebolt','WV-MISC-LANDISASSM':'Landis Threader/ASSM','WV-MISC-UNITS':'Unit Assembly'};
 
   function computeDailyReport(dateStr, submissions) {
     const shifts = { '1': [], '2': [] };
@@ -301,36 +300,35 @@ function registerRoutes() {
 
     function calcShift(records) {
       let totalTarget = 0, totalGood = 0, totalProduced = 0, totalScheduled = 0, totalDT = 0;
-      const dtMap = {}, defMap = {};
+      const dtByEquip = {}, defByEquip = {};
       records.forEach(r => {
         const target = parseInt(r.target || 0);
         const good = parseInt(r.goodUnits || 0);
         const sched = parseInt(r.scheduledMins || 0);
         const dtMins = (r.downtime || []).reduce((s, d) => s + parseInt(d.mins || 0), 0);
         const defQty = (r.defects || []).reduce((s, d) => s + parseInt(d.qty || 0), 0);
+        const eqName = EQUIP_NAMES[r.equipCode] || r.equipCode || 'Unknown';
         totalTarget += target;
         totalGood += good;
         totalProduced += good + defQty;
         totalScheduled += sched;
         totalDT += dtMins;
-        (r.downtime || []).forEach(d => {
-          const nm = DT_CODES[d.dtCode] || ('Code ' + d.dtCode);
-          if (!dtMap[nm]) dtMap[nm] = 0;
-          dtMap[nm] += parseInt(d.mins || 0);
-        });
-        (r.defects || []).forEach(d => {
-          const nm = DEF_CODES[d.defCode] || ('Code ' + d.defCode);
-          if (!defMap[nm]) defMap[nm] = 0;
-          defMap[nm] += parseInt(d.qty || 0);
-        });
+        if (dtMins > 0) {
+          if (!dtByEquip[eqName]) dtByEquip[eqName] = 0;
+          dtByEquip[eqName] += dtMins;
+        }
+        if (defQty > 0) {
+          if (!defByEquip[eqName]) defByEquip[eqName] = 0;
+          defByEquip[eqName] += defQty;
+        }
       });
       const avail = totalScheduled > 0 ? (totalScheduled - totalDT) / totalScheduled : 0;
       const perf = (totalTarget > 0 && (totalScheduled - totalDT) > 0) ? totalProduced / totalTarget : 0;
       const qual = totalProduced > 0 ? totalGood / totalProduced : (totalTarget > 0 ? 0 : 1);
       const oee = avail * perf * qual;
-      const topDT = Object.entries(dtMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      const topDef = Object.entries(defMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      const totalDefects = Object.values(defMap).reduce((s, v) => s + v, 0);
+      const topDT = Object.entries(dtByEquip).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const topDef = Object.entries(defByEquip).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const totalDefects = Object.values(defByEquip).reduce((s, v) => s + v, 0);
       return { records: records.length, totalTarget, totalGood, totalProduced, totalScheduled, totalDT, totalDefects, avail, perf, qual, oee, topDT, topDef };
     }
 
@@ -370,7 +368,7 @@ function registerRoutes() {
     // ── Combined OEE Hero ──
     const heroH = 120;
     parts.push(`<rect x="0" y="${y}" width="${W}" height="${heroH}" fill="#fff"/>`);
-    parts.push(`<text x="${W/2}" y="${y+24}" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600" font-family="system-ui,sans-serif" letter-spacing="2">DAILY COMBINED OEE</text>`);
+    parts.push(`<text x="${W/2}" y="${y+24}" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600" font-family="system-ui,sans-serif" letter-spacing="2">OEE</text>`);
     if (comb.records > 0) {
       parts.push(`<text x="${W/2}" y="${y+72}" text-anchor="middle" fill="${oeeColor(comb.oee)}" font-size="52" font-weight="800" font-family="system-ui,sans-serif">${pct(comb.oee)}</text>`);
       const apqY = y + 100;
@@ -471,8 +469,8 @@ function registerRoutes() {
         });
       }
 
-      drawIssues(comb.topDT, 'Top Downtime', pad, '#ef4444', ' min');
-      drawIssues(comb.topDef, 'Top Defects', W/2, '#f59e0b', '');
+      drawIssues(comb.topDT, 'Downtime by Equipment', pad, '#ef4444', ' min');
+      drawIssues(comb.topDef, 'Quality by Equipment', W/2, '#f59e0b', ' defects');
       y += issueH;
     }
 
