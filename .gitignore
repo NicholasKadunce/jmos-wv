@@ -2,3 +2,8 @@ node_modules/
 .env
 *.log
 .DS_Store
+_check.js
+*.py
+load_dummy_data.html
+logo_uri.txt
+.claude/

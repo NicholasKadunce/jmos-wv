@@ -312,18 +312,34 @@ app.use(express.static(path.join(__dirname), {
   }
 }));
 
-// All other routes serve the app (SPA)
+// All other routes serve the app (SPA) — only for non-API routes
 app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
   res.sendFile(path.join(__dirname, 'WV_OEE_App.html'));
 });
 
 // ── START SERVER ──
-initDB().then(() => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`JMOS server running on port ${PORT}`);
-    console.log(`Local: http://localhost:${PORT}`);
-  });
-}).catch(err => {
-  console.error('Database initialization failed:', err);
-  process.exit(1);
-});
+async function start() {
+  if (!process.env.DATABASE_URL) {
+    console.error('WARNING: DATABASE_URL not set. Waiting for database to be provisioned...');
+    console.error('Add a PostgreSQL database in Railway and link the DATABASE_URL variable.');
+    // Start server anyway so Railway doesn't loop-crash — show a helpful page
+    app.get('*', (req, res) => {
+      res.status(503).send('<html><body style="font-family:sans-serif;text-align:center;padding:60px"><h1>JMOS Setup In Progress</h1><p>Database not connected yet. Add PostgreSQL in Railway and set DATABASE_URL.</p></body></html>');
+    });
+    app.listen(PORT, '0.0.0.0', () => console.log(`Server waiting for database on port ${PORT}`));
+    return;
+  }
+  try {
+    await initDB();
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`JMOS server running on port ${PORT}`);
+      console.log(`Local: http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Database initialization failed:', err);
+    console.error('Retrying in 5 seconds...');
+    setTimeout(start, 5000);
+  }
+}
+start();
