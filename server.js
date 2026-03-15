@@ -580,6 +580,37 @@ function registerRoutes() {
     }
   });
 
+  // TEST: Send sample report email (remove after testing)
+  app.get('/api/report/test-send', async (req, res) => {
+    try {
+      const dummyReport = {
+        date: new Date().toISOString().slice(0, 10),
+        shift1: { records:18,totalTarget:4200,totalGood:3150,totalProduced:3228,totalScheduled:480,totalDT:62,totalDefects:78,avail:0.871,perf:0.769,qual:0.976,oee:0.653,topDT:[['Header #1',22],['Autoshear #1',15],['400 Press',10],['Threader #2',8],['Cable Line #3',7]],topDef:[['Autoshear #2',28],['Header #3',18],['500A Press',14],['Threader #1',10],['AutoPeeler',8]] },
+        shift2: { records:16,totalTarget:3800,totalGood:3040,totalProduced:3098,totalScheduled:480,totalDT:45,totalDefects:58,avail:0.906,perf:0.815,qual:0.981,oee:0.724,topDT:[['Auto Header',18],['Assembly #2',12],['Manual Peeler',8],['Big Saw',4],['Cable Line #1',3]],topDef:[['Header #2',20],['Autothreader',15],['500B Press',12],['Assembly #1',6],['Swager',5]] },
+        combined: { records:34,totalTarget:8000,totalGood:6190,totalProduced:6326,totalScheduled:960,totalDT:107,totalDefects:136,avail:0.889,perf:0.791,qual:0.979,oee:0.688,topDT:[['Header #1',22],['Auto Header',18],['Autoshear #1',15],['Assembly #2',12],['400 Press',10]],topDef:[['Autoshear #2',28],['Header #2',20],['Header #3',18],['Autothreader',15],['500A Press',14]] }
+      };
+      const pngBuffer = await buildReportPNG(dummyReport);
+      const recipients = process.env.REPORT_EMAILS;
+      if (!recipients) return res.json({ error: 'REPORT_EMAILS not set' });
+      const transporter = getEmailTransporter();
+      if (!transporter) return res.json({ error: 'SMTP not configured' });
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: recipients,
+        subject: 'JMOS Daily OEE — 68.8% — TEST EMAIL',
+        html: `<div style="font-family:sans-serif;text-align:center;padding:16px;background:#f1f5f9">
+          <img src="cid:dailyreport" alt="JMOS Daily OEE Report" style="max-width:100%;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.1)"/>
+          <p style="margin-top:12px;font-size:12px;color:#94a3b8"><a href="https://jmos-wv.up.railway.app" style="color:#1b3d6e;font-weight:600">Open JMOS Dashboard</a></p>
+        </div>`,
+        attachments: [{ filename:'jmos-daily-oee.png', content:pngBuffer, cid:'dailyreport' }]
+      });
+      res.json({ sent: true, to: recipients });
+    } catch (err) {
+      console.error('Test send error:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Get previous working day (Mon→Fri, Tue-Fri→previous day, Sat/Sun→skip)
   function getPreviousWorkday(now) {
     const day = now.getDay(); // 0=Sun,1=Mon,...,6=Sat
