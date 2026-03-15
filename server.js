@@ -3,7 +3,6 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const sharp = require('sharp');
-const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -502,21 +501,25 @@ function registerRoutes() {
     return sharp(Buffer.from(svg)).png().toBuffer();
   }
 
-  // Email transporter (configured via env vars)
-  let emailTransporter = null;
-  function getEmailTransporter() {
-    if (emailTransporter) return emailTransporter;
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
-    emailTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000
+  // Email via Resend HTTP API (no SMTP needed, works on Railway)
+  async function sendEmail({ to, subject, html, pngBuffer }) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) throw new Error('RESEND_API_KEY not set');
+    const fromAddr = process.env.EMAIL_FROM || 'JMOS Dashboard <onboarding@resend.dev>';
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: fromAddr,
+        to: Array.isArray(to) ? to : to.split(',').map(e => e.trim()),
+        subject,
+        html,
+        attachments: pngBuffer ? [{ filename: 'jmos-daily-oee.png', content: pngBuffer.toString('base64') }] : []
+      })
     });
-    return emailTransporter;
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.message || JSON.stringify(data));
+    return data;
   }
 
   async function sendDailyReport(dateStr) {
@@ -528,27 +531,19 @@ function registerRoutes() {
     const recipients = process.env.REPORT_EMAILS;
     if (!recipients) return { sent: false, reason: 'REPORT_EMAILS not configured' };
 
-    const transporter = getEmailTransporter();
-    if (!transporter) return { sent: false, reason: 'SMTP not configured' };
-
     const d = new Date(dateStr + 'T12:00:00');
     const subject = `JMOS Daily OEE — ${pct(report.combined.oee)} — ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    const result = await sendEmail({
       to: recipients,
       subject,
       html: `<div style="font-family:sans-serif;text-align:center;padding:16px;background:#f1f5f9">
-        <img src="cid:dailyreport" alt="JMOS Daily OEE Report" style="max-width:100%;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.1)"/>
+        <p style="margin:0 0 12px;font-size:14px;color:#475569">Your daily OEE report is attached as an image.</p>
         <p style="margin-top:12px;font-size:12px;color:#94a3b8"><a href="https://jmos-wv.up.railway.app" style="color:#1b3d6e;font-weight:600">Open JMOS Dashboard</a></p>
       </div>`,
-      attachments: [{
-        filename: 'jmos-daily-oee.png',
-        content: pngBuffer,
-        cid: 'dailyreport'
-      }]
+      pngBuffer
     });
-    return { sent: true, to: recipients, subject };
+    return { sent: true, to: recipients, subject, id: result.id };
   }
 
   // API: preview report as PNG image
@@ -587,13 +582,7 @@ function registerRoutes() {
 
   // TEST: Send sample report email (remove after testing)
   app.get('/api/report/test-send', async (req, res) => {
-    const steps = [];
-    const timeout = setTimeout(() => {
-      console.error('Test send TIMEOUT after 25s. Steps completed:', steps);
-      if (!res.headersSent) res.status(504).json({ error: 'Timed out after 25s', steps });
-    }, 25000);
     try {
-      steps.push('start');
       console.log('[test-send] Starting...');
       const dummyReport = {
         date: new Date().toISOString().slice(0, 10),
@@ -601,53 +590,40 @@ function registerRoutes() {
         shift2: { records:16,totalTarget:3800,totalGood:3040,totalProduced:3098,totalScheduled:480,totalDT:45,totalDefects:58,avail:0.906,perf:0.815,qual:0.981,oee:0.724,topDT:[['Auto Header',18],['Assembly #2',12],['Manual Peeler',8],['Big Saw',4],['Cable Line #1',3]],topDef:[['Header #2',20],['Autothreader',15],['500B Press',12],['Assembly #1',6],['Swager',5]] },
         combined: { records:34,totalTarget:8000,totalGood:6190,totalProduced:6326,totalScheduled:960,totalDT:107,totalDefects:136,avail:0.889,perf:0.791,qual:0.979,oee:0.688,topDT:[['Header #1',22],['Auto Header',18],['Autoshear #1',15],['Assembly #2',12],['400 Press',10]],topDef:[['Autoshear #2',28],['Header #2',20],['Header #3',18],['Autothreader',15],['500A Press',14]] }
       };
-      steps.push('building-png');
       console.log('[test-send] Building PNG...');
       const pngBuffer = await buildReportPNG(dummyReport);
-      steps.push('png-done-' + pngBuffer.length + 'bytes');
       console.log('[test-send] PNG built:', pngBuffer.length, 'bytes');
 
       const recipients = process.env.REPORT_EMAILS;
-      if (!recipients) { clearTimeout(timeout); return res.json({ error: 'REPORT_EMAILS env var not set', steps }); }
-      steps.push('recipients-' + recipients);
+      if (!recipients) return res.json({ error: 'REPORT_EMAILS env var not set' });
+      if (!process.env.RESEND_API_KEY) return res.json({ error: 'RESEND_API_KEY not set' });
 
-      const transporter = getEmailTransporter();
-      if (!transporter) { clearTimeout(timeout); return res.json({ error: 'SMTP not configured (missing SMTP_USER or SMTP_PASS)', steps }); }
-      steps.push('transporter-ready');
-      console.log('[test-send] Sending email to', recipients, '...');
-
-      steps.push('sending-email');
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      console.log('[test-send] Sending via Resend to', recipients, '...');
+      const result = await sendEmail({
         to: recipients,
         subject: 'JMOS Daily OEE — 68.8% — TEST EMAIL',
         html: `<div style="font-family:sans-serif;text-align:center;padding:16px;background:#f1f5f9">
-          <img src="cid:dailyreport" alt="JMOS Daily OEE Report" style="max-width:100%;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.1)"/>
+          <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#1b3d6e">JMOS Daily OEE Report</p>
+          <p style="margin:0 0 12px;font-size:13px;color:#475569">This is a test email. Your daily report image is attached.</p>
           <p style="margin-top:12px;font-size:12px;color:#94a3b8"><a href="https://jmos-wv.up.railway.app" style="color:#1b3d6e;font-weight:600">Open JMOS Dashboard</a></p>
         </div>`,
-        attachments: [{ filename:'jmos-daily-oee.png', content:pngBuffer, cid:'dailyreport' }]
+        pngBuffer
       });
-      steps.push('email-sent');
-      console.log('[test-send] Email sent successfully!');
-      clearTimeout(timeout);
-      res.json({ sent: true, to: recipients, steps });
+      console.log('[test-send] Email sent!', result);
+      res.json({ sent: true, to: recipients, resend_id: result.id });
     } catch (err) {
-      clearTimeout(timeout);
       console.error('Test send error:', err);
-      steps.push('error-' + err.message);
-      if (!res.headersSent) res.status(500).json({ error: err.message, steps });
+      res.status(500).json({ error: err.message });
     }
   });
 
   // TEST: Quick diagnostic endpoint (remove after testing)
   app.get('/api/report/test-check', (req, res) => {
     res.json({
-      smtp_user: process.env.SMTP_USER ? 'SET (' + process.env.SMTP_USER.slice(0,3) + '...)' : 'NOT SET',
-      smtp_pass: process.env.SMTP_PASS ? 'SET (' + process.env.SMTP_PASS.length + ' chars)' : 'NOT SET',
+      resend_api_key: process.env.RESEND_API_KEY ? 'SET (' + process.env.RESEND_API_KEY.slice(0,6) + '...)' : 'NOT SET',
       report_emails: process.env.REPORT_EMAILS || 'NOT SET',
       tz: process.env.TZ || 'NOT SET',
-      sharp_loaded: typeof sharp === 'function' ? 'YES' : 'NO',
-      nodemailer_loaded: typeof nodemailer === 'object' ? 'YES' : 'NO'
+      sharp_loaded: typeof sharp === 'function' ? 'YES' : 'NO'
     });
   });
 
