@@ -580,52 +580,6 @@ function registerRoutes() {
     }
   });
 
-  // TEST: Send sample report email (remove after testing)
-  app.get('/api/report/test-send', async (req, res) => {
-    try {
-      console.log('[test-send] Starting...');
-      const dummyReport = {
-        date: new Date().toISOString().slice(0, 10),
-        shift1: { records:18,totalTarget:4200,totalGood:3150,totalProduced:3228,totalScheduled:480,totalDT:62,totalDefects:78,avail:0.871,perf:0.769,qual:0.976,oee:0.653,topDT:[['Header #1',22],['Autoshear #1',15],['400 Press',10],['Threader #2',8],['Cable Line #3',7]],topDef:[['Autoshear #2',28],['Header #3',18],['500A Press',14],['Threader #1',10],['AutoPeeler',8]] },
-        shift2: { records:16,totalTarget:3800,totalGood:3040,totalProduced:3098,totalScheduled:480,totalDT:45,totalDefects:58,avail:0.906,perf:0.815,qual:0.981,oee:0.724,topDT:[['Auto Header',18],['Assembly #2',12],['Manual Peeler',8],['Big Saw',4],['Cable Line #1',3]],topDef:[['Header #2',20],['Autothreader',15],['500B Press',12],['Assembly #1',6],['Swager',5]] },
-        combined: { records:34,totalTarget:8000,totalGood:6190,totalProduced:6326,totalScheduled:960,totalDT:107,totalDefects:136,avail:0.889,perf:0.791,qual:0.979,oee:0.688,topDT:[['Header #1',22],['Auto Header',18],['Autoshear #1',15],['Assembly #2',12],['400 Press',10]],topDef:[['Autoshear #2',28],['Header #2',20],['Header #3',18],['Autothreader',15],['500A Press',14]] }
-      };
-      console.log('[test-send] Building PNG...');
-      const pngBuffer = await buildReportPNG(dummyReport);
-      console.log('[test-send] PNG built:', pngBuffer.length, 'bytes');
-
-      const recipients = process.env.REPORT_EMAILS;
-      if (!recipients) return res.json({ error: 'REPORT_EMAILS env var not set' });
-      if (!process.env.RESEND_API_KEY) return res.json({ error: 'RESEND_API_KEY not set' });
-
-      console.log('[test-send] Sending via Resend to', recipients, '...');
-      const result = await sendEmail({
-        to: recipients,
-        subject: 'JMOS Daily OEE — 68.8% — TEST EMAIL',
-        html: `<div style="font-family:sans-serif;text-align:center;padding:16px;background:#f1f5f9">
-          <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#1b3d6e">JMOS Daily OEE Report</p>
-          <p style="margin:0 0 12px;font-size:13px;color:#475569">This is a test email. Your daily report image is attached.</p>
-          <p style="margin-top:12px;font-size:12px;color:#94a3b8"><a href="https://jmos-wv.up.railway.app" style="color:#1b3d6e;font-weight:600">Open JMOS Dashboard</a></p>
-        </div>`,
-        pngBuffer
-      });
-      console.log('[test-send] Email sent!', result);
-      res.json({ sent: true, to: recipients, resend_id: result.id });
-    } catch (err) {
-      console.error('Test send error:', err);
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // TEST: Quick diagnostic endpoint (remove after testing)
-  app.get('/api/report/test-check', (req, res) => {
-    res.json({
-      resend_api_key: process.env.RESEND_API_KEY ? 'SET (' + process.env.RESEND_API_KEY.slice(0,6) + '...)' : 'NOT SET',
-      report_emails: process.env.REPORT_EMAILS || 'NOT SET',
-      tz: process.env.TZ || 'NOT SET',
-      sharp_loaded: typeof sharp === 'function' ? 'YES' : 'NO'
-    });
-  });
 
   // Get previous working day (Mon→Fri, Tue-Fri→previous day, Sat/Sun→skip)
   function getPreviousWorkday(now) {
