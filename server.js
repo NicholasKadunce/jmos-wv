@@ -2,6 +2,8 @@ const express = require('express');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const sharp = require('sharp');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -496,7 +498,6 @@ function registerRoutes() {
   }
 
   async function buildReportPNG(report) {
-    const sharp = require('sharp');
     const svg = buildReportSVG(report);
     return sharp(Buffer.from(svg)).png().toBuffer();
   }
@@ -505,11 +506,13 @@ function registerRoutes() {
   let emailTransporter = null;
   function getEmailTransporter() {
     if (emailTransporter) return emailTransporter;
-    const nodemailer = require('nodemailer');
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
     emailTransporter = nodemailer.createTransport({
       service: process.env.SMTP_SERVICE || 'gmail',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
     });
     return emailTransporter;
   }
@@ -582,18 +585,36 @@ function registerRoutes() {
 
   // TEST: Send sample report email (remove after testing)
   app.get('/api/report/test-send', async (req, res) => {
+    const steps = [];
+    const timeout = setTimeout(() => {
+      console.error('Test send TIMEOUT after 25s. Steps completed:', steps);
+      if (!res.headersSent) res.status(504).json({ error: 'Timed out after 25s', steps });
+    }, 25000);
     try {
+      steps.push('start');
+      console.log('[test-send] Starting...');
       const dummyReport = {
         date: new Date().toISOString().slice(0, 10),
         shift1: { records:18,totalTarget:4200,totalGood:3150,totalProduced:3228,totalScheduled:480,totalDT:62,totalDefects:78,avail:0.871,perf:0.769,qual:0.976,oee:0.653,topDT:[['Header #1',22],['Autoshear #1',15],['400 Press',10],['Threader #2',8],['Cable Line #3',7]],topDef:[['Autoshear #2',28],['Header #3',18],['500A Press',14],['Threader #1',10],['AutoPeeler',8]] },
         shift2: { records:16,totalTarget:3800,totalGood:3040,totalProduced:3098,totalScheduled:480,totalDT:45,totalDefects:58,avail:0.906,perf:0.815,qual:0.981,oee:0.724,topDT:[['Auto Header',18],['Assembly #2',12],['Manual Peeler',8],['Big Saw',4],['Cable Line #1',3]],topDef:[['Header #2',20],['Autothreader',15],['500B Press',12],['Assembly #1',6],['Swager',5]] },
         combined: { records:34,totalTarget:8000,totalGood:6190,totalProduced:6326,totalScheduled:960,totalDT:107,totalDefects:136,avail:0.889,perf:0.791,qual:0.979,oee:0.688,topDT:[['Header #1',22],['Auto Header',18],['Autoshear #1',15],['Assembly #2',12],['400 Press',10]],topDef:[['Autoshear #2',28],['Header #2',20],['Header #3',18],['Autothreader',15],['500A Press',14]] }
       };
+      steps.push('building-png');
+      console.log('[test-send] Building PNG...');
       const pngBuffer = await buildReportPNG(dummyReport);
+      steps.push('png-done-' + pngBuffer.length + 'bytes');
+      console.log('[test-send] PNG built:', pngBuffer.length, 'bytes');
+
       const recipients = process.env.REPORT_EMAILS;
-      if (!recipients) return res.json({ error: 'REPORT_EMAILS not set' });
+      if (!recipients) { clearTimeout(timeout); return res.json({ error: 'REPORT_EMAILS env var not set', steps }); }
+      steps.push('recipients-' + recipients);
+
       const transporter = getEmailTransporter();
-      if (!transporter) return res.json({ error: 'SMTP not configured' });
+      if (!transporter) { clearTimeout(timeout); return res.json({ error: 'SMTP not configured (missing SMTP_USER or SMTP_PASS)', steps }); }
+      steps.push('transporter-ready');
+      console.log('[test-send] Sending email to', recipients, '...');
+
+      steps.push('sending-email');
       await transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: recipients,
@@ -604,11 +625,28 @@ function registerRoutes() {
         </div>`,
         attachments: [{ filename:'jmos-daily-oee.png', content:pngBuffer, cid:'dailyreport' }]
       });
-      res.json({ sent: true, to: recipients });
+      steps.push('email-sent');
+      console.log('[test-send] Email sent successfully!');
+      clearTimeout(timeout);
+      res.json({ sent: true, to: recipients, steps });
     } catch (err) {
+      clearTimeout(timeout);
       console.error('Test send error:', err);
-      res.status(500).json({ error: err.message });
+      steps.push('error-' + err.message);
+      if (!res.headersSent) res.status(500).json({ error: err.message, steps });
     }
+  });
+
+  // TEST: Quick diagnostic endpoint (remove after testing)
+  app.get('/api/report/test-check', (req, res) => {
+    res.json({
+      smtp_user: process.env.SMTP_USER ? 'SET (' + process.env.SMTP_USER.slice(0,3) + '...)' : 'NOT SET',
+      smtp_pass: process.env.SMTP_PASS ? 'SET (' + process.env.SMTP_PASS.length + ' chars)' : 'NOT SET',
+      report_emails: process.env.REPORT_EMAILS || 'NOT SET',
+      tz: process.env.TZ || 'NOT SET',
+      sharp_loaded: typeof sharp === 'function' ? 'YES' : 'NO',
+      nodemailer_loaded: typeof nodemailer === 'object' ? 'YES' : 'NO'
+    });
   });
 
   // Get previous working day (Mon→Fri, Tue-Fri→previous day, Sat/Sun→skip)
