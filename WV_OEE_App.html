@@ -3356,17 +3356,53 @@ function TVView({dataVersion,master}){
   );
 }
 
-function AdminPanel({master,onUpdate,onDataChange}){
+function AdminPanel({master,onUpdate,onDataChange,authUser}){
   const [tab,setTab]=useState('personnel');const [newSup,setNewSup]=useState('');const [newOp,setNewOp]=useState('');
-  const [spSite,setSpSite]=useState(STORAGE_CONFIG.spSiteUrl);const [spList,setSpList]=useState(STORAGE_CONFIG.spListName);
-  const [provStatus,setProvStatus]=useState('');const [migStatus,setMigStatus]=useState('');
+  // User management state
+  const [users,setUsers]=useState([]);const [newUser,setNewUser]=useState({username:'',password:'',displayName:'',role:'operator'});
+  const [userMsg,setUserMsg]=useState('');const [resetPw,setResetPw]=useState({});
+  // Database browser state
+  const [dbRecords,setDbRecords]=useState([]);const [dbLoading,setDbLoading]=useState(false);const [dbDateFrom,setDbDateFrom]=useState('');const [dbDateTo,setDbDateTo]=useState('');
+  const [dbExpanded,setDbExpanded]=useState(null);
+  // Load users when tab switches
+  useEffect(()=>{if(tab==='users'){API.getUsers().then(u=>setUsers(u)).catch(e=>setUserMsg('Error loading users: '+e.message));}},[tab]);
+  // Load data when tab switches
+  useEffect(()=>{if(tab==='data'){loadDbRecords();}},[tab]);
+  function loadDbRecords(){
+    setDbLoading(true);
+    const params=new URLSearchParams();
+    if(dbDateFrom)params.set('from',dbDateFrom);if(dbDateTo)params.set('to',dbDateTo);
+    fetch('/api/data'+(params.toString()?'?'+params.toString():'')).then(r=>r.json()).then(d=>{setDbRecords(Array.isArray(d)?d:[]);setDbLoading(false);}).catch(()=>{setDbLoading(false);});
+  }
+  function exportXLS(){
+    // Build CSV from records (opens as .xls in Excel)
+    const rows=[['Date','Shift','Equipment','Hour','Product','Target','Good Units','Defects','DT Minutes','Operators']];
+    dbRecords.forEach(rec=>{
+      if(!rec.shiftData||!rec.equipData)return;
+      const sd=rec.shiftData;
+      Object.keys(rec.equipData).forEach(ec=>{
+        (rec.equipData[ec]||[]).forEach(hr=>{
+          const defQty=(hr.defects||[]).reduce((s,d)=>s+parseInt(d.qty||0),0);
+          const dtMins=(hr.downtime||[]).reduce((s,d)=>s+parseInt(d.mins||0),0);
+          const ops=(hr.operators||[]).join('; ');
+          rows.push([sd.shiftDate,sd.shiftNum,ec,hr.hourIdx,hr.productCode,hr.target,hr.goodUnits||0,defQty,dtMins,ops]);
+        });
+      });
+    });
+    const csv=rows.map(r=>r.map(c=>'"'+(String(c).replace(/"/g,'""'))+'"').join(',')).join('\n');
+    const blob=new Blob(['\uFEFF'+csv],{type:'application/vnd.ms-excel;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='JMOS_Data_Export_'+new Date().toISOString().split('T')[0]+'.xls';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    showToast('Data exported to Excel');
+  }
   // Equipment state
   const [newEquipCode,setNewEquipCode]=useState('');const [newEquipName,setNewEquipName]=useState('');const [newEquipProcess,setNewEquipProcess]=useState('');
   const [equipSearch,setEquipSearch]=useState('');
   // Products state
   const [newProdCode,setNewProdCode]=useState('');const [newProdName,setNewProdName]=useState('');
   const [prodSearch,setProdSearch]=useState('');
-  const tabs=[{id:'personnel',label:'Data Entry Personnel'},{id:'operators',label:'Operators'},{id:'equipment',label:'Equipment'},{id:'products',label:'Products'},{id:'rates',label:'Rate Management'},{id:'storage',label:'Storage'}];
+  const tabs=[{id:'personnel',label:'Data Entry Personnel'},{id:'operators',label:'Operators'},{id:'equipment',label:'Equipment'},{id:'products',label:'Products'},{id:'rates',label:'Rate Management'},{id:'users',label:'Users'},{id:'data',label:'Database'}];
   // BDR state
   const [bdrPending,setBdrPending]=useState(BDR.getPending());
   const [bdrApproved,setBdrApproved]=useState(BDR.getApproved());
@@ -3597,70 +3633,107 @@ function AdminPanel({master,onUpdate,onDataChange}){
       )
     ),
 
-    tab==='storage'&&h('div',{className:'admin-storage'},
-      // Current mode indicator
+    // ═══ USER MANAGEMENT TAB ═══
+    tab==='users'&&h('div',{className:'admin-storage'},
       h('div',{className:'admin-storage-section'},
-        h('div',{className:'admin-storage-title'},'Current Mode'),
-        h('div',{className:'admin-storage-badge badge-'+STORAGE_CONFIG.mode},STORAGE_CONFIG.mode==='local'?'Local Storage':'SharePoint'),
-        h('p',{style:{fontSize:12,color:'var(--jm-text-sec)',marginTop:6}},
-          STORAGE_CONFIG.mode==='local'
-            ?'Data is stored in this browser\'s localStorage. Records: '+Storage.getAll().length
-            :'Connected to SharePoint list at '+STORAGE_CONFIG.spSiteUrl
+        h('div',{className:'admin-storage-title'},'Create New User'),
+        h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}},
+          h('input',{placeholder:'Username',value:newUser.username,onChange:e=>setNewUser(u=>({...u,username:e.target.value})),style:{flex:'1 1 120px',minWidth:100,height:36,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 10px',fontSize:13,fontFamily:'inherit'}}),
+          h('input',{placeholder:'Display Name',value:newUser.displayName,onChange:e=>setNewUser(u=>({...u,displayName:e.target.value})),style:{flex:'1 1 140px',minWidth:120,height:36,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 10px',fontSize:13,fontFamily:'inherit'}}),
+          h('input',{placeholder:'Password (min 4 chars)',type:'password',value:newUser.password,onChange:e=>setNewUser(u=>({...u,password:e.target.value})),style:{flex:'1 1 120px',minWidth:100,height:36,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 10px',fontSize:13,fontFamily:'inherit'}}),
+          h('select',{value:newUser.role,onChange:e=>setNewUser(u=>({...u,role:e.target.value})),style:{height:36,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:13,fontFamily:'inherit'}},
+            h('option',{value:'operator'},'Operator'),h('option',{value:'supervisor'},'Supervisor'),h('option',{value:'admin'},'Admin')),
+          h('button',{className:'btn btn-primary btn-sm',onClick:()=>{
+            if(!newUser.username||!newUser.password){setUserMsg('Username and password required');return;}
+            API.createUser(newUser).then(()=>{
+              setUserMsg('User created');setNewUser({username:'',password:'',displayName:'',role:'operator'});
+              API.getUsers().then(u=>setUsers(u));
+            }).catch(e=>setUserMsg('Error: '+e.message));
+          }},'Create User')
+        ),
+        userMsg&&h('p',{style:{fontSize:12,color:userMsg.includes('Error')?'#FF3B30':'#34C759',fontWeight:600,marginBottom:8}},userMsg)
+      ),
+      h('div',{className:'admin-storage-section'},
+        h('div',{className:'admin-storage-title'},'All Users ('+users.length+')'),
+        users.length===0?h('p',{style:{color:'var(--jm-text-ter)',textAlign:'center',padding:16}},'No users found'):
+        h('table',{className:'admin-table'},
+          h('thead',null,h('tr',null,h('th',null,'Username'),h('th',null,'Display Name'),h('th',null,'Role'),h('th',null,'Created'),h('th',{style:{width:200}},'Actions'))),
+          h('tbody',null,users.map(u=>h('tr',{key:u.id},
+            h('td',{style:{fontWeight:600,fontSize:12}},u.username),
+            h('td',null,u.display_name),
+            h('td',null,h('span',{style:{fontSize:11,fontWeight:600,padding:'2px 8px',borderRadius:4,background:u.role==='admin'?'#EBF5FF':u.role==='supervisor'?'#FFF7ED':'#F0FDF4',color:u.role==='admin'?'#1B3D6E':u.role==='supervisor'?'#92400E':'#166534'}},u.role)),
+            h('td',{style:{fontSize:12}},u.created_at?u.created_at.split('T')[0]:'—'),
+            h('td',null,h('div',{style:{display:'flex',gap:4,alignItems:'center'}},
+              resetPw[u.id]!==undefined?h(React.Fragment,null,
+                h('input',{type:'password',placeholder:'New password',value:resetPw[u.id]||'',onChange:e=>setResetPw(p=>({...p,[u.id]:e.target.value})),style:{height:28,width:110,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 6px',fontSize:11,fontFamily:'inherit'}}),
+                h('button',{className:'btn btn-primary btn-sm',style:{fontSize:10,padding:'2px 8px'},onClick:()=>{
+                  API.resetPassword(u.id,resetPw[u.id]).then(()=>{showToast('Password reset');setResetPw(p=>{const n={...p};delete n[u.id];return n;});}).catch(e=>showToast('Error: '+e.message));
+                }},'Save'),
+                h('button',{className:'btn btn-sm',style:{fontSize:10,padding:'2px 6px'},onClick:()=>setResetPw(p=>{const n={...p};delete n[u.id];return n;})},'Cancel')
+              ):h('button',{className:'btn btn-secondary btn-sm',style:{fontSize:10,padding:'2px 8px'},onClick:()=>setResetPw(p=>({...p,[u.id]:''}))},'\uD83D\uDD11 Reset PW'),
+              authUser&&u.id!==authUser.id&&h('button',{className:'btn btn-sm',style:{fontSize:10,padding:'2px 8px',background:'#FF3B30',color:'#fff'},onClick:()=>{
+                if(confirm('Delete user '+u.username+'?')){API.deleteUser(u.id).then(()=>{showToast('User deleted');API.getUsers().then(u2=>setUsers(u2));}).catch(e=>showToast('Error: '+e.message));}
+              }},'Delete')
+            ))
+          )))
+        )
+      )
+    ),
+
+    // ═══ DATABASE BROWSER TAB ═══
+    tab==='data'&&h('div',{className:'admin-storage'},
+      h('div',{className:'admin-storage-section'},
+        h('div',{className:'admin-storage-title'},'Production Data Browser'),
+        h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:12}},
+          h('input',{type:'date',value:dbDateFrom,onChange:e=>setDbDateFrom(e.target.value),style:{height:34,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:12,fontFamily:'inherit'}}),
+          h('span',{style:{fontSize:12,color:'var(--jm-text-sec)'}},'to'),
+          h('input',{type:'date',value:dbDateTo,onChange:e=>setDbDateTo(e.target.value),style:{height:34,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:12,fontFamily:'inherit'}}),
+          h('button',{className:'btn btn-primary btn-sm',onClick:loadDbRecords},dbLoading?'Loading...':'Refresh'),
+          h('button',{className:'btn btn-secondary btn-sm',onClick:exportXLS,disabled:dbRecords.length===0},'\uD83D\uDCE5 Export to Excel'),
+          h('div',{className:'dash-card-badge',style:{marginLeft:'auto'}},dbRecords.length+' submissions')
         )
       ),
-
-      // Data Management
       h('div',{className:'admin-storage-section'},
-        h('div',{className:'admin-storage-title'},'Data Management'),
-        h('div',{style:{display:'flex',gap:8,flexWrap:'wrap'}},
-          h('button',{className:'btn btn-primary btn-sm',onClick:()=>{Storage.exportJSON();showToast('Data exported');}},h(Icon.upload),' Export Data (JSON)'),
-          h('button',{className:'btn btn-secondary btn-sm',onClick:()=>{
-            const inp=document.createElement('input');inp.type='file';inp.accept='.json';
-            inp.onchange=e=>{const f=e.target.files[0];if(!f)return;
-              Storage.importJSON(f).then(n=>{showToast(n+' records imported');if(onDataChange)onDataChange();}).catch(err=>showToast('Import error: '+err.message));
-            };inp.click();
-          }},h(Icon.upload),' Import Data (JSON)'),
-          h('button',{className:'btn btn-sm',style:{background:'#FF3B30',color:'#fff'},onClick:()=>{
-            if(confirm('Delete ALL production data? This cannot be undone.')){
-              Storage.clearAll();if(onDataChange)onDataChange();showToast('All data cleared');
-            }
-          }},'Clear All Data')
-        ),
-        h('p',{style:{fontSize:11,color:'var(--jm-text-ter)',marginTop:8}},'Export saves all production data as a JSON file. Import adds records from a previously exported file.')
-      ),
-
-      // SharePoint Configuration
-      h('div',{className:'admin-storage-section'},
-        h('div',{className:'admin-storage-title'},'SharePoint Configuration'),
-        h('p',{style:{fontSize:12,color:'var(--jm-text-sec)',marginBottom:10}},'Configure the SharePoint connection for production use. The app will automatically create the list, columns, and indexes.'),
-        h('div',{style:{display:'flex',flexDirection:'column',gap:8}},
-          h('label',{style:{fontSize:12,fontWeight:600,color:'var(--jm-text)'}},'SharePoint Site URL'),
-          h('input',{placeholder:'https://yourcompany.sharepoint.com/sites/OEE',value:spSite,onChange:e=>setSpSite(e.target.value),style:{padding:'8px 10px',border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',fontSize:13}}),
-          h('label',{style:{fontSize:12,fontWeight:600,color:'var(--jm-text)',marginTop:4}},'List Name'),
-          h('input',{value:spList,onChange:e=>setSpList(e.target.value),style:{padding:'8px 10px',border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',fontSize:13}})
-        ),
-        h('div',{style:{display:'flex',gap:8,marginTop:12,flexWrap:'wrap'}},
-          h('button',{className:'btn btn-primary btn-sm',disabled:!spSite,onClick:()=>{
-            STORAGE_CONFIG.spSiteUrl=spSite;STORAGE_CONFIG.spListName=spList;
-            setProvStatus('Creating list...');
-            Storage.spProvision().then(result=>{
-              setProvStatus(result.success?'List created successfully!':'Error: '+result.message);
-              if(result.success)showToast('SharePoint list provisioned');
-            });
-          }},'Create SharePoint List'),
-          h('button',{className:'btn btn-secondary btn-sm',disabled:!spSite,onClick:()=>{
-            STORAGE_CONFIG.spSiteUrl=spSite;STORAGE_CONFIG.spListName=spList;STORAGE_CONFIG.mode='sharepoint';
-            showToast('Switched to SharePoint mode');
-          }},'Activate SharePoint Mode'),
-          h('button',{className:'btn btn-secondary btn-sm',disabled:!spSite||STORAGE_CONFIG.mode!=='sharepoint',onClick:()=>{
-            setMigStatus('Migrating...');
-            Storage.spMigrateLocal().then(count=>{
-              setMigStatus(count+' rows migrated to SharePoint');showToast('Migration complete');
-            }).catch(err=>setMigStatus('Error: '+err.message||err));
-          }},'Migrate Local Data to SharePoint')
-        ),
-        provStatus&&h('p',{style:{fontSize:12,color:provStatus.includes('Error')?'#FF3B30':'#34C759',marginTop:8,fontWeight:600}},provStatus),
-        migStatus&&h('p',{style:{fontSize:12,color:migStatus.includes('Error')?'#FF3B30':'#34C759',marginTop:4,fontWeight:600}},migStatus)
+        dbRecords.length===0?h('p',{style:{color:'var(--jm-text-ter)',textAlign:'center',padding:20}},'No data found. Submit production data to see it here.'):
+        h('div',{style:{overflowX:'auto'}},
+          h('table',{className:'admin-table'},
+            h('thead',null,h('tr',null,h('th',{style:{width:30}},'#'),h('th',null,'Date'),h('th',null,'Shift'),h('th',null,'Equipment'),h('th',{className:'num'},'Hours'),h('th',{className:'num'},'Good'),h('th',{className:'num'},'Target'),h('th',{className:'num'},'Defects'),h('th',{className:'num'},'DT Min'),h('th',{style:{width:40}}))),
+            h('tbody',null,dbRecords.map((rec,idx)=>{
+              if(!rec.shiftData||!rec.equipData)return null;
+              const sd=rec.shiftData;const eqs=Object.keys(rec.equipData);
+              let totalGood=0,totalTgt=0,totalDef=0,totalDt=0,totalHrs=0;
+              eqs.forEach(ec=>(rec.equipData[ec]||[]).forEach(hr=>{totalGood+=parseInt(hr.goodUnits||0);totalTgt+=hr.target||0;totalDef+=(hr.defects||[]).reduce((s,d)=>s+parseInt(d.qty||0),0);totalDt+=(hr.downtime||[]).reduce((s,d)=>s+parseInt(d.mins||0),0);totalHrs++;}));
+              const isExp=dbExpanded===idx;
+              return h(React.Fragment,{key:idx},
+                h('tr',{style:{cursor:'pointer',background:isExp?'rgba(27,61,110,0.04)':'transparent'},onClick:()=>setDbExpanded(isExp?null:idx)},
+                  h('td',{style:{fontSize:11,color:'var(--jm-text-ter)'}},idx+1),
+                  h('td',{style:{fontWeight:600,fontSize:12}},sd.shiftDate),
+                  h('td',null,'S'+sd.shiftNum),
+                  h('td',{style:{fontSize:12}},eqs.map(ec=>getEquipName(ec)).join(', ')),
+                  h('td',{className:'num'},totalHrs),
+                  h('td',{className:'num',style:{fontWeight:600}},totalGood.toLocaleString()),
+                  h('td',{className:'num'},totalTgt.toLocaleString()),
+                  h('td',{className:'num',style:{color:totalDef>0?'#B02028':'inherit'}},totalDef),
+                  h('td',{className:'num'},totalDt),
+                  h('td',null,h('span',{style:{fontSize:14}},isExp?'\u25B2':'\u25BC'))
+                ),
+                isExp&&eqs.map(ec=>(rec.equipData[ec]||[]).map(hr=>
+                  h('tr',{key:ec+'-'+hr.hourIdx,style:{background:'#f8f9fa',fontSize:11}},
+                    h('td',null),
+                    h('td',null),h('td',null),
+                    h('td',{style:{paddingLeft:16,fontWeight:500}},getEquipName(ec)+' Hr'+hr.hourIdx),
+                    h('td',{className:'num'},'1'),
+                    h('td',{className:'num'},hr.goodUnits||0),
+                    h('td',{className:'num'},hr.target||0),
+                    h('td',{className:'num'},(hr.defects||[]).reduce((s,d)=>s+parseInt(d.qty||0),0)),
+                    h('td',{className:'num'},(hr.downtime||[]).reduce((s,d)=>s+parseInt(d.mins||0),0)),
+                    h('td',null)
+                  )
+                )).flat()
+              );
+            }))
+          )
+        )
       )
     )
   );
@@ -4337,7 +4410,7 @@ function App({authUser,onLogout}){
     // Main content
     h('div',{className:'content'},
       screen==='dashboard'&&h(Dashboard,{dataVersion,master}),screen==='analytics'&&h(AnalyticsView,{dataVersion,master}),screen==='tv'&&h(TVView,{dataVersion,master}),
-      screen==='admin'&&h(AdminPanel,{master,onUpdate:u=>setMaster(m=>({...m,...u})),onDataChange:()=>setDataVersion(v=>v+1)}),
+      screen==='admin'&&h(AdminPanel,{master,onUpdate:u=>setMaster(m=>({...m,...u})),onDataChange:()=>setDataVersion(v=>v+1),authUser}),
       screen==='entry'&&h('div',null,
         h('div',{className:'wizard-steps'},stepNames.map((nm,i)=>{
           const items=[h('div',{key:i,className:`wizard-step${step===i+1?' active':step>i+1?' done':' locked'}`,onClick:step>i+1?()=>setStep(i+1):undefined},nm)];
