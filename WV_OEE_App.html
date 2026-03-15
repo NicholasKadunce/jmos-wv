@@ -3402,7 +3402,8 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   // Products state
   const [newProdCode,setNewProdCode]=useState('');const [newProdName,setNewProdName]=useState('');
   const [prodSearch,setProdSearch]=useState('');
-  const tabs=[{id:'personnel',label:'Data Entry Personnel'},{id:'operators',label:'Operators'},{id:'equipment',label:'Equipment'},{id:'products',label:'Products'},{id:'rates',label:'Rate Management'},{id:'users',label:'Users'},{id:'data',label:'Database'}];
+  const isAdmin=authUser&&authUser.role==='admin';
+  const tabs=[{id:'personnel',label:'Data Entry Personnel'},{id:'operators',label:'Operators'},{id:'equipment',label:'Equipment'},{id:'products',label:'Products'},{id:'rates',label:'Rate Management',adminOnly:true},{id:'users',label:'Users',adminOnly:true},{id:'data',label:'Database'}].filter(t=>!t.adminOnly||isAdmin);
   // BDR state
   const [bdrPending,setBdrPending]=useState(BDR.getPending());
   const [bdrApproved,setBdrApproved]=useState(BDR.getApproved());
@@ -4385,8 +4386,8 @@ function App({authUser,onLogout}){
         h('button',{className:'sidebar-btn'+(screen==='dashboard'?' active':''),onClick:()=>setScreen('dashboard'),title:'Dashboard'},h(Icon.dashboard)),
         h('button',{className:'sidebar-btn'+(screen==='entry'?' active':''),onClick:()=>setScreen('entry'),title:'Enter Data'},h(Icon.clipboard)),
         h('button',{className:'sidebar-btn'+(screen==='tv'?' active':''),onClick:()=>setScreen('tv'),title:'TV Display'},h(Icon.tv)),
-        h('button',{className:'sidebar-btn'+(screen==='analytics'?' active':''),onClick:()=>setScreen('analytics'),title:'Analytics'},h(Icon.analytics)),
-        h('button',{className:'sidebar-btn'+(screen==='admin'?' active':''),onClick:()=>setScreen('admin'),title:'Admin'},h(Icon.settings))
+        (authUser.role==='admin'||authUser.role==='supervisor')&&h('button',{className:'sidebar-btn'+(screen==='analytics'?' active':''),onClick:()=>setScreen('analytics'),title:'Analytics'},h(Icon.analytics)),
+        (authUser.role==='admin'||authUser.role==='supervisor')&&h('button',{className:'sidebar-btn'+(screen==='admin'?' active':''),onClick:()=>setScreen('admin'),title:'Admin'},h(Icon.settings))
       ),
       // Sync + User
       h('div',{style:{marginTop:'auto',padding:'8px 6px',display:'flex',flexDirection:'column',alignItems:'center',gap:6}},
@@ -4409,8 +4410,10 @@ function App({authUser,onLogout}){
     ),
     // Main content
     h('div',{className:'content'},
-      screen==='dashboard'&&h(Dashboard,{dataVersion,master}),screen==='analytics'&&h(AnalyticsView,{dataVersion,master}),screen==='tv'&&h(TVView,{dataVersion,master}),
-      screen==='admin'&&h(AdminPanel,{master,onUpdate:u=>setMaster(m=>({...m,...u})),onDataChange:()=>setDataVersion(v=>v+1),authUser}),
+      screen==='dashboard'&&h(Dashboard,{dataVersion,master}),
+      screen==='analytics'&&(authUser.role==='admin'||authUser.role==='supervisor')&&h(AnalyticsView,{dataVersion,master}),
+      screen==='tv'&&h(TVView,{dataVersion,master}),
+      screen==='admin'&&(authUser.role==='admin'||authUser.role==='supervisor')&&h(AdminPanel,{master,onUpdate:u=>setMaster(m=>({...m,...u})),onDataChange:()=>setDataVersion(v=>v+1),authUser}),
       screen==='entry'&&h('div',null,
         h('div',{className:'wizard-steps'},stepNames.map((nm,i)=>{
           const items=[h('div',{key:i,className:`wizard-step${step===i+1?' active':step>i+1?' done':' locked'}`,onClick:step>i+1?()=>setStep(i+1):undefined},nm)];
