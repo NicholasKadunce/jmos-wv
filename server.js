@@ -360,28 +360,28 @@ function registerRoutes() {
     const hdrH = 110;
     parts.push(`<rect x="0" y="0" width="${W}" height="${hdrH}" rx="16" ry="16" fill="url(#navyGrad)"/>`);
     parts.push(`<rect x="0" y="${hdrH-16}" width="${W}" height="16" fill="url(#navyGrad)"/>`);
-    parts.push(`<text x="${W/2}" y="40" text-anchor="middle" fill="#fff" font-size="26" font-weight="800" font-family="system-ui,sans-serif">JMOS Dashboard</text>`);
-    parts.push(`<text x="${W/2}" y="60" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="12" font-family="system-ui,sans-serif">West Virginia Bolt Plant</text>`);
+    parts.push(`<text x="${W/2}" y="40" text-anchor="middle" fill="#fff" font-size="26" font-weight="800" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">JMOS Dashboard</text>`);
+    parts.push(`<text x="${W/2}" y="60" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="12" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">West Virginia Bolt Plant</text>`);
     parts.push(`<rect x="${W/2-20}" y="70" width="40" height="2" rx="1" fill="#c8a951"/>`);
-    parts.push(`<text x="${W/2}" y="92" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="13" font-family="system-ui,sans-serif">${dateDisplay}</text>`);
+    parts.push(`<text x="${W/2}" y="92" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="13" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${dateDisplay}</text>`);
     y = hdrH;
 
     // ── Combined OEE Hero ──
     const heroH = 120;
     parts.push(`<rect x="0" y="${y}" width="${W}" height="${heroH}" fill="#fff"/>`);
-    parts.push(`<text x="${W/2}" y="${y+24}" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600" font-family="system-ui,sans-serif" letter-spacing="2">OEE</text>`);
+    parts.push(`<text x="${W/2}" y="${y+24}" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600" font-family="DejaVu Sans,Arial,Helvetica,sans-serif" letter-spacing="2">OEE</text>`);
     if (comb.records > 0) {
-      parts.push(`<text x="${W/2}" y="${y+72}" text-anchor="middle" fill="${oeeColor(comb.oee)}" font-size="52" font-weight="800" font-family="system-ui,sans-serif">${pct(comb.oee)}</text>`);
+      parts.push(`<text x="${W/2}" y="${y+72}" text-anchor="middle" fill="${oeeColor(comb.oee)}" font-size="52" font-weight="800" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${pct(comb.oee)}</text>`);
       const apqY = y + 100;
       const apqSpacing = 130;
       const cx = W / 2;
       [['Avail', comb.avail], ['Perf', comb.perf], ['Quality', comb.qual]].forEach(([lbl, val], i) => {
         const ax = cx + (i - 1) * apqSpacing;
-        parts.push(`<text x="${ax}" y="${apqY}" text-anchor="middle" fill="${oeeColor(val)}" font-size="18" font-weight="700" font-family="system-ui,sans-serif">${pct(val)}</text>`);
-        parts.push(`<text x="${ax}" y="${apqY+14}" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" font-family="system-ui,sans-serif">${lbl.toUpperCase()}</text>`);
+        parts.push(`<text x="${ax}" y="${apqY}" text-anchor="middle" fill="${oeeColor(val)}" font-size="18" font-weight="700" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${pct(val)}</text>`);
+        parts.push(`<text x="${ax}" y="${apqY+14}" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${lbl.toUpperCase()}</text>`);
       });
     } else {
-      parts.push(`<text x="${W/2}" y="${y+65}" text-anchor="middle" fill="#94a3b8" font-size="36" font-family="system-ui,sans-serif">No Data</text>`);
+      parts.push(`<text x="${W/2}" y="${y+65}" text-anchor="middle" fill="#94a3b8" font-size="36" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">No Data</text>`);
     }
     y += heroH;
 
@@ -398,25 +398,25 @@ function registerRoutes() {
       let sy = y + 12;
       // Gold underline header
       parts.push(`<rect x="${ox+colW/2-30}" y="${sy+14}" width="60" height="2" rx="1" fill="#c8a951"/>`);
-      parts.push(`<text x="${ox+colW/2}" y="${sy+10}" text-anchor="middle" fill="#1b3d6e" font-size="12" font-weight="700" font-family="system-ui,sans-serif" letter-spacing="2">${label.toUpperCase()}</text>`);
+      parts.push(`<text x="${ox+colW/2}" y="${sy+10}" text-anchor="middle" fill="#1b3d6e" font-size="12" font-weight="700" font-family="DejaVu Sans,Arial,Helvetica,sans-serif" letter-spacing="2">${label.toUpperCase()}</text>`);
       sy += 28;
 
       if (s.records === 0) {
-        parts.push(`<text x="${ox+colW/2}" y="${sy+40}" text-anchor="middle" fill="#94a3b8" font-size="13" font-style="italic" font-family="system-ui,sans-serif">No data submitted</text>`);
+        parts.push(`<text x="${ox+colW/2}" y="${sy+40}" text-anchor="middle" fill="#94a3b8" font-size="13" font-style="italic" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">No data submitted</text>`);
         return;
       }
 
       // OEE big number
-      parts.push(`<text x="${ox+colW/2}" y="${sy+36}" text-anchor="middle" fill="${oeeColor(s.oee)}" font-size="40" font-weight="800" font-family="system-ui,sans-serif">${pct(s.oee)}</text>`);
-      parts.push(`<text x="${ox+colW/2}" y="${sy+50}" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" font-family="system-ui,sans-serif" letter-spacing="2">OEE</text>`);
+      parts.push(`<text x="${ox+colW/2}" y="${sy+36}" text-anchor="middle" fill="${oeeColor(s.oee)}" font-size="40" font-weight="800" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${pct(s.oee)}</text>`);
+      parts.push(`<text x="${ox+colW/2}" y="${sy+50}" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" font-family="DejaVu Sans,Arial,Helvetica,sans-serif" letter-spacing="2">OEE</text>`);
       sy += 64;
 
       // A / P / Q row
       const miniSpacing = colW / 4;
       [['A', s.avail], ['P', s.perf], ['Q', s.qual]].forEach(([lbl, val], i) => {
         const mx = ox + miniSpacing * (i + 0.5);
-        parts.push(`<text x="${mx}" y="${sy+4}" text-anchor="middle" fill="${oeeColor(val)}" font-size="16" font-weight="700" font-family="system-ui,sans-serif">${pct(val)}</text>`);
-        parts.push(`<text x="${mx}" y="${sy+16}" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="600" font-family="system-ui,sans-serif">${lbl}</text>`);
+        parts.push(`<text x="${mx}" y="${sy+4}" text-anchor="middle" fill="${oeeColor(val)}" font-size="16" font-weight="700" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${pct(val)}</text>`);
+        parts.push(`<text x="${mx}" y="${sy+16}" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="600" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${lbl}</text>`);
       });
       sy += 30;
 
@@ -430,8 +430,8 @@ function registerRoutes() {
       ];
       stats.forEach(([lbl, val, clr], i) => {
         const ry = sy + i * 20;
-        parts.push(`<text x="${ox+12}" y="${ry+12}" fill="#64748b" font-size="11" font-family="system-ui,sans-serif">${lbl}</text>`);
-        parts.push(`<text x="${ox+colW-12}" y="${ry+12}" text-anchor="end" fill="${clr}" font-size="11" font-weight="700" font-family="system-ui,sans-serif">${val}</text>`);
+        parts.push(`<text x="${ox+12}" y="${ry+12}" fill="#64748b" font-size="11" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${lbl}</text>`);
+        parts.push(`<text x="${ox+colW-12}" y="${ry+12}" text-anchor="end" fill="${clr}" font-size="11" font-weight="700" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${val}</text>`);
         if (i < stats.length - 1) parts.push(`<rect x="${ox+8}" y="${ry+18}" width="${colW-16}" height="1" fill="#f1f5f9"/>`);
       });
     }
@@ -454,14 +454,14 @@ function registerRoutes() {
 
       function drawIssues(items, label, ox, barColor, unit) {
         let iy = y + 8;
-        parts.push(`<text x="${ox+12}" y="${iy+12}" fill="#94a3b8" font-size="9" font-weight="700" font-family="system-ui,sans-serif" letter-spacing="1.5">${label.toUpperCase()}</text>`);
+        parts.push(`<text x="${ox+12}" y="${iy+12}" fill="#94a3b8" font-size="9" font-weight="700" font-family="DejaVu Sans,Arial,Helvetica,sans-serif" letter-spacing="1.5">${label.toUpperCase()}</text>`);
         iy += 24;
         const maxVal = items.length > 0 ? items[0][1] : 1;
         const barW = colW - 24;
         items.forEach(([name, val], i) => {
           const ry = iy + i * 32;
-          parts.push(`<text x="${ox+12}" y="${ry+4}" fill="#334155" font-size="11" font-family="system-ui,sans-serif">${name}</text>`);
-          parts.push(`<text x="${ox+colW-12}" y="${ry+4}" text-anchor="end" fill="#475569" font-size="11" font-weight="700" font-family="system-ui,sans-serif">${val}${unit}</text>`);
+          parts.push(`<text x="${ox+12}" y="${ry+4}" fill="#334155" font-size="11" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${name}</text>`);
+          parts.push(`<text x="${ox+colW-12}" y="${ry+4}" text-anchor="end" fill="#475569" font-size="11" font-weight="700" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">${val}${unit}</text>`);
           // Bar background
           parts.push(`<rect x="${ox+12}" y="${ry+9}" width="${barW}" height="6" rx="3" fill="#f1f5f9"/>`);
           // Bar fill
@@ -480,7 +480,7 @@ function registerRoutes() {
     parts.push(`<rect x="0" y="${y}" width="${W}" height="${footH}" rx="0" fill="#f8fafc"/>`);
     parts.push(`<rect x="0" y="${y+footH-16}" width="${W}" height="16" rx="16" ry="16" fill="#f8fafc"/>`);
     parts.push(`<rect x="${pad}" y="${y}" width="${W-pad*2}" height="1" fill="#e2e8f0"/>`);
-    parts.push(`<text x="${W/2}" y="${y+22}" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui,sans-serif">jmos-wv.up.railway.app  ·  Auto-generated daily report</text>`);
+    parts.push(`<text x="${W/2}" y="${y+22}" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">jmos-wv.up.railway.app  ·  Auto-generated daily report</text>`);
     y += footH;
 
     const totalH = y;
