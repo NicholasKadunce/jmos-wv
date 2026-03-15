@@ -2688,7 +2688,7 @@ function AnalyticsView({dataVersion,master}){
   },[filtered,module]);
 
   // ── LOSS WATERFALL MODULE ──
-  const [aLossView,setALossView]=useState('code');
+  const [aLossView,setALossView]=useState('category');
   const [lossScopeType,setLossScopeType]=useState('plant'); // 'plant','process','equip'
   const [lossScope,setLossScope]=useState('');
   const lossData=useMemo(()=>{
@@ -2936,7 +2936,7 @@ function AnalyticsView({dataVersion,master}){
           h(BarChart,{data:downtimeData.trend,margin:{top:10,right:20,bottom:5,left:0}},
             h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E5EA'}),
             h(XAxis,{dataKey:'date',tick:{fontSize:10},tickFormatter:d=>d.slice(5)}),
-            h(YAxis,{domain:[d=>{const floor=Math.floor(d/100)*100;return Math.max(0,floor-100);},d=>Math.ceil(d*1.15)],allowDataOverflow:false,tick:{fontSize:11},label:{value:'Minutes',angle:-90,position:'insideLeft',style:{fontSize:10}}}),
+            h(YAxis,{domain:[0,d=>Math.ceil(d*1.2)],allowDataOverflow:false,tick:{fontSize:11},label:{value:'Minutes',angle:-90,position:'insideLeft',style:{fontSize:10}}}),
             h(Tooltip,{contentStyle:{borderRadius:8,border:'1px solid #E5E5EA',fontSize:12}}),
             h(Bar,{dataKey:'totalMins',name:'Downtime (min)',fill:'#EF4444',radius:[3,3,0,0],barSize:20,opacity:0.8})
           )
@@ -2966,7 +2966,7 @@ function AnalyticsView({dataVersion,master}){
             h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E5EA'}),
             h(XAxis,{dataKey:'date',tick:{fontSize:10},tickFormatter:d=>d.slice(5)}),
             h(YAxis,{yAxisId:'left',domain:[d=>{const floor=Math.floor(d/5)*5;return Math.max(0,floor-5);},d=>Math.min(100,Math.ceil(d/5)*5+5)],allowDataOverflow:false,tick:{fontSize:11},tickFormatter:v=>v+'%',label:{value:'Quality %',angle:-90,position:'insideLeft',style:{fontSize:10}}}),
-            h(YAxis,{yAxisId:'right',orientation:'right',domain:[d=>Math.max(0,Math.floor(d/1000)*1000-1000),d=>Math.ceil((d+1000)/1000)*1000],allowDataOverflow:false,tick:{fontSize:11},label:{value:'DPMO',angle:90,position:'insideRight',style:{fontSize:10}}}),
+            h(YAxis,{yAxisId:'right',orientation:'right',domain:[0,d=>Math.ceil(d*1.2)],allowDataOverflow:false,tick:{fontSize:11},label:{value:'DPMO',angle:90,position:'insideRight',style:{fontSize:10}}}),
             h(Tooltip,{contentStyle:{borderRadius:8,border:'1px solid #E5E5EA',fontSize:12}}),
             h(Line,{yAxisId:'left',dataKey:'q',name:'Quality %',stroke:'#8B5CF6',strokeWidth:2.5,dot:{r:3},type:'monotone'}),
             h(Bar,{yAxisId:'right',dataKey:'dpmo',name:'DPMO',fill:'#F59E0B',radius:[3,3,0,0],barSize:16,opacity:0.5})
@@ -2989,7 +2989,8 @@ function AnalyticsView({dataVersion,master}){
     ),
 
     // ═══════════ LOSS WATERFALL MODULE ═══════════
-    module==='losses'&&lossData&&h('div',null,
+    module==='losses'&&h('div',null,
+      !lossData?h('div',{className:'dash-empty'},h(Icon.analytics),h('p',{style:{marginTop:8}},'No data available for loss analysis')):h(React.Fragment,null,
       // Scope selector
       h('div',{style:{display:'flex',gap:8,alignItems:'center',marginBottom:16,flexWrap:'wrap'}},
         h('div',{className:'dash-shift-toggle'},
@@ -3016,8 +3017,8 @@ function AnalyticsView({dataVersion,master}){
           h('div',{className:'dash-card-title'},h(Icon.analytics),' Loss Waterfall — Entitlement vs Actual'),
           h('div',{style:{display:'flex',gap:8,alignItems:'center'}},
             h('div',{className:'dash-shift-toggle'},
-              h('button',{className:'dash-shift-btn'+(aLossView==='code'?' active':''),onClick:()=>setALossView('code'),style:{fontSize:11,padding:'3px 10px'}},'By Code'),
-              h('button',{className:'dash-shift-btn'+(aLossView==='category'?' active':''),onClick:()=>setALossView('category'),style:{fontSize:11,padding:'3px 10px'}},'By Category')
+              h('button',{className:'dash-shift-btn'+(aLossView==='category'?' active':''),onClick:()=>setALossView('category'),style:{fontSize:11,padding:'3px 10px'}},'By Category'),
+              h('button',{className:'dash-shift-btn'+(aLossView==='code'?' active':''),onClick:()=>setALossView('code'),style:{fontSize:11,padding:'3px 10px'}},'By Code')
             )
           )
         ),
@@ -3070,7 +3071,7 @@ function AnalyticsView({dataVersion,master}){
           )
         )
       )
-    )
+    ))
   );
 }
 
