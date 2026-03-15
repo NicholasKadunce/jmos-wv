@@ -345,135 +345,162 @@ function registerRoutes() {
     if (v >= 0.65) return '#f59e0b';
     return '#ef4444';
   }
-
   function pct(v) { return (v * 100).toFixed(1) + '%'; }
 
-  function buildEmailHTML(report) {
+  function buildReportSVG(report) {
+    const W = 700, pad = 32;
     const d = new Date(report.date + 'T12:00:00');
     const dateDisplay = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const comb = report.combined;
+    const s1 = report.shift1;
+    const s2 = report.shift2;
+    let parts = [];
+    let y = 0;
 
-    function shiftBlock(label, s) {
-      if (s.records === 0) return `<div style="text-align:center;padding:20px;color:#94a3b8;font-style:italic">No data submitted</div>`;
-      return `
-        <div style="text-align:center;margin-bottom:16px">
-          <div style="font-size:48px;font-weight:800;color:${oeeColor(s.oee)};letter-spacing:-2px">${pct(s.oee)}</div>
-          <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-top:2px">OEE</div>
-        </div>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
-          <tr>
-            <td style="text-align:center;padding:8px 4px">
-              <div style="font-size:22px;font-weight:700;color:${oeeColor(s.avail)}">${pct(s.avail)}</div>
-              <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Availability</div>
-            </td>
-            <td style="text-align:center;padding:8px 4px">
-              <div style="font-size:22px;font-weight:700;color:${oeeColor(s.perf)}">${pct(s.perf)}</div>
-              <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Performance</div>
-            </td>
-            <td style="text-align:center;padding:8px 4px">
-              <div style="font-size:22px;font-weight:700;color:${oeeColor(s.qual)}">${pct(s.qual)}</div>
-              <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Quality</div>
-            </td>
-          </tr>
-        </table>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;color:#475569">
-          <tr><td style="padding:4px 0">Good Units</td><td style="text-align:right;font-weight:600">${s.totalGood.toLocaleString()}</td></tr>
-          <tr><td style="padding:4px 0">Total Produced</td><td style="text-align:right;font-weight:600">${s.totalProduced.toLocaleString()}</td></tr>
-          <tr><td style="padding:4px 0">Target</td><td style="text-align:right;font-weight:600">${s.totalTarget.toLocaleString()}</td></tr>
-          <tr><td style="padding:4px 0">Downtime</td><td style="text-align:right;font-weight:600;color:#ef4444">${s.totalDT} min</td></tr>
-          <tr><td style="padding:4px 0">Defects</td><td style="text-align:right;font-weight:600;color:#f59e0b">${s.totalDefects.toLocaleString()}</td></tr>
-        </table>`;
+    // ── Navy Header ──
+    const hdrH = 110;
+    parts.push(`<rect x="0" y="0" width="${W}" height="${hdrH}" rx="16" ry="16" fill="url(#navyGrad)"/>`);
+    parts.push(`<rect x="0" y="${hdrH-16}" width="${W}" height="16" fill="url(#navyGrad)"/>`);
+    parts.push(`<text x="${W/2}" y="40" text-anchor="middle" fill="#fff" font-size="26" font-weight="800" font-family="system-ui,sans-serif">JMOS Dashboard</text>`);
+    parts.push(`<text x="${W/2}" y="60" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="12" font-family="system-ui,sans-serif">West Virginia Bolt Plant</text>`);
+    parts.push(`<rect x="${W/2-20}" y="70" width="40" height="2" rx="1" fill="#c8a951"/>`);
+    parts.push(`<text x="${W/2}" y="92" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="13" font-family="system-ui,sans-serif">${dateDisplay}</text>`);
+    y = hdrH;
+
+    // ── Combined OEE Hero ──
+    const heroH = 120;
+    parts.push(`<rect x="0" y="${y}" width="${W}" height="${heroH}" fill="#fff"/>`);
+    parts.push(`<text x="${W/2}" y="${y+24}" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600" font-family="system-ui,sans-serif" letter-spacing="2">DAILY COMBINED OEE</text>`);
+    if (comb.records > 0) {
+      parts.push(`<text x="${W/2}" y="${y+72}" text-anchor="middle" fill="${oeeColor(comb.oee)}" font-size="52" font-weight="800" font-family="system-ui,sans-serif">${pct(comb.oee)}</text>`);
+      const apqY = y + 100;
+      const apqSpacing = 130;
+      const cx = W / 2;
+      [['Avail', comb.avail], ['Perf', comb.perf], ['Quality', comb.qual]].forEach(([lbl, val], i) => {
+        const ax = cx + (i - 1) * apqSpacing;
+        parts.push(`<text x="${ax}" y="${apqY}" text-anchor="middle" fill="${oeeColor(val)}" font-size="18" font-weight="700" font-family="system-ui,sans-serif">${pct(val)}</text>`);
+        parts.push(`<text x="${ax}" y="${apqY+14}" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" font-family="system-ui,sans-serif">${lbl.toUpperCase()}</text>`);
+      });
+    } else {
+      parts.push(`<text x="${W/2}" y="${y+65}" text-anchor="middle" fill="#94a3b8" font-size="36" font-family="system-ui,sans-serif">No Data</text>`);
+    }
+    y += heroH;
+
+    // ── Divider ──
+    parts.push(`<rect x="${pad}" y="${y}" width="${W-pad*2}" height="1" fill="#e2e8f0"/>`);
+    y += 1;
+
+    // ── Shift Cards Side by Side ──
+    const shiftH = 260;
+    const colW = (W - pad * 2) / 2;
+    parts.push(`<rect x="0" y="${y}" width="${W}" height="${shiftH}" fill="#fff"/>`);
+
+    function drawShift(s, label, ox) {
+      let sy = y + 12;
+      // Gold underline header
+      parts.push(`<rect x="${ox+colW/2-30}" y="${sy+14}" width="60" height="2" rx="1" fill="#c8a951"/>`);
+      parts.push(`<text x="${ox+colW/2}" y="${sy+10}" text-anchor="middle" fill="#1b3d6e" font-size="12" font-weight="700" font-family="system-ui,sans-serif" letter-spacing="2">${label.toUpperCase()}</text>`);
+      sy += 28;
+
+      if (s.records === 0) {
+        parts.push(`<text x="${ox+colW/2}" y="${sy+40}" text-anchor="middle" fill="#94a3b8" font-size="13" font-style="italic" font-family="system-ui,sans-serif">No data submitted</text>`);
+        return;
+      }
+
+      // OEE big number
+      parts.push(`<text x="${ox+colW/2}" y="${sy+36}" text-anchor="middle" fill="${oeeColor(s.oee)}" font-size="40" font-weight="800" font-family="system-ui,sans-serif">${pct(s.oee)}</text>`);
+      parts.push(`<text x="${ox+colW/2}" y="${sy+50}" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" font-family="system-ui,sans-serif" letter-spacing="2">OEE</text>`);
+      sy += 64;
+
+      // A / P / Q row
+      const miniSpacing = colW / 4;
+      [['A', s.avail], ['P', s.perf], ['Q', s.qual]].forEach(([lbl, val], i) => {
+        const mx = ox + miniSpacing * (i + 0.5);
+        parts.push(`<text x="${mx}" y="${sy+4}" text-anchor="middle" fill="${oeeColor(val)}" font-size="16" font-weight="700" font-family="system-ui,sans-serif">${pct(val)}</text>`);
+        parts.push(`<text x="${mx}" y="${sy+16}" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="600" font-family="system-ui,sans-serif">${lbl}</text>`);
+      });
+      sy += 30;
+
+      // Stats table
+      const stats = [
+        ['Good Units', s.totalGood.toLocaleString(), '#334155'],
+        ['Produced', s.totalProduced.toLocaleString(), '#334155'],
+        ['Target', s.totalTarget.toLocaleString(), '#334155'],
+        ['Downtime', s.totalDT + ' min', '#ef4444'],
+        ['Defects', s.totalDefects.toLocaleString(), '#f59e0b']
+      ];
+      stats.forEach(([lbl, val, clr], i) => {
+        const ry = sy + i * 20;
+        parts.push(`<text x="${ox+12}" y="${ry+12}" fill="#64748b" font-size="11" font-family="system-ui,sans-serif">${lbl}</text>`);
+        parts.push(`<text x="${ox+colW-12}" y="${ry+12}" text-anchor="end" fill="${clr}" font-size="11" font-weight="700" font-family="system-ui,sans-serif">${val}</text>`);
+        if (i < stats.length - 1) parts.push(`<rect x="${ox+8}" y="${ry+18}" width="${colW-16}" height="1" fill="#f1f5f9"/>`);
+      });
     }
 
-    function topIssues(label, items, unit) {
-      if (items.length === 0) return '';
-      const max = items[0][1];
-      return `
-        <div style="margin-top:16px">
-          <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;font-weight:600">${label}</div>
-          ${items.map(([name, val]) => {
-            const w = max > 0 ? Math.round((val / max) * 100) : 0;
-            return `<div style="margin-bottom:6px">
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:#334155;margin-bottom:2px">
-                <span>${name}</span><span style="font-weight:600">${val}${unit}</span>
-              </div>
-              <div style="background:#f1f5f9;border-radius:4px;height:6px;overflow:hidden">
-                <div style="width:${w}%;height:100%;background:${label.includes('Downtime') ? '#ef4444' : '#f59e0b'};border-radius:4px"></div>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>`;
+    drawShift(s1, 'Shift 1', pad);
+    // Vertical divider
+    parts.push(`<rect x="${W/2}" y="${y+8}" width="1" height="${shiftH-16}" fill="#e2e8f0"/>`);
+    drawShift(s2, 'Shift 2', W/2);
+    y += shiftH;
+
+    // ── Divider ──
+    parts.push(`<rect x="${pad}" y="${y}" width="${W-pad*2}" height="1" fill="#e2e8f0"/>`);
+    y += 1;
+
+    // ── Top Downtime & Top Defects ──
+    if (comb.records > 0 && (comb.topDT.length > 0 || comb.topDef.length > 0)) {
+      const issueRows = Math.max(comb.topDT.length, comb.topDef.length);
+      const issueH = 40 + issueRows * 32;
+      parts.push(`<rect x="0" y="${y}" width="${W}" height="${issueH}" fill="#fff"/>`);
+
+      function drawIssues(items, label, ox, barColor, unit) {
+        let iy = y + 8;
+        parts.push(`<text x="${ox+12}" y="${iy+12}" fill="#94a3b8" font-size="9" font-weight="700" font-family="system-ui,sans-serif" letter-spacing="1.5">${label.toUpperCase()}</text>`);
+        iy += 24;
+        const maxVal = items.length > 0 ? items[0][1] : 1;
+        const barW = colW - 24;
+        items.forEach(([name, val], i) => {
+          const ry = iy + i * 32;
+          parts.push(`<text x="${ox+12}" y="${ry+4}" fill="#334155" font-size="11" font-family="system-ui,sans-serif">${name}</text>`);
+          parts.push(`<text x="${ox+colW-12}" y="${ry+4}" text-anchor="end" fill="#475569" font-size="11" font-weight="700" font-family="system-ui,sans-serif">${val}${unit}</text>`);
+          // Bar background
+          parts.push(`<rect x="${ox+12}" y="${ry+9}" width="${barW}" height="6" rx="3" fill="#f1f5f9"/>`);
+          // Bar fill
+          const fw = maxVal > 0 ? Math.round((val / maxVal) * barW) : 0;
+          parts.push(`<rect x="${ox+12}" y="${ry+9}" width="${fw}" height="6" rx="3" fill="${barColor}"/>`);
+        });
+      }
+
+      drawIssues(comb.topDT, 'Top Downtime', pad, '#ef4444', ' min');
+      drawIssues(comb.topDef, 'Top Defects', W/2, '#f59e0b', '');
+      y += issueH;
     }
 
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-<div style="max-width:640px;margin:0 auto;padding:24px 16px">
+    // ── Footer ──
+    const footH = 36;
+    parts.push(`<rect x="0" y="${y}" width="${W}" height="${footH}" rx="0" fill="#f8fafc"/>`);
+    parts.push(`<rect x="0" y="${y+footH-16}" width="${W}" height="16" rx="16" ry="16" fill="#f8fafc"/>`);
+    parts.push(`<rect x="${pad}" y="${y}" width="${W-pad*2}" height="1" fill="#e2e8f0"/>`);
+    parts.push(`<text x="${W/2}" y="${y+22}" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="system-ui,sans-serif">jmos-wv.up.railway.app  ·  Auto-generated daily report</text>`);
+    y += footH;
 
-  <!-- Header -->
-  <div style="background:linear-gradient(135deg,#0f1e38 0%,#1b3d6e 100%);border-radius:16px 16px 0 0;padding:32px 28px;text-align:center">
-    <div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.5px">JMOS Dashboard</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px">West Virginia Bolt Plant</div>
-    <div style="width:40px;height:2px;background:linear-gradient(90deg,#c8a951,#e8d48b);margin:12px auto 0;border-radius:2px"></div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:12px">${dateDisplay}</div>
-  </div>
+    const totalH = y;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${totalH}" viewBox="0 0 ${W} ${totalH}">
+  <defs>
+    <linearGradient id="navyGrad" x1="0" y1="0" x2="${W}" y2="${hdrH}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f1e38"/>
+      <stop offset="100%" stop-color="#1b3d6e"/>
+    </linearGradient>
+  </defs>
+  <rect width="${W}" height="${totalH}" fill="#f1f5f9" rx="16"/>
+  ${parts.join('\n  ')}
+</svg>`;
+  }
 
-  <!-- Combined OEE Hero -->
-  <div style="background:#fff;padding:28px;text-align:center;border-bottom:1px solid #e2e8f0">
-    <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">Daily Combined OEE</div>
-    <div style="font-size:64px;font-weight:800;color:${oeeColor(report.combined.oee)};letter-spacing:-3px;line-height:1">${report.combined.records > 0 ? pct(report.combined.oee) : '—'}</div>
-    ${report.combined.records > 0 ? `
-    <table style="width:240px;margin:16px auto 0;border-collapse:collapse">
-      <tr>
-        <td style="text-align:center;padding:4px">
-          <div style="font-size:18px;font-weight:700;color:${oeeColor(report.combined.avail)}">${pct(report.combined.avail)}</div>
-          <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Avail</div>
-        </td>
-        <td style="text-align:center;padding:4px">
-          <div style="font-size:18px;font-weight:700;color:${oeeColor(report.combined.perf)}">${pct(report.combined.perf)}</div>
-          <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Perf</div>
-        </td>
-        <td style="text-align:center;padding:4px">
-          <div style="font-size:18px;font-weight:700;color:${oeeColor(report.combined.qual)}">${pct(report.combined.qual)}</div>
-          <div style="font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px">Quality</div>
-        </td>
-      </tr>
-    </table>` : ''}
-  </div>
-
-  <!-- Shift Cards Side by Side -->
-  <div style="display:flex;gap:0;background:#fff">
-    <div style="flex:1;padding:24px 20px;border-right:1px solid #e2e8f0">
-      <div style="text-align:center;font-size:12px;font-weight:700;color:#1b3d6e;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #c8a951">Shift 1</div>
-      ${shiftBlock('Shift 1', report.shift1)}
-    </div>
-    <div style="flex:1;padding:24px 20px">
-      <div style="text-align:center;font-size:12px;font-weight:700;color:#1b3d6e;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #c8a951">Shift 2</div>
-      ${shiftBlock('Shift 2', report.shift2)}
-    </div>
-  </div>
-
-  <!-- Top Issues -->
-  ${report.combined.records > 0 ? `
-  <div style="background:#fff;padding:20px 24px;border-top:1px solid #e2e8f0">
-    <div style="display:flex;gap:24px">
-      <div style="flex:1">
-        ${topIssues('Top Downtime', report.combined.topDT, ' min')}
-      </div>
-      <div style="flex:1">
-        ${topIssues('Top Defects', report.combined.topDef, '')}
-      </div>
-    </div>
-  </div>` : ''}
-
-  <!-- Footer -->
-  <div style="background:#f8fafc;border-radius:0 0 16px 16px;padding:16px 24px;text-align:center;border-top:1px solid #e2e8f0">
-    <div style="font-size:11px;color:#94a3b8">
-      <a href="https://jmos-wv.up.railway.app" style="color:#1b3d6e;text-decoration:none;font-weight:600">Open JMOS Dashboard</a>
-      &nbsp;·&nbsp; Auto-generated daily report
-    </div>
-  </div>
-
-</div>
-</body></html>`;
+  async function buildReportPNG(report) {
+    const sharp = require('sharp');
+    const svg = buildReportSVG(report);
+    return sharp(Buffer.from(svg)).png().toBuffer();
   }
 
   // Email transporter (configured via env vars)
@@ -494,12 +521,12 @@ function registerRoutes() {
     if (rows.length === 0) return { sent: false, reason: 'No data for ' + dateStr };
 
     const report = computeDailyReport(dateStr, rows);
-    const html = buildEmailHTML(report);
+    const pngBuffer = await buildReportPNG(report);
     const recipients = process.env.REPORT_EMAILS;
-    if (!recipients) return { sent: false, reason: 'REPORT_EMAILS not configured', report, html };
+    if (!recipients) return { sent: false, reason: 'REPORT_EMAILS not configured' };
 
     const transporter = getEmailTransporter();
-    if (!transporter) return { sent: false, reason: 'SMTP not configured', report, html };
+    if (!transporter) return { sent: false, reason: 'SMTP not configured' };
 
     const d = new Date(dateStr + 'T12:00:00');
     const subject = `JMOS Daily OEE — ${pct(report.combined.oee)} — ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
@@ -508,19 +535,35 @@ function registerRoutes() {
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: recipients,
       subject,
-      html
+      html: `<div style="font-family:sans-serif;text-align:center;padding:16px;background:#f1f5f9">
+        <img src="cid:dailyreport" alt="JMOS Daily OEE Report" style="max-width:100%;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.1)"/>
+        <p style="margin-top:12px;font-size:12px;color:#94a3b8"><a href="https://jmos-wv.up.railway.app" style="color:#1b3d6e;font-weight:600">Open JMOS Dashboard</a></p>
+      </div>`,
+      attachments: [{
+        filename: 'jmos-daily-oee.png',
+        content: pngBuffer,
+        cid: 'dailyreport'
+      }]
     });
     return { sent: true, to: recipients, subject };
   }
 
-  // API: preview report (returns HTML)
+  // API: preview report as PNG image
   app.get('/api/report/preview', requireAuth, async (req, res) => {
     try {
       const dateStr = req.query.date || new Date(Date.now() - 86400000).toISOString().slice(0, 10);
       const { rows } = await pool.query('SELECT data FROM submissions WHERE shift_date = $1', [dateStr]);
       if (rows.length === 0) return res.status(404).send('<h2 style="font-family:sans-serif;text-align:center;padding:60px;color:#64748b">No data for ' + dateStr + '</h2>');
       const report = computeDailyReport(dateStr, rows);
-      res.send(buildEmailHTML(report));
+      const fmt = req.query.format || 'png';
+      if (fmt === 'svg') {
+        res.setHeader('Content-Type', 'image/svg+xml');
+        return res.send(buildReportSVG(report));
+      }
+      const pngBuffer = await buildReportPNG(report);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Content-Disposition', `inline; filename="jmos-oee-${dateStr}.png"`);
+      res.send(pngBuffer);
     } catch (err) {
       console.error('Report preview error:', err);
       res.status(500).json({ error: 'Failed to generate report' });
