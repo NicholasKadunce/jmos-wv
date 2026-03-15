@@ -571,7 +571,7 @@ function registerRoutes() {
   // API: send report now (admin only)
   app.post('/api/report/send', requireAdmin, async (req, res) => {
     try {
-      const dateStr = req.body.date || new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const dateStr = req.body.date || getPreviousWorkday(new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' })));
       const result = await sendDailyReport(dateStr);
       res.json(result);
     } catch (err) {
@@ -580,19 +580,30 @@ function registerRoutes() {
     }
   });
 
-  // Daily auto-send scheduler (runs every hour, sends at configured hour)
+  // Get previous working day (Mon→Fri, Tue-Fri→previous day, Sat/Sun→skip)
+  function getPreviousWorkday(now) {
+    const day = now.getDay(); // 0=Sun,1=Mon,...,6=Sat
+    const prev = new Date(now);
+    if (day === 1) prev.setDate(prev.getDate() - 3);      // Monday → Friday
+    else if (day === 0) prev.setDate(prev.getDate() - 2);  // Sunday → Friday
+    else if (day === 6) prev.setDate(prev.getDate() - 1);  // Saturday → Friday
+    else prev.setDate(prev.getDate() - 1);                 // Tue-Fri → previous day
+    return prev.toISOString().slice(0, 10);
+  }
+
+  // Daily auto-send scheduler (weekdays only, sends previous workday's data)
   const REPORT_HOUR = parseInt(process.env.REPORT_HOUR || '6'); // 6 AM ET default
   let lastReportDate = null;
   setInterval(async () => {
     try {
       const now = new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' }));
       const todayStr = now.toISOString().slice(0, 10);
-      if (now.getHours() >= REPORT_HOUR && lastReportDate !== todayStr) {
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yStr = yesterday.toISOString().slice(0, 10);
-        console.log('Auto-sending daily report for', yStr);
-        const result = await sendDailyReport(yStr);
+      const dayOfWeek = now.getDay();
+      // Only send on weekdays (Mon-Fri)
+      if (dayOfWeek >= 1 && dayOfWeek <= 5 && now.getHours() >= REPORT_HOUR && lastReportDate !== todayStr) {
+        const reportDate = getPreviousWorkday(now);
+        console.log('Auto-sending daily report for', reportDate, '(today is', todayStr, ')');
+        const result = await sendDailyReport(reportDate);
         console.log('Daily report result:', result);
         lastReportDate = todayStr;
       }
