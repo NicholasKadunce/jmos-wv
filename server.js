@@ -297,23 +297,30 @@ function registerRoutes() {
 }
 
 // ── START SERVER ──
+// Start listening IMMEDIATELY so Railway sees the app is alive
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on port ${PORT}`);
+});
+
+// Temporary route while DB initializes
+app.get('/__health', (req, res) => res.send('ok'));
+
 async function start() {
   if (!process.env.DATABASE_URL) {
     console.error('WARNING: DATABASE_URL not set.');
     app.get('*', (req, res) => {
       res.status(503).send('<html><body style="font-family:sans-serif;text-align:center;padding:60px"><h1>JMOS Setup In Progress</h1><p>Database not connected yet. Add PostgreSQL in Railway and set DATABASE_URL.</p></body></html>');
     });
-    app.listen(PORT, '0.0.0.0', () => console.log(`Server waiting for database on port ${PORT}`));
     return;
   }
+  console.log('DATABASE_URL found, connecting to database...');
+  console.log('DB host:', process.env.DATABASE_URL.split('@')[1]?.split('/')[0] || 'unknown');
   try {
     await initDB();
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`JMOS server running on port ${PORT}`);
-      console.log(`Open: https://jmos-wv.up.railway.app`);
-    });
+    console.log('Database initialized successfully!');
+    console.log(`App ready at https://jmos-wv.up.railway.app`);
   } catch (err) {
-    console.error('Database initialization failed:', err);
+    console.error('Database initialization failed:', err.message);
     console.error('Retrying in 5 seconds...');
     setTimeout(start, 5000);
   }
