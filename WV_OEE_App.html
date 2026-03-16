@@ -1650,9 +1650,10 @@ function Dashboard({dataVersion,master}){
           });
         });
       }
-      if(entry.equipCode&&entry.hourData&&!entry.shiftData){
+      if(entry.equipCode&&entry.hourData&&!entry.equipData){
         const hr=entry.hourData;
-        records.push({date:today(),shiftNum:'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
+        const sd=entry.shiftData||{};
+        records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
       }
     });
     return records;
@@ -2543,6 +2544,10 @@ function AnalyticsView({dataVersion,master}){
           });
         });
       }
+      if(entry.equipCode&&entry.hourData&&!entry.equipData){
+        const hr=entry.hourData;const sd=entry.shiftData||{};
+        records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
+      }
     });
     return records;
   },[dataVersion]);
@@ -3134,6 +3139,10 @@ function TVView({dataVersion,master}){
             records.push({date:sd.shiftDate,shiftNum:sd.shiftNum,equipCode:ec,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
           });
         });
+      }
+      if(entry.equipCode&&entry.hourData&&!entry.equipData){
+        const hr=entry.hourData;const sd=entry.shiftData||{};
+        records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
       }
     });
     return records;
