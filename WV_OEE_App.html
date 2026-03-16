@@ -4369,20 +4369,28 @@ function App({authUser,onLogout}){
     return()=>{window.removeEventListener('online',goOnline);window.removeEventListener('offline',goOffline);};
   },[]);
 
-  // Fetch data from server on mount
-  useEffect(()=>{
-    if(navigator.onLine){
-      API.fetchData().then(serverData=>{
-        // Merge server data into local cache
-        if(serverData&&serverData.length>0){
-          // Clear and reload from server
-          Storage._cache.length=0;
-          serverData.forEach(d=>Storage._cache.push(d));
+  // Fetch data from server on mount and auto-poll for live updates
+  const fetchServerData=useCallback(()=>{
+    if(!navigator.onLine)return;
+    API.fetchData().then(serverData=>{
+      if(serverData&&serverData.length>0){
+        const oldLen=Storage._cache.length;
+        const oldLast=oldLen>0?JSON.stringify(Storage._cache[oldLen-1]):'';
+        Storage._cache.length=0;
+        serverData.forEach(d=>Storage._cache.push(d));
+        // Only bump version if data actually changed
+        if(serverData.length!==oldLen||JSON.stringify(serverData[serverData.length-1])!==oldLast){
           setDataVersion(v=>v+1);
         }
-      }).catch(e=>console.warn('Could not fetch server data:',e));
-    }
+      }
+    }).catch(e=>console.warn('Could not fetch server data:',e));
   },[]);
+  useEffect(()=>{fetchServerData();},[]);
+  // Auto-poll every 30s for live TV/Dashboard updates
+  useEffect(()=>{
+    const iv=setInterval(fetchServerData,30000);
+    return()=>clearInterval(iv);
+  },[fetchServerData]);
 
   // Periodic sync attempt
   useEffect(()=>{
