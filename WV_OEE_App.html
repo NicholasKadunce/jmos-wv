@@ -1143,11 +1143,13 @@ const Storage={
     catch(e){console.error('localStorage write error:',e);showToast('Storage full — clear old data or export');}
   },
 
+  _masterSynced:false, // Don't sync to server until we've loaded from server first
+
   // ── Save master data (supervisors, operators, equipment defaults) ──
   saveMaster(masterData){
     try{localStorage.setItem(STORAGE_CONFIG.masterKey,JSON.stringify(masterData));}catch(e){console.error('Master save error:',e);}
-    // Also persist to server so it survives cache clears
-    if(navigator.onLine){
+    // Only persist to server after initial server load has completed
+    if(this._masterSynced&&navigator.onLine){
       fetch('/api/settings/master',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({value:masterData})}).catch(()=>{});
     }
     return Promise.resolve();
@@ -1165,13 +1167,14 @@ const Storage={
   async loadMasterFromServer(){
     try{
       const r=await fetch('/api/settings/master');
-      if(!r.ok)return null;
+      if(!r.ok){this._masterSynced=true;return null;}
       const data=await r.json();
       if(data){
         try{localStorage.setItem(STORAGE_CONFIG.masterKey,JSON.stringify(data));}catch(e){}
       }
+      this._masterSynced=true;
       return data;
-    }catch(e){return null;}
+    }catch(e){this._masterSynced=true;return null;}
   },
 
   // ──────────────────────────────────────────────────────────────
@@ -4429,12 +4432,28 @@ function App({authUser,onLogout}){
   },[pendingCount]);
 
   useEffect(()=>{Storage.saveMaster(master);},[master]);
-  // If localStorage master was empty (cache cleared), fetch from server
+  // Always try to load master from server on mount (handles cache clears & cross-device sync)
   useEffect(()=>{
-    if(!Storage.loadMaster()&&navigator.onLine){
+    if(navigator.onLine){
       Storage.loadMasterFromServer().then(serverMaster=>{
-        if(serverMaster)setMaster(serverMaster);
+        if(serverMaster&&serverMaster.supervisors&&serverMaster.supervisors.length>0){
+          setMaster(prev=>{
+            // Merge: server wins for supervisors/operators if they have data
+            const merged={...prev};
+            if(serverMaster.supervisors&&serverMaster.supervisors.length>0)merged.supervisors=serverMaster.supervisors;
+            if(serverMaster.operators&&serverMaster.operators.length>0)merged.operators=serverMaster.operators;
+            if(serverMaster.equipDefaults)merged.equipDefaults={...prev.equipDefaults,...serverMaster.equipDefaults};
+            if(serverMaster.customEquipment)merged.customEquipment=serverMaster.customEquipment;
+            if(serverMaster.customProducts)merged.customProducts=serverMaster.customProducts;
+            return merged;
+          });
+        } else {
+          // No server data yet — enable syncing so next save pushes to server
+          Storage._masterSynced=true;
+        }
       });
+    } else {
+      Storage._masterSynced=true;
     }
   },[]);
   function toggleEquip(c){setSelectedEquip(p=>p.includes(c)?p.filter(x=>x!==c):[...p,c]);}
