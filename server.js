@@ -187,19 +187,6 @@ function registerRoutes() {
     }
   });
 
-  // Temporary: delete test records
-  app.post('/api/admin/cleanup-test', requireAuth, async (req, res) => {
-    try {
-      const result = await pool.query(
-        `DELETE FROM submissions WHERE data->>'shiftData' IS NOT NULL AND (data->'shiftData'->>'enteredBy' = 'test-verify' OR data->'shiftData'->>'enteredBy' = 'deploy-test') RETURNING id`
-      );
-      res.json({ deleted: result.rowCount });
-    } catch (err) {
-      console.error('Cleanup error:', err);
-      res.status(500).json({ error: 'Cleanup failed' });
-    }
-  });
-
   app.get('/api/data', requireAuth, async (req, res) => {
     try {
       const { from, to } = req.query;
