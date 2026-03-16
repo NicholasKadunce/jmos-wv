@@ -923,7 +923,7 @@ const INIT_PRODUCTS=[
   {code:'P-STW-001',name:'5Rb,6RB Up To 72"',people:4},{code:'P-STW-002',name:'5Rb,6RB Above 72"',people:4},
   {code:'P-STW-003',name:'174" ST',people:5},{code:'P-STW-004',name:'5Rb,6RB Up To 72"',people:3},
   {code:'P-STW-005',name:'5Rb,6RB Above 72"',people:3},{code:'P-STW-006',name:'174" ST',people:4},
-  {code:'P-UNT-001',name:'Shell & Plug Assembly'},{code:'P-SAW-001',name:'Cutting Heavy Wall Pipe'},{code:'P-SAW-002',name:'Cut Tubing'},
+  {code:'P-UNT-001',name:'7/8 Unit Assembly'},{code:'P-UNT-002',name:'5/8 Unit Assembly'},{code:'P-SAW-001',name:'Cutting Heavy Wall Pipe'},{code:'P-SAW-002',name:'Cut Tubing'},
   {code:'P-TIE-001',name:'Tie Line - Standard'},{code:'P-TIE-002',name:'Tie Line - Countersink'},
   {code:'P-EYE-001',name:'Bend Eye Bolt'},{code:'P-EYE-002',name:'Eye Bolt W/Tail'},
   {code:'P-WLD-001',name:'Offline Welding - All Types'},{code:'P-WLD-002',name:'Offline Welding - Eye bolts w/Tail'},
@@ -953,7 +953,7 @@ const EQUIP_PRODUCTS={
   'WV-CABLE-C4':['P-CBL-001','P-CBL-002','P-CBL-003','P-CBL-004','P-CBL-005','P-CBL-006','P-CBL-007'],
   'WV-MISC-BIGSAW':['P-SAW-001','P-SAW-002'],'WV-MISC-TIELINE':['P-TIE-001','P-TIE-002'],
   'WV-MISC-OFFWELD':['P-WLD-001','P-WLD-002'],'WV-MISC-EYEBOLT':['P-EYE-001','P-EYE-002'],
-  'WV-MISC-LANDISASSM':['P-LND-001','P-LND-002','P-PPA-001'],'WV-MISC-UNITS':['P-UNT-001'],
+  'WV-MISC-LANDISASSM':['P-LND-001','P-LND-002','P-PPA-001'],'WV-MISC-UNITS':['P-UNT-001','P-UNT-002'],
 };
 
 // Target rates
@@ -977,7 +977,7 @@ ASSEMBLY_EQUIP.forEach(k=>{
 ['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C3','WV-CABLE-C4'].forEach(k=>{
   Object.assign(TARGET_RATES,{[k+'_P-CBL-001']:33,[k+'_P-CBL-002']:50,[k+'_P-CBL-003']:55,[k+'_P-CBL-004']:50,[k+'_P-CBL-005']:45,[k+'_P-CBL-006']:45,[k+'_P-CBL-007']:45});
 });
-Object.assign(TARGET_RATES,{'WV-MISC-BIGSAW_P-SAW-001':250,'WV-MISC-BIGSAW_P-SAW-002':700,'WV-MISC-TIELINE_P-TIE-001':60,'WV-MISC-TIELINE_P-TIE-002':30,'WV-MISC-OFFWELD_P-WLD-001':50,'WV-MISC-OFFWELD_P-WLD-002':35,'WV-MISC-EYEBOLT_P-EYE-001':100,'WV-MISC-EYEBOLT_P-EYE-002':65,'WV-MISC-LANDISASSM_P-LND-001':75,'WV-MISC-LANDISASSM_P-LND-002':125,'WV-MISC-LANDISASSM_P-PPA-001':85,'WV-MISC-UNITS_P-UNT-001':400});
+Object.assign(TARGET_RATES,{'WV-MISC-BIGSAW_P-SAW-001':250,'WV-MISC-BIGSAW_P-SAW-002':700,'WV-MISC-TIELINE_P-TIE-001':60,'WV-MISC-TIELINE_P-TIE-002':30,'WV-MISC-OFFWELD_P-WLD-001':50,'WV-MISC-OFFWELD_P-WLD-002':35,'WV-MISC-EYEBOLT_P-EYE-001':100,'WV-MISC-EYEBOLT_P-EYE-002':65,'WV-MISC-LANDISASSM_P-LND-001':75,'WV-MISC-LANDISASSM_P-LND-002':125,'WV-MISC-LANDISASSM_P-PPA-001':85,'WV-MISC-UNITS_P-UNT-001':400,'WV-MISC-UNITS_P-UNT-002':400});
 
 const DT_CODES={1:'Tooling',2:'Hydraulic Issues',3:'Air Issues',4:'Water Issues',5:'Electrical Issues',6:'Sensor Issues',7:'Encoder Issues',8:'Mechanical Issues',9:'Lubrication Issues',10:'Changeover',11:'Loading Material',12:'Unloading Material',13:'Material Issues',14:'QC',15:'Assisting Operator',16:'Scheduled Downtime',17:'Programming Issues',18:'Vibration Issues',19:'Robot Issues',20:'Welder Issues',21:'Vision Issues'};
 const DEF_CODES={1:'Bent Bar',2:'Burr',3:'Bad Ribs',4:'Failing Bar Length',5:'Failing Peel Length',6:'Failing Diameter',7:'Cross Thread',8:'Incomplete Starter Thread',9:'Cracked Threads',10:'Failing Thread Length',11:'Failing Stamp',12:'Head Off-Center',13:'Failing Washer',14:'Failing Tensile',15:'Failing Yield',16:'Bad Break',17:'Rounded Head',18:'Improper Assembly',19:'Failing Width',20:'Failing Length',21:'Cracked Steel',22:'Bend Cable',23:'Broken Strand',24:'Broken Housing',25:'Failing Cable Length',26:'Failing Bird Cage',27:'Failing Crimp',28:'Failing Teeth Depth',29:'Failing Weld',30:'Hole Alignment',31:'Missing Component'};
