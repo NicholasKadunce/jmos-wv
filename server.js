@@ -187,6 +187,19 @@ function registerRoutes() {
     }
   });
 
+  // ── Cleanup: delete empty submission records ──
+  app.post('/api/admin/cleanup-empty', requireAuth, async (req, res) => {
+    try {
+      const result = await pool.query(
+        `DELETE FROM submissions WHERE data::text = '{}' OR data IS NULL RETURNING id`
+      );
+      res.json({ deleted: result.rowCount, ids: result.rows.map(r => r.id) });
+    } catch (err) {
+      console.error('Cleanup error:', err);
+      res.status(500).json({ error: 'Cleanup failed' });
+    }
+  });
+
   app.get('/api/data', requireAuth, async (req, res) => {
     try {
       const { from, to } = req.query;
