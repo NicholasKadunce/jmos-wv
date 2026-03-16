@@ -2225,23 +2225,24 @@ function Dashboard({dataVersion,master}){
         )
       ),
       h('div',{style:{padding:'8px 0'}},
+        (()=>{const sc=100/Math.max(lossWaterfall.actualPct,100);return[
         // Entitlement bar
-        h('div',{style:{display:'flex',alignItems:'center',gap:12,marginBottom:6,padding:'0 4px'}},
+        h('div',{key:'ent',style:{display:'flex',alignItems:'center',gap:12,marginBottom:6,padding:'0 4px'}},
           h('div',{style:{width:130,fontSize:12,fontWeight:700,color:'var(--jm-navy)',textAlign:'right'}},'Entitlement'),
           h('div',{style:{flex:1,position:'relative'}},
-            h('div',{style:{height:28,borderRadius:6,background:'var(--jm-navy)',width:'100%',position:'relative',overflow:'hidden'}},
+            h('div',{style:{height:28,borderRadius:6,background:'var(--jm-navy)',width:(100*sc)+'%',position:'relative',overflow:'hidden',transition:'width .4s ease'}},
               h('div',{style:{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:11,fontWeight:700,color:'#fff'}},'100%')
             )
           ),
           h('div',{style:{width:70,fontSize:11,fontWeight:600,color:'var(--jm-text-sec)',textAlign:'right'}},lossWaterfall.totalTarget.toLocaleString()+' u')
         ),
         // Loss bars (ranked)
-        (lossView==='code'?lossWaterfall.byCode:lossWaterfall.byCategory).slice(0,8).map((l,i)=>{
+        ...(lossView==='code'?lossWaterfall.byCode:lossWaterfall.byCategory).slice(0,8).map((l,i)=>{
           const color=l.type==='downtime'?'#EF4444':l.type==='performance'?'#F59E0B':'#8B5CF6';
           return h('div',{key:l.name,style:{display:'flex',alignItems:'center',gap:12,marginBottom:3,padding:'0 4px'}},
             h('div',{style:{width:130,fontSize:11,fontWeight:600,color:'var(--jm-text-sec)',textAlign:'right',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},l.name),
             h('div',{style:{flex:1,position:'relative'}},
-              h('div',{style:{height:20,borderRadius:4,background:color,width:Math.min(Math.max(l.pct*2,1),100)+'%',opacity:0.85,minWidth:l.pct>0?24:0,position:'relative',overflow:'hidden',transition:'width .4s ease'}},
+              h('div',{style:{height:20,borderRadius:4,background:color,width:Math.min(Math.max(l.pct*2*sc,1),100)+'%',opacity:0.85,minWidth:l.pct>0?24:0,position:'relative',overflow:'hidden',transition:'width .4s ease'}},
                 l.pct>=1.5&&h('div',{style:{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',fontSize:10,fontWeight:700,color:'#fff'}},l.pct+'%')
               )
             ),
@@ -2249,17 +2250,18 @@ function Dashboard({dataVersion,master}){
           );
         }),
         // Separator
-        h('div',{style:{borderTop:'2px dashed var(--jm-border)',margin:'8px 4px 8px 146px'}}),
+        h('div',{key:'sep',style:{borderTop:'2px dashed var(--jm-border)',margin:'8px 4px 8px 146px'}}),
         // Actual production bar
-        h('div',{style:{display:'flex',alignItems:'center',gap:12,padding:'0 4px'}},
+        h('div',{key:'act',style:{display:'flex',alignItems:'center',gap:12,padding:'0 4px'}},
           h('div',{style:{width:130,fontSize:12,fontWeight:700,color:'#059669',textAlign:'right'}},'Actual Production'),
           h('div',{style:{flex:1,position:'relative'}},
-            h('div',{style:{height:28,borderRadius:6,background:'#059669',width:Math.min(lossWaterfall.actualPct,100)+'%',position:'relative',overflow:'hidden',transition:'width .4s ease'}},
+            h('div',{style:{height:28,borderRadius:6,background:'#059669',width:Math.min(lossWaterfall.actualPct*sc,100)+'%',position:'relative',overflow:'hidden',transition:'width .4s ease'}},
               h('div',{style:{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:11,fontWeight:700,color:'#fff'}},lossWaterfall.actualPct+'%')
             )
           ),
           h('div',{style:{width:70,fontSize:11,fontWeight:600,color:'#059669',textAlign:'right'}},lossWaterfall.totalGood.toLocaleString()+' u')
         ),
+        ];})(),
         // Legend
         h('div',{style:{display:'flex',gap:16,justifyContent:'center',marginTop:12}},
           h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:10,height:10,borderRadius:2,background:'#EF4444',display:'inline-block'}}),'Downtime'),
@@ -3058,20 +3060,21 @@ function AnalyticsView({dataVersion,master}){
           )
         ),
         h('div',{style:{padding:'8px 0'}},
+          (()=>{const sc=100/Math.max(lossData.actualPct,100);return[
           // Entitlement
-          h('div',{style:{display:'flex',alignItems:'center',gap:12,marginBottom:8,padding:'0 4px'}},
+          h('div',{key:'ent',style:{display:'flex',alignItems:'center',gap:12,marginBottom:8,padding:'0 4px'}},
             h('div',{style:{width:150,fontSize:12,fontWeight:700,color:'var(--jm-navy)',textAlign:'right'}},'Entitlement'),
-            h('div',{style:{flex:1}},h('div',{style:{height:30,borderRadius:6,background:'var(--jm-navy)',width:'100%',position:'relative',overflow:'hidden'}},
+            h('div',{style:{flex:1}},h('div',{style:{height:30,borderRadius:6,background:'var(--jm-navy)',width:(100*sc)+'%',position:'relative',overflow:'hidden',transition:'width .4s ease'}},
               h('div',{style:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',fontSize:11,fontWeight:700,color:'#fff'}},'100% — '+lossData.tgt.toLocaleString()+' units')
             ))
           ),
           // Losses
-          (aLossView==='code'?lossData.byCode:lossData.byCategory).slice(0,12).map((l,i)=>{
+          ...(aLossView==='code'?lossData.byCode:lossData.byCategory).slice(0,12).map((l,i)=>{
             const color=l.type==='downtime'?'#EF4444':l.type==='performance'?'#F59E0B':'#8B5CF6';
             return h('div',{key:l.name},
               h('div',{style:{display:'flex',alignItems:'center',gap:12,marginBottom:2,padding:'0 4px'}},
                 h('div',{style:{width:150,fontSize:11,fontWeight:600,color:'var(--jm-text-sec)',textAlign:'right',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},l.name),
-                h('div',{style:{flex:1}},h('div',{style:{height:22,borderRadius:4,background:color,width:Math.min(Math.max(l.pct*2,1),100)+'%',opacity:0.85,minWidth:l.pct>0?28:0,position:'relative',overflow:'hidden',transition:'width .4s ease'}},
+                h('div',{style:{flex:1}},h('div',{style:{height:22,borderRadius:4,background:color,width:Math.min(Math.max(l.pct*2*sc,1),100)+'%',opacity:0.85,minWidth:l.pct>0?28:0,position:'relative',overflow:'hidden',transition:'width .4s ease'}},
                   l.pct>=1&&h('div',{style:{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',fontSize:10,fontWeight:700,color:'#fff'}},l.pct+'%')
                 )),
                 h('div',{style:{width:90,fontSize:11,fontWeight:600,color:color,textAlign:'right'}},l.units.toLocaleString()+' u ('+l.pct+'%)')
@@ -3083,14 +3086,15 @@ function AnalyticsView({dataVersion,master}){
             );
           }),
           // Separator
-          h('div',{style:{borderTop:'2px dashed var(--jm-border)',margin:'10px 4px 10px 166px'}}),
+          h('div',{key:'sep',style:{borderTop:'2px dashed var(--jm-border)',margin:'10px 4px 10px 166px'}}),
           // Actual
-          h('div',{style:{display:'flex',alignItems:'center',gap:12,padding:'0 4px'}},
+          h('div',{key:'act',style:{display:'flex',alignItems:'center',gap:12,padding:'0 4px'}},
             h('div',{style:{width:150,fontSize:12,fontWeight:700,color:'#059669',textAlign:'right'}},'Actual Production'),
-            h('div',{style:{flex:1}},h('div',{style:{height:30,borderRadius:6,background:'#059669',width:Math.min(lossData.actualPct,100)+'%',position:'relative',overflow:'hidden',transition:'width .4s ease'}},
+            h('div',{style:{flex:1}},h('div',{style:{height:30,borderRadius:6,background:'#059669',width:Math.min(lossData.actualPct*sc,100)+'%',position:'relative',overflow:'hidden',transition:'width .4s ease'}},
               h('div',{style:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',fontSize:11,fontWeight:700,color:'#fff'}},lossData.actualPct+'% — '+lossData.good.toLocaleString()+' units')
             ))
           ),
+          ];})(),
           // Legend + narrative
           h('div',{style:{display:'flex',gap:16,justifyContent:'center',marginTop:14}},
             h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:10,height:10,borderRadius:2,background:'#EF4444',display:'inline-block'}}),'Downtime'),
