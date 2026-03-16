@@ -1557,10 +1557,10 @@ const BDR={
   getHistory(){return this._load().history;},
 
   // Detect if a shift's data qualifies as a new BDR
-  // Requires: 7+ hours, all hours above current target, zero or minimal defects
+  // Requires: 8+ hours, 80%+ above current target
   detectBDR(equipCode,productCode,hours,shiftDate,operators){
-    const eligible=hours.filter(hr=>hr.submitted&&hr.productCode===productCode&&parseInt(hr.goodUnits||0)>0);
-    if(eligible.length<7)return null; // Must sustain for 7+ hours
+    const eligible=hours.filter(hr=>hr.productCode===productCode&&parseInt(hr.goodUnits||0)>0);
+    if(eligible.length<8)return null; // Must sustain for 8+ hours
     const currentTarget=this.getEffectiveTarget(equipCode,productCode);
     if(!currentTarget||currentTarget<=0)return null;
     // Calculate average rate per hour (units per available minute × 60)
@@ -4465,13 +4465,27 @@ function App({authUser,onLogout}){
   }
   function handleSubmit(){
     queueData({shiftData,selectedEquip,equipData});setDataVersion(v=>v+1);
-    // BDR detection per equipment
+    // BDR detection per equipment — merge in-memory + server-stored hours
     const bdrDetected=[];
+    // Build map of server-stored hours for this date/shift
+    const serverHours={};
+    Storage._cache.forEach(entry=>{
+      if(entry.equipCode&&entry.hourData&&entry.shiftData&&entry.shiftData.shiftDate===shiftData.shiftDate&&entry.shiftData.shiftNum===shiftData.shiftNum){
+        if(!serverHours[entry.equipCode])serverHours[entry.equipCode]={};
+        serverHours[entry.equipCode][entry.hourIdx||entry.hourData.hourIdx]=entry.hourData;
+      }
+    });
     selectedEquip.forEach(ec=>{
-      const hrs=equipData[ec]||[];
-      const products=[...new Set(hrs.map(h2=>h2.productCode).filter(Boolean))];
+      // Merge: start with in-memory equipData, overlay with server data by hourIdx
+      const memHrs=equipData[ec]||[];
+      const srvMap=serverHours[ec]||{};
+      const merged={};
+      memHrs.forEach(hr=>{merged[hr.hourIdx]=hr;});
+      Object.keys(srvMap).forEach(hi=>{const h=srvMap[hi];if(!merged[hi]||!merged[hi].goodUnits)merged[hi]=h;});
+      const allHrs=Object.values(merged);
+      const products=[...new Set(allHrs.map(h2=>h2.productCode).filter(Boolean))];
       products.forEach(pc=>{
-        const prodHrs=hrs.filter(h2=>h2.productCode===pc);
+        const prodHrs=allHrs.filter(h2=>h2.productCode===pc);
         const ops=[...new Set(prodHrs.flatMap(h2=>h2.operators||[]).filter(Boolean))];
         const result=BDR.detectBDR(ec,pc,prodHrs,shiftData.shiftDate,ops);
         if(result){BDR.submitPending(result);bdrDetected.push(result);}
