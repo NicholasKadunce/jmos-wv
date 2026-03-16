@@ -1459,6 +1459,8 @@ async function submitToServer(data){
 
 // Global reference to current shift data so individual hour submissions include context
 let _currentShiftData=null;
+// Global callback to notify App of new data (bumps dataVersion for chart updates)
+let _onDataQueued=null;
 
 function queueData(data){
   // For individual hour submissions, include shiftData context if available
@@ -1469,6 +1471,8 @@ function queueData(data){
     if(r.synced)showToast('Data saved & synced');
     else showToast('Data saved offline — will sync when connected','warn');
   });
+  // Trigger chart/dashboard re-render
+  if(_onDataQueued)_onDataQueued();
 }
 
 // ─── BEST DEMONSTRATED RATE (BDR) SYSTEM ─────────────────────────────────────
@@ -4326,6 +4330,7 @@ function App({authUser,onLogout}){
 
   // Keep global shiftData reference in sync for individual hour submissions
   useEffect(()=>{_currentShiftData=shiftData;},[shiftData]);
+  useEffect(()=>{_onDataQueued=()=>setDataVersion(v=>v+1);return()=>{_onDataQueued=null;};},[]);
   const [pendingCount,setPendingCount]=useState(0);
   const [showUserMenu,setShowUserMenu]=useState(false);
 
