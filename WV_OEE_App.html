@@ -593,6 +593,7 @@ input[type=number]{-moz-appearance:textfield}
 @media(max-width:900px){.dash-oee-hero{grid-template-columns:1fr 1fr}}
 @media(max-width:500px){.dash-oee-hero{grid-template-columns:1fr 1fr;gap:8px}.dash-oee-card{padding:10px 12px}.dash-oee-card .dash-oee-value{font-size:18px!important;letter-spacing:-0.5px}.dash-oee-card.oee-main .dash-oee-value{font-size:20px!important}.dash-oee-card .dash-oee-pct{font-size:10px!important}.dash-oee-card.oee-main .dash-oee-pct{font-size:11px!important}.dash-oee-sub{font-size:9px;margin-top:2px}.dash-oee-label{font-size:9px}.dash-oee-ring-wrap{width:72px;height:72px;margin:6px auto 2px}.dash-oee-ring-wrap.main{width:88px;height:88px}.dash-header-logo{height:28px}}
 .dash-oee-card{background:var(--jm-surface);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .15s;border:1.5px solid var(--jm-border-light)}
+.dash-oee-card.oee-main{border-color:#E5E7EB;box-shadow:0 4px 20px rgba(27,61,110,0.12),0 1px 4px rgba(27,61,110,0.08)}
 .dash-oee-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);border-color:var(--jm-border)}
 .dash-oee-card.expanded{border-color:var(--jm-navy);box-shadow:var(--shadow-md)}
 .dash-oee-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
@@ -731,7 +732,7 @@ input[type=number]{-moz-appearance:textfield}
 .equip-focus-metric-val{font-size:12px;font-weight:600;color:#6B7280}
 .equip-focus-metric-val.is-constraint{color:#DC2626;font-weight:800}
 .equip-focus-constraint{width:90px;text-align:right;flex-shrink:0}
-@media(max-width:640px){.equip-focus-apq,.equip-focus-hdr-apq{display:none}.equip-focus-constraint,.equip-focus-hdr-con{width:auto}}
+@media(max-width:640px){.equip-focus-apq,.equip-focus-hdr-apq{display:none}.equip-focus-oee{text-align:left;width:auto;margin-right:8px}.equip-focus-hdr-oee{text-align:left;width:auto;margin-right:8px}.equip-focus-constraint,.equip-focus-hdr-con{width:auto;text-align:left;margin-left:auto}}
 
 /* Tables */
 .dash-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -747,7 +748,7 @@ input[type=number]{-moz-appearance:textfield}
 /* Downtime expandable rows */
 .dash-dt-row{cursor:pointer;transition:background 0.15s}
 .dash-dt-row:hover td{background:var(--jm-blue-tint)}
-.dash-dt-chevron{display:inline-block;transition:transform 0.2s;margin-right:6px}
+.dash-dt-chevron{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;transition:transform 0.2s;margin-right:4px;font-size:14px;font-family:'Segoe UI',system-ui,sans-serif;font-weight:300;color:#9CA3AF;vertical-align:middle;line-height:1}
 .dash-dt-chevron.open{transform:rotate(90deg)}
 .dash-dt-sub td{background:#F8FAFC;font-size:12px;color:var(--jm-text-sec);padding-left:36px}
 .dash-dt-bar{height:8px;background:var(--jm-border-light);border-radius:4px;overflow:hidden;min-width:60px}
@@ -761,6 +762,23 @@ input[type=number]{-moz-appearance:textfield}
 .oee-bar{height:8px;background:var(--jm-border-light);border-radius:4px;overflow:hidden}
 .oee-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
 .oee-green{background:var(--jm-success)}.oee-yellow{background:var(--jm-warn)}.oee-red{background:var(--jm-error)}
+/* AI Ask */
+.ai-ask-toggle{padding:4px 16px 12px;text-align:right}
+.ai-ask-btn{background:none;border:1px solid var(--jm-border-light);border-radius:20px;padding:4px 14px;font-size:11px;color:#9CA3AF;cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.ai-ask-btn:hover{border-color:var(--jm-navy);color:var(--jm-navy);background:var(--jm-blue-tint)}
+.ai-ask-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,#1B3D6E,#2563EB);color:#fff;font-size:8px;font-weight:800;letter-spacing:0.3px}
+.ai-ask-panel{margin:0 16px 12px;padding:12px;background:var(--jm-bg);border-radius:var(--radius-md);border:1px solid var(--jm-border-light)}
+.ai-ask-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ai-ask-close{background:none;border:none;cursor:pointer;color:#9CA3AF;font-size:16px;margin-left:auto;padding:0 4px;line-height:1}
+.ai-ask-close:hover{color:var(--jm-text)}
+.ai-ask-input-row{display:flex;gap:6px}
+.ai-ask-input{flex:1;border:1px solid var(--jm-border-light);border-radius:8px;padding:8px 12px;font-size:12px;font-family:inherit;outline:none;transition:border-color .2s}
+.ai-ask-input:focus{border-color:var(--jm-navy)}
+.ai-ask-input::placeholder{color:#CBD5E1}
+.ai-ask-send{width:36px;height:36px;border-radius:8px;border:none;background:var(--jm-navy);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0}
+.ai-ask-send:hover{background:#2563EB}
+.ai-ask-send:disabled{opacity:.5;cursor:not-allowed}
+.ai-ask-answer{margin-top:10px;padding:10px 12px;background:#fff;border-radius:8px;border:1px solid var(--jm-border-light);font-size:12px;line-height:1.6;color:var(--jm-text);white-space:pre-wrap}
 .divider{height:1px;background:var(--jm-border-light);margin:20px 0}
 .required-note{font-size:12px;color:var(--jm-text-sec);margin-bottom:16px}.required-note span{color:var(--jm-red)}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--jm-navy);color:#fff;padding:12px 24px;border-radius:var(--radius-md);font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.3s}.toast.show{opacity:1}
@@ -980,9 +998,9 @@ ASSEMBLY_EQUIP.forEach(k=>{
 Object.assign(TARGET_RATES,{'WV-MISC-BIGSAW_P-SAW-001':250,'WV-MISC-BIGSAW_P-SAW-002':700,'WV-MISC-TIELINE_P-TIE-001':60,'WV-MISC-TIELINE_P-TIE-002':30,'WV-MISC-OFFWELD_P-WLD-001':50,'WV-MISC-OFFWELD_P-WLD-002':35,'WV-MISC-EYEBOLT_P-EYE-001':100,'WV-MISC-EYEBOLT_P-EYE-002':65,'WV-MISC-LANDISASSM_P-LND-001':75,'WV-MISC-LANDISASSM_P-LND-002':125,'WV-MISC-LANDISASSM_P-PPA-001':85,'WV-MISC-UNITS_P-UNT-001':400,'WV-MISC-UNITS_P-UNT-002':400});
 
 const DT_CODES={1:'Tooling',2:'Hydraulic Issues',3:'Air Issues',4:'Water Issues',5:'Electrical Issues',6:'Sensor Issues',7:'Encoder Issues',8:'Mechanical Issues',9:'Lubrication Issues',10:'Changeover',11:'Loading Material',12:'Unloading Material',13:'Material Issues',14:'QC',15:'Assisting Operator',16:'Scheduled Downtime',17:'Programming Issues',18:'Vibration Issues',19:'Robot Issues',20:'Welder Issues',21:'Vision Issues'};
-const DEF_CODES={1:'Bent Bar',2:'Burr',3:'Bad Ribs',4:'Failing Bar Length',5:'Failing Peel Length',6:'Failing Diameter',7:'Cross Thread',8:'Incomplete Starter Thread',9:'Cracked Threads',10:'Failing Thread Length',11:'Failing Stamp',12:'Head Off-Center',13:'Failing Washer',14:'Failing Tensile',15:'Failing Yield',16:'Bad Break',17:'Rounded Head',18:'Improper Assembly',19:'Failing Width',20:'Failing Length',21:'Cracked Steel',22:'Bend Cable',23:'Broken Strand',24:'Broken Housing',25:'Failing Cable Length',26:'Failing Bird Cage',27:'Failing Crimp',28:'Failing Teeth Depth',29:'Failing Weld',30:'Hole Alignment',31:'Missing Component'};
+const DEF_CODES={1:'Bent Bar',2:'Burr',3:'Bad Ribs',4:'Failing Bar Length',5:'Failing Peel Length',6:'Failing Diameter',7:'Cross Thread',8:'Incomplete Starter Thread',9:'Cracked Threads',10:'Failing Thread Length',11:'Failing Stamp',12:'Head Off-Center',13:'Failing Washer',14:'Failing Tensile',15:'Failing Yield',16:'Bad Break',17:'Rounded Head',18:'Improper Assembly',19:'Failing Width',20:'Failing Length',21:'Cracked Steel',22:'Bend Cable',23:'Broken Strand',24:'Broken Housing',25:'Failing Cable Length',26:'Failing Bird Cage',27:'Failing Crimp',28:'Failing Teeth Depth',29:'Failing Weld',30:'Hole Alignment',31:'Missing Component',32:'Miss Hit'};
 const EQUIP_DT_CODES={'WV-SHEAR-AS1':[1,2,3,5,6,8,10,11,12,14,15,16,17,18],'WV-SHEAR-AS2':[1,2,3,5,6,8,10,11,12,14,15,16,17,18],'WV-PRESS-400':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-PRESS-500A':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-PRESS-500B':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-HEAD-H1':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-H2':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-H3':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-AUTO':[1,3,4,5,6,8,9,10,11,12,14,15,16,17,19,21],'WV-THREAD-T1':[1,3,5,8,9,10,11,12,14,15,16],'WV-THREAD-T2':[1,3,5,8,9,10,11,12,14,15,16],'WV-THREAD-AT':[1,3,5,6,8,9,10,11,12,14,15,16],'WV-PEEL-MAN':[1,3,4,5,6,8,9,10,11,12,14,15,16,17],'WV-PEEL-AUTO':[1,3,4,5,6,8,9,10,11,12,14,15,16,17,19],'WV-PEEL-SWAG':[1,3,4,5,6,8,9,10,11,12,14,15,16,17],'WV-ASSY-A1':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A2':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A3':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A4':[1,5,6,8,10,11,12,14,15,16],'WV-CABLE-C1':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-CABLE-C2':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-CABLE-C3':[1,2,3,5,6,7,8,10,11,13,14,15,16,17,20],'WV-CABLE-C4':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-MISC-BIGSAW':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-TIELINE':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-OFFWELD':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-EYEBOLT':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-LANDISASSM':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-UNITS':[1,2,3,5,6,8,9,10,11,12,14,15,16]};
-const EQUIP_DEF_CODES={'WV-SHEAR-AS1':[1,2,3,4],'WV-SHEAR-AS2':[1,2,3,4],'WV-PRESS-400':[2,11,19,20,21,14],'WV-PRESS-500A':[2,11,19,20,21,14],'WV-PRESS-500B':[2,11,19,20,21,14],'WV-HEAD-H1':[1,2,11,12,13,4,14,15,16,17],'WV-HEAD-H2':[1,2,11,12,13,4,14,15,16,17],'WV-HEAD-H3':[1,2,11,12,13,4,14,15,16,17],'WV-HEAD-AUTO':[1,2,11,12,13,4,14,15,16,17],'WV-THREAD-T1':[1,2,7,8,9,6,10],'WV-THREAD-T2':[1,2,7,8,9,6,10],'WV-THREAD-AT':[1,2,7,8,9,6,10],'WV-PEEL-MAN':[1,2,5,6,21],'WV-PEEL-AUTO':[1,2,5,6,21],'WV-PEEL-SWAG':[1,2,5,6,21],'WV-ASSY-A1':[1,18,31],'WV-ASSY-A2':[1,18,31],'WV-ASSY-A3':[1,18,31],'WV-ASSY-A4':[1,18,31],'WV-CABLE-C1':[22,23,24,25,26,27],'WV-CABLE-C2':[22,23,24,25,26,27],'WV-CABLE-C3':[22,23,24,25,26,27,29],'WV-CABLE-C4':[22,23,24,25,26,27],'WV-MISC-BIGSAW':[20,21],'WV-MISC-TIELINE':[28,30],'WV-MISC-OFFWELD':[29],'WV-MISC-EYEBOLT':[1],'WV-MISC-LANDISASSM':[1,7,8,9],'WV-MISC-UNITS':[1,18,31]};
+const EQUIP_DEF_CODES={'WV-SHEAR-AS1':[1,2,3,4],'WV-SHEAR-AS2':[1,2,3,4],'WV-PRESS-400':[2,11,19,20,21,14],'WV-PRESS-500A':[2,11,19,20,21,14],'WV-PRESS-500B':[2,11,19,20,21,14],'WV-HEAD-H1':[1,2,11,12,13,4,14,15,16,17,32],'WV-HEAD-H2':[1,2,11,12,13,4,14,15,16,17,32],'WV-HEAD-H3':[1,2,11,12,13,4,14,15,16,17,32],'WV-HEAD-AUTO':[1,2,11,12,13,4,14,15,16,17,32],'WV-THREAD-T1':[1,2,7,8,9,6,10],'WV-THREAD-T2':[1,2,7,8,9,6,10],'WV-THREAD-AT':[1,2,7,8,9,6,10],'WV-PEEL-MAN':[1,2,5,6,21],'WV-PEEL-AUTO':[1,2,5,6,21],'WV-PEEL-SWAG':[1,2,5,6,21],'WV-ASSY-A1':[1,18,31],'WV-ASSY-A2':[1,18,31],'WV-ASSY-A3':[1,18,31],'WV-ASSY-A4':[1,18,31],'WV-CABLE-C1':[22,23,24,25,26,27],'WV-CABLE-C2':[22,23,24,25,26,27],'WV-CABLE-C3':[22,23,24,25,26,27,29],'WV-CABLE-C4':[22,23,24,25,26,27],'WV-MISC-BIGSAW':[20,21],'WV-MISC-TIELINE':[28,30],'WV-MISC-OFFWELD':[29],'WV-MISC-EYEBOLT':[1],'WV-MISC-LANDISASSM':[1,7,8,9],'WV-MISC-UNITS':[1,18,31]};
 const EQUIP_DEFAULTS={'WV-SHEAR-AS1':'P-SHR-016','WV-SHEAR-AS2':'P-SHR-012','WV-PRESS-400':'P-PRS-001','WV-PRESS-500A':'P-PRS-005','WV-PRESS-500B':'P-PRS-002','WV-HEAD-H1':'P-HDG-007','WV-HEAD-H2':'P-HDG-002','WV-HEAD-H3':'P-HDG-004','WV-THREAD-T1':'P-TR1-001','WV-THREAD-T2':'P-TR2-001','WV-THREAD-AT':'P-ATH-006','WV-PEEL-MAN':'P-MPL-001','WV-PEEL-AUTO':'P-APL-001','WV-PEEL-SWAG':'P-SWG-001','WV-ASSY-A1':'P-ASY-007','WV-ASSY-A2':'P-ASY-007','WV-ASSY-A3':'P-ASY-003','WV-ASSY-A4':'P-ASY-017','WV-CABLE-C1':'P-CBL-001','WV-CABLE-C2':'P-CBL-003','WV-CABLE-C3':'P-CBL-007','WV-CABLE-C4':'P-CBL-004','WV-MISC-BIGSAW':'P-SAW-002','WV-MISC-TIELINE':'P-TIE-001','WV-MISC-OFFWELD':'P-WLD-001','WV-MISC-UNITS':'P-UNT-001','WV-MISC-EYEBOLT':'P-EYE-001','WV-MISC-LANDISASSM':'P-LND-001'};
 
 // ─── DOWNTIME SUB-ITEMS ──────────────────────────────────────────────────────
@@ -1004,11 +1022,11 @@ function getSubItems(equipCode,dtCodeId){
 // ─── SHIFT TEMPLATES & HELPERS ───────────────────────────────────────────────
 const SHIFT_TEMPLATES={
   '1-6':{startup:{h:1,mins:15},lunch:{h:4,mins:15},cleanup:{h:6,mins:15}},
-  '2-6':{startup:{h:1,mins:15},lunch:{h:4,mins:15},cleanup:{h:6,mins:15}},
+  '2-6':{startup:{h:1,mins:15},lunch:{h:3,mins:30},cleanup:{h:6,mins:15}},
   '1-8':{startup:{h:1,mins:15},lunch:{h:5,mins:30},cleanup:{h:8,mins:15}},
-  '2-8':{startup:{h:1,mins:15},lunch:{h:5,mins:30},cleanup:{h:8,mins:15}},
+  '2-8':{startup:{h:1,mins:15},lunch:{h:6,mins:30},cleanup:{h:8,mins:15}},
   '1-9':{startup:{h:1,mins:15},lunch:{h:5,mins:30},cleanup:{h:9,mins:15}},
-  '2-9':{startup:{h:1,mins:15},lunch:{h:4,mins:30},cleanup:{h:9,mins:15}},
+  '2-9':{startup:{h:1,mins:15},lunch:{h:6,mins:30},cleanup:{h:9,mins:15}},
 };
 // Shift 1 always starts at 5 AM; Shift 2 starts right after Shift 1 ends
 // Shift 2 start = 5 + (shift 1 hours, assumed same as shift 2 hours)
@@ -1648,6 +1666,37 @@ function Home({onEnterData,onAdmin,onDashboard,onTV}){
   );
 }
 
+function AskAI({section,context}){
+  const[q,setQ]=useState('');
+  const[answer,setAnswer]=useState('');
+  const[loading,setLoading]=useState(false);
+  const[open,setOpen]=useState(false);
+  const ask=async()=>{
+    if(!q.trim())return;
+    setLoading(true);setAnswer('');
+    try{
+      const r=await fetch('/api/ai/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,context:typeof context==='function'?context():context,section})});
+      const d=await r.json();
+      if(d.error)setAnswer('Error: '+d.error);
+      else setAnswer(d.answer||'No response');
+    }catch(e){setAnswer('Error: Could not reach AI service');}
+    setLoading(false);
+  };
+  if(!open)return h('div',{className:'ai-ask-toggle'},h('button',{className:'ai-ask-btn',onClick:()=>setOpen(true)},h('span',{className:'ai-ask-icon'},'AI'),' Ask about this data'));
+  return h('div',{className:'ai-ask-panel'},
+    h('div',{className:'ai-ask-header'},
+      h('span',{className:'ai-ask-icon'},'AI'),
+      h('span',{style:{fontSize:11,fontWeight:600,color:'var(--jm-navy)'}},'Ask about this data'),
+      h('button',{className:'ai-ask-close',onClick:()=>{setOpen(false);setAnswer('');setQ('');}},'\u00D7')
+    ),
+    h('div',{className:'ai-ask-input-row'},
+      h('input',{className:'ai-ask-input',placeholder:'e.g. What is driving the low OEE?',value:q,onChange:e=>setQ(e.target.value),onKeyDown:e=>{if(e.key==='Enter')ask();}}),
+      h('button',{className:'ai-ask-send',onClick:ask,disabled:loading},loading?'...':'\u2192')
+    ),
+    answer&&h('div',{className:'ai-ask-answer'},answer)
+  );
+}
+
 function Dashboard({dataVersion,master}){
   const {ResponsiveContainer,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,Cell,ComposedChart,Line,ReferenceLine,Area,Legend,LabelList}=Recharts;
   const [dateFrom,setDateFrom]=useState(()=>{const d=new Date();d.setDate(d.getDate()-6);return d.toISOString().split('T')[0];});
@@ -1965,12 +2014,20 @@ function Dashboard({dataVersion,master}){
     );
   }
 
-  function heroRing(pct,color,sz,strokeW){
-    const s=sz||100,sw=strokeW||4,r=s/2-sw-1,c=2*Math.PI*r,offset=c-(Math.min(pct,100)/100)*c;
-    return h('svg',{className:'hero-ring-svg',width:s,height:s,viewBox:'0 0 '+s+' '+s},
-      h('circle',{cx:s/2,cy:s/2,r,fill:'none',stroke:'#F3F4F6',strokeWidth:sw}),
-      h('circle',{cx:s/2,cy:s/2,r,fill:'none',stroke:color,strokeWidth:sw,strokeDasharray:c,strokeDashoffset:offset,strokeLinecap:'round',style:{transition:'stroke-dashoffset .8s ease',transform:'rotate(-90deg)',transformOrigin:s/2+'px '+s/2+'px'}})
-    );
+  function heroRing(pct,color,sz,strokeW,isMain){
+    const s=sz||100,sw=strokeW||4,r=s/2-sw-1,c=2*Math.PI*r;
+    const basePct=Math.min(pct,100);
+    const offset=c-(basePct/100)*c;
+    const over=pct>100;
+    const overPct=over?Math.min(pct-100,100):0;
+    const overOffset=c-(overPct/100)*c;
+    const circles=[
+      h('circle',{key:'bg',cx:s/2,cy:s/2,r,fill:'none',stroke:over?'#BBF7D0':'#F3F4F6',strokeWidth:sw}),
+      h('circle',{key:'main',cx:s/2,cy:s/2,r,fill:'none',stroke:color,strokeWidth:sw,strokeDasharray:c,strokeDashoffset:offset,strokeLinecap:'round',style:{transition:'stroke-dashoffset .8s ease',transform:'rotate(-90deg)',transformOrigin:s/2+'px '+s/2+'px'}})
+    ];
+    if(over){circles.push(h('circle',{key:'over',cx:s/2,cy:s/2,r,fill:'none',stroke:'#15803D',strokeWidth:sw,strokeDasharray:c,strokeDashoffset:overOffset,strokeLinecap:'round',style:{transition:'stroke-dashoffset .8s ease',transform:'rotate(-90deg)',transformOrigin:s/2+'px '+s/2+'px'}}));}
+    if(isMain){circles.unshift(h('circle',{key:'glow',cx:s/2,cy:s/2,r,fill:'none',stroke:color,strokeWidth:sw+6,strokeDasharray:c,strokeDashoffset:offset,strokeLinecap:'round',opacity:0.15,style:{transform:'rotate(-90deg)',transformOrigin:s/2+'px '+s/2+'px'}}));}
+    return h('svg',{className:'hero-ring-svg',width:s,height:s,viewBox:'0 0 '+s+' '+s},...circles);
   }
 
   function oeeClass(v){return v>=85?'dash-oee-good':v>=60?'dash-oee-warn':'dash-oee-bad';}
@@ -2018,7 +2075,7 @@ function Dashboard({dataVersion,master}){
       h('div',{className:'dash-oee-card oee-main'+(drillDown==='oee'?' expanded':''),onClick:()=>setDrillDown(drillDown==='oee'?null:'oee')},
         h('div',{className:'dash-oee-label'},'OEE'),
         h('div',{className:'dash-oee-ring-wrap main'},
-          hasData&&heroRing(metrics.oee,barColor(metrics.oee),120,8),
+          hasData&&heroRing(metrics.oee,barColor(metrics.oee),120,8,true),
           h('div',{className:'dash-oee-ring-inner'},
             h('div',{className:hasData?'dash-oee-value':'dash-no-data'},hasData?h(React.Fragment,null,metrics.oee.toFixed(1),h('span',{className:'dash-oee-pct'},'%')):'—')
           )
@@ -2029,7 +2086,7 @@ function Dashboard({dataVersion,master}){
       h('div',{className:'dash-oee-card oee-a'+(drillDown==='a'?' expanded':''),onClick:()=>setDrillDown(drillDown==='a'?null:'a')},
         h('div',{className:'dash-oee-label'},'Availability'),
         h('div',{className:'dash-oee-ring-wrap'},
-          hasData&&heroRing(metrics.a,'#D1D5DB',96,7),
+          hasData&&heroRing(metrics.a,barColor(metrics.oee),96,7),
           h('div',{className:'dash-oee-ring-inner'},
             h('div',{className:hasData?'dash-oee-value':'dash-no-data'},hasData?h(React.Fragment,null,metrics.a.toFixed(1),h('span',{className:'dash-oee-pct'},'%')):'—')
           )
@@ -2040,7 +2097,7 @@ function Dashboard({dataVersion,master}){
       h('div',{className:'dash-oee-card oee-p'+(drillDown==='p'?' expanded':''),onClick:()=>setDrillDown(drillDown==='p'?null:'p')},
         h('div',{className:'dash-oee-label'},'Performance'),
         h('div',{className:'dash-oee-ring-wrap'},
-          hasData&&heroRing(metrics.p,'#D1D5DB',96,7),
+          hasData&&heroRing(metrics.p,barColor(metrics.oee),96,7),
           h('div',{className:'dash-oee-ring-inner'},
             h('div',{className:hasData?'dash-oee-value':'dash-no-data'},hasData?h(React.Fragment,null,metrics.p.toFixed(1),h('span',{className:'dash-oee-pct'},'%')):'—')
           )
@@ -2051,7 +2108,7 @@ function Dashboard({dataVersion,master}){
       h('div',{className:'dash-oee-card oee-q'+(drillDown==='q'?' expanded':''),onClick:()=>setDrillDown(drillDown==='q'?null:'q')},
         h('div',{className:'dash-oee-label'},'Quality'),
         h('div',{className:'dash-oee-ring-wrap'},
-          hasData&&heroRing(metrics.q,'#D1D5DB',96,7),
+          hasData&&heroRing(metrics.q,barColor(metrics.oee),96,7),
           h('div',{className:'dash-oee-ring-inner'},
             h('div',{className:hasData?'dash-oee-value':'dash-no-data'},hasData?h(React.Fragment,null,metrics.q.toFixed(1),h('span',{className:'dash-oee-pct'},'%')):'—')
           )
@@ -2177,7 +2234,7 @@ function Dashboard({dataVersion,master}){
               h(ReferenceLine,{y:90,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'UCL',position:'insideTopLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
               h(ReferenceLine,{y:80,stroke:'#9CA3AF',strokeDasharray:'6 4',strokeWidth:1.5,label:{value:'80%',position:'insideBottomLeft',fill:'#6B7280',fontSize:9,fontWeight:600,offset:2}}),
               h(ReferenceLine,{y:70,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'LCL',position:'insideBottomLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
-              h(Bar,{dataKey:'oee',name:'OEE',radius:[4,4,0,0],barSize:30,isAnimationActive:true,animationDuration:600},
+              h(Bar,{dataKey:'oee',name:'OEE',radius:[4,4,0,0],barSize:window.innerWidth<600?18:30,isAnimationActive:true,animationDuration:600},
                 ...hourlyOEE.map((d,i)=>h(Cell,{key:'c'+i,fill:d.oee<70?'#DC2626':d.oee<80?'#F59E0B':'#1B3D6E'})),
                 h(LabelList,{dataKey:'oee',position:'top',content:props=>{
                   const{x,y,width,value,index}=props;
@@ -2185,8 +2242,10 @@ function Dashboard({dataVersion,master}){
                   const d=hourlyOEE[index];
                   const cx=(x||0)+(width||0)/2;
                   const isBad=d.oee<70;
+                  const isMobile=window.innerWidth<600;
+                  if(isMobile&&hourlyOEE.length>6&&index%2===1)return null;
                   return h('g',{key:'l'+index},
-                    h('text',{x:cx,y:y-6,textAnchor:'middle',fontSize:11,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280'},value+'%')
+                    h('text',{x:cx,y:y-(isMobile?4:6),textAnchor:'middle',fontSize:isMobile?8:11,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280'},value+'%')
                   );
                 }})
               )
@@ -2198,7 +2257,8 @@ function Dashboard({dataVersion,master}){
             h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#DC2626'}}),'Critical'),
             h('span',{className:'oee-hr-legend-item'},h('span',{style:{width:14,height:0,borderTop:'1.5px dashed #9CA3AF',display:'inline-block',verticalAlign:'middle',marginRight:5}}),'Control')
           )
-        ):h('div',{className:'dash-empty'},h(Icon.chart),h('p',{style:{marginTop:8}},'OEE hourly data appears after shift entry'))
+        ):h('div',{className:'dash-empty'},h(Icon.chart),h('p',{style:{marginTop:8}},'OEE hourly data appears after shift entry')),
+        hasData&&h(AskAI,{section:'OEE by Hour',context:()=>'Hourly OEE data: '+JSON.stringify(hourlyOEE.map(d=>({hour:d.hour,oee:d.oee,a:d.a,p:d.p,q:d.q,good:d.good,target:d.tgt})))})
       ),
 
       // ── OEE TREND (multi-day) ──
@@ -2266,10 +2326,11 @@ function Dashboard({dataVersion,master}){
           const color=l.type==='downtime'?'#EF4444':l.type==='performance'?'#F59E0B':'#8B5CF6';
           return h('div',{key:l.name,style:{display:'flex',alignItems:'center',gap:12,marginBottom:3,padding:'0 4px'}},
             h('div',{style:{width:130,fontSize:11,fontWeight:600,color:'var(--jm-text-sec)',textAlign:'right',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},l.name),
-            h('div',{style:{flex:1,position:'relative'}},
-              h('div',{style:{height:20,borderRadius:4,background:color,width:Math.min(Math.max(l.pct*2*sc,1),100)+'%',opacity:0.85,minWidth:l.pct>0?24:0,position:'relative',overflow:'hidden',transition:'width .4s ease'}},
-                l.pct>=1.5&&h('div',{style:{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',fontSize:10,fontWeight:700,color:'#fff'}},l.pct+'%')
-              )
+            h('div',{style:{flex:1,position:'relative',display:'flex',alignItems:'center',gap:4}},
+              h('div',{style:{height:20,borderRadius:4,background:color,width:Math.min(Math.max(l.pct*2*sc,1),100)+'%',opacity:0.85,minWidth:l.pct>0?4:0,position:'relative',overflow:'hidden',transition:'width .4s ease',flexShrink:0}},
+                l.pct>=4&&h('div',{style:{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',fontSize:10,fontWeight:700,color:'#fff'}},l.pct+'%')
+              ),
+              l.pct>0&&l.pct<4&&h('span',{style:{fontSize:10,fontWeight:700,color:color,whiteSpace:'nowrap'}},l.pct+'%')
             ),
             h('div',{style:{width:70,fontSize:11,fontWeight:600,color:color,textAlign:'right'}},l.pct+'%')
           );
@@ -2292,7 +2353,8 @@ function Dashboard({dataVersion,master}){
           h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:10,height:10,borderRadius:2,background:'#EF4444',display:'inline-block'}}),'Downtime'),
           h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:10,height:10,borderRadius:2,background:'#F59E0B',display:'inline-block'}}),'Performance'),
           h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:10,height:10,borderRadius:2,background:'#8B5CF6',display:'inline-block'}}),'Quality')
-        )
+        ),
+        h(AskAI,{section:'Loss Waterfall',context:()=>'Loss breakdown: '+JSON.stringify((lossView==='code'?lossWaterfall.byCode:lossWaterfall.byCategory).map(l=>({name:l.name,type:l.type,pct:l.pct})))+'. Actual production: '+lossWaterfall.actualPct+'%'})
       )
     ),
 
@@ -2331,7 +2393,8 @@ function Dashboard({dataVersion,master}){
               h('div',{className:'equip-focus-constraint'},h('span',{className:'dash-constraint '+bnCls},bn))
             );
           })
-        ):h('div',{className:'dash-empty'},h(Icon.settings),h('p',{style:{marginTop:8}},'Equipment data appears after shift entry'))
+        ):h('div',{className:'dash-empty'},h(Icon.settings),h('p',{style:{marginTop:8}},'Equipment data appears after shift entry')),
+        hasData&&h(AskAI,{section:'Equipment Focus',context:()=>'Equipment metrics (sorted worst to best OEE): '+JSON.stringify(equipMetrics.slice(0,8).map(em=>({name:getEquipName(em.ec),oee:em.oee.toFixed(1),a:em.a.toFixed(1),p:em.p.toFixed(1),q:em.q.toFixed(1),bottleneck:em.bottleneck})))})
       ),
 
       h('div',{className:'dash-card'},
@@ -2347,7 +2410,7 @@ function Dashboard({dataVersion,master}){
         (()=>{
           if(operatorMetrics.length===0) return h('div',{className:'dash-empty'},h(Icon.users),h('p',{style:{marginTop:8}},'Operator data appears after shift entry'));
           const top5=operatorMetrics.slice(0,5);
-          const bottom5=operatorMetrics.length>5?operatorMetrics.slice(-5).reverse():[];
+          const bottom5=operatorMetrics.length>5?operatorMetrics.slice(-5):[];
           const displayOps=opView==='all'?operatorMetrics.map((op,i)=>({...op,rank:i+1})):
             [...top5.map((op,i)=>({...op,rank:i+1,section:'top'})),
              ...(bottom5.length>0?[{separator:true}]:[]),
@@ -2377,7 +2440,8 @@ function Dashboard({dataVersion,master}){
               }))
             )
           );
-        })()
+        })(),
+        hasData&&h(AskAI,{section:'Operator Performance',context:()=>'Operator metrics (sorted by performance): '+JSON.stringify(operatorMetrics.slice(0,10).map(op=>({name:op.name,perf:op.perf.toFixed(1),hours:op.hrs,output:op.good,target:op.tgt,defects:op.def,downtime:Math.round(op.dtm)})))})
       ),
     ),
 
@@ -2413,7 +2477,7 @@ function Dashboard({dataVersion,master}){
               const pct=metrics.dtm>0?(d.mins/metrics.dtm*100):0;
               const isOpen=expandedDt===d.code;
               const rows=[h('tr',{key:d.code,className:'dash-dt-row',onClick:()=>setExpandedDt(isOpen?null:d.code)},
-                h('td',null,h('span',{className:'dash-dt-chevron'+(isOpen?' open':'')},'\u25B6'),' ',d.name),
+                h('td',null,h('span',{className:'dash-dt-chevron'+(isOpen?' open':'')},'\u203A'),' ',d.name),
                 h('td',{className:'num'},d.mins),
                 h('td',{className:'num'},d.count),
                 h('td',{className:'num',style:{fontWeight:600,color:d.cumPct<=80?'#B02028':'var(--jm-text-ter)'}},d.cumPct.toFixed(0)+'%'),
@@ -2422,25 +2486,45 @@ function Dashboard({dataVersion,master}){
                   h('span',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-sec)',minWidth:36,textAlign:'right'}},pct.toFixed(1)+'%')
                 ))
               )];
-              if(isOpen&&d.equip.length>0){
-                d.equip.forEach(eq=>{
-                  const ep=d.mins>0?(eq.mins/d.mins*100):0;
-                  rows.push(h('tr',{key:d.code+'-eq-'+eq.name,className:'dash-dt-sub'},
-                    h('td',{style:{paddingLeft:28,fontSize:11,color:'var(--jm-text-sec)'}},'\u2514 ',eq.name),
-                    h('td',{className:'num',style:{fontSize:11}},eq.mins),
-                    h('td',{className:'num',style:{fontSize:11}},eq.count),
-                    h('td',null),
-                    h('td',null,h('div',{style:{display:'flex',alignItems:'center',gap:8}},
-                      h('div',{className:'dash-dt-bar',style:{flex:1}},h('div',{className:'dash-dt-bar-fill',style:{width:ep+'%',background:'#E06060'}})),
-                      h('span',{style:{fontSize:11,color:'var(--jm-text-ter)',minWidth:36,textAlign:'right'}},ep.toFixed(1)+'%')
-                    ))
-                  ));
-                });
+              if(isOpen){
+                if(d.subs&&d.subs.length>0){
+                  rows.push(h('tr',{key:d.code+'-sub-hdr',className:'dash-dt-sub'},h('td',{colSpan:5,style:{paddingLeft:28,fontSize:9,fontWeight:700,color:'#9CA3AF',textTransform:'uppercase',letterSpacing:'0.5px',paddingBottom:2,paddingTop:6}},'Sub-Classifications')));
+                  d.subs.forEach(sub=>{
+                    const sp=d.mins>0?(sub.mins/d.mins*100):0;
+                    rows.push(h('tr',{key:d.code+'-sub-'+sub.name,className:'dash-dt-sub'},
+                      h('td',{style:{paddingLeft:36,fontSize:11,color:'var(--jm-text-sec)'}},'  ',sub.name),
+                      h('td',{className:'num',style:{fontSize:11}},sub.mins),
+                      h('td',{className:'num',style:{fontSize:11}},sub.count),
+                      h('td',null),
+                      h('td',null,h('div',{style:{display:'flex',alignItems:'center',gap:8}},
+                        h('div',{className:'dash-dt-bar',style:{flex:1}},h('div',{className:'dash-dt-bar-fill',style:{width:sp+'%',background:'#F87171'}})),
+                        h('span',{style:{fontSize:11,color:'var(--jm-text-ter)',minWidth:36,textAlign:'right'}},sp.toFixed(1)+'%')
+                      ))
+                    ));
+                  });
+                }
+                if(d.equip.length>0){
+                  rows.push(h('tr',{key:d.code+'-eq-hdr',className:'dash-dt-sub'},h('td',{colSpan:5,style:{paddingLeft:28,fontSize:9,fontWeight:700,color:'#9CA3AF',textTransform:'uppercase',letterSpacing:'0.5px',paddingBottom:2,paddingTop:6}},'By Equipment')));
+                  d.equip.forEach(eq=>{
+                    const ep=d.mins>0?(eq.mins/d.mins*100):0;
+                    rows.push(h('tr',{key:d.code+'-eq-'+eq.name,className:'dash-dt-sub'},
+                      h('td',{style:{paddingLeft:36,fontSize:11,color:'var(--jm-text-sec)'}},'  ',eq.name),
+                      h('td',{className:'num',style:{fontSize:11}},eq.mins),
+                      h('td',{className:'num',style:{fontSize:11}},eq.count),
+                      h('td',null),
+                      h('td',null,h('div',{style:{display:'flex',alignItems:'center',gap:8}},
+                        h('div',{className:'dash-dt-bar',style:{flex:1}},h('div',{className:'dash-dt-bar-fill',style:{width:ep+'%',background:'#E06060'}})),
+                        h('span',{style:{fontSize:11,color:'var(--jm-text-ter)',minWidth:36,textAlign:'right'}},ep.toFixed(1)+'%')
+                      ))
+                    ));
+                  });
+                }
               }
               return rows;
             }))
           ))
-        ):h('div',{className:'dash-empty'},h(Icon.clock),h('p',{style:{marginTop:8}},'Downtime data appears after shift entry'))
+        ):h('div',{className:'dash-empty'},h(Icon.clock),h('p',{style:{marginTop:8}},'Downtime data appears after shift entry')),
+        hasData&&h(AskAI,{section:'Downtime Pareto',context:()=>'Total downtime: '+Math.round(metrics.dtm)+' min. Top reasons: '+JSON.stringify(dtPareto.slice(0,8).map(d=>({reason:d.name,mins:d.mins,events:d.count,subs:d.subs.slice(0,3).map(s=>s.name+':'+s.mins+'min'),equipment:d.equip.slice(0,3).map(e=>e.name+':'+e.mins+'min')})))})
       ),
 
       h('div',{className:'dash-card has-chart-logo',style:{position:'relative'}},
@@ -2472,7 +2556,7 @@ function Dashboard({dataVersion,master}){
               const pct=metrics.def>0?(d.qty/metrics.def*100):0;
               const isOpen=expandedDef===d.name;
               const rows=[h('tr',{key:d.name,className:'dash-dt-row',onClick:()=>setExpandedDef(isOpen?null:d.name)},
-                h('td',null,h('span',{className:'dash-dt-chevron'+(isOpen?' open':'')},'\u25B6'),' ',d.name),
+                h('td',null,h('span',{className:'dash-dt-chevron'+(isOpen?' open':'')},'\u203A'),' ',d.name),
                 h('td',{className:'num'},d.qty),h('td',{className:'num'},d.count),
                 h('td',{className:'num',style:{fontWeight:600,color:d.cumPct<=80?'#8B5CF6':'var(--jm-text-ter)'}},d.cumPct.toFixed(0)+'%'),
                 h('td',null,h('div',{style:{display:'flex',alignItems:'center',gap:8}},
@@ -2498,7 +2582,8 @@ function Dashboard({dataVersion,master}){
               return rows;
             }))
           ))
-        ):h('div',{className:'dash-empty'},h(Icon.alertTri),h('p',{style:{marginTop:8}},'Defect data appears after shift entry'))
+        ):h('div',{className:'dash-empty'},h(Icon.alertTri),h('p',{style:{marginTop:8}},'Defect data appears after shift entry')),
+        hasData&&h(AskAI,{section:'Defect Pareto',context:()=>'Total defects: '+metrics.def+'. DPMO: '+((metrics.good+metrics.def)>0?((metrics.def/(metrics.good+metrics.def))*1000000).toFixed(0):'0')+'. Top defects: '+JSON.stringify(defPareto.slice(0,8).map(d=>({type:d.name,qty:d.qty,events:d.count,equipment:d.equip.slice(0,3).map(e=>e.name+':'+e.qty)})))})
       )
     ),
 

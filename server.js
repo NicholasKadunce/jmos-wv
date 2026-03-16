@@ -678,6 +678,34 @@ function registerRoutes() {
   });
 
 
+  // ── AI INSIGHTS (Claude API proxy) ──
+  app.post('/api/ai/ask', requireAuth, async (req, res) => {
+    try {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) return res.status(503).json({ error: 'AI not configured — ANTHROPIC_API_KEY not set' });
+      const { question, context, section } = req.body;
+      if (!question || !context) return res.status(400).json({ error: 'Missing question or context' });
+      const systemPrompt = `You are an OEE (Overall Equipment Effectiveness) analytics expert for the JMOS Dashboard at a manufacturing bolt plant. You analyze production data and provide concise, actionable insights for C-Suite executives. Keep responses to 2-4 sentences. Be specific — reference actual numbers from the data. Focus on root causes and actionable recommendations. The section being analyzed is: ${section || 'general'}.`;
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 300,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: `Here is the current data for this chart:\n${context}\n\nQuestion: ${question}` }]
+        })
+      });
+      if (!resp.ok) { const err = await resp.text(); return res.status(502).json({ error: 'AI API error: ' + resp.status }); }
+      const data = await resp.json();
+      const answer = data.content && data.content[0] ? data.content[0].text : 'No response';
+      res.json({ answer });
+    } catch (err) {
+      console.error('AI ask error:', err);
+      res.status(500).json({ error: 'Failed to get AI insight' });
+    }
+  });
+
   // Get previous working day (Mon→Fri, Tue-Fri→previous day, Sat/Sun→skip)
   function getPreviousWorkday(now) {
     const day = now.getDay(); // 0=Sun,1=Mon,...,6=Sat
