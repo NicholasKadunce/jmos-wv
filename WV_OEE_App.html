@@ -4324,18 +4324,33 @@ function AppWrapper(){
   return h(App,{authUser,onLogout:handleLogout});
 }
 
+// ─── SESSION PERSISTENCE (survive page refresh) ──────────────────────────────
+const SESSION_KEY='oee_wizard_session';
+function saveSession(obj){try{sessionStorage.setItem(SESSION_KEY,JSON.stringify(obj));}catch(e){}}
+function loadSession(){try{const r=sessionStorage.getItem(SESSION_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+function clearSession(){try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}}
+
 function App({authUser,onLogout}){
-  const [screen,setScreen]=useState('dashboard');
+  // Restore wizard state from sessionStorage if mid-entry
+  const _saved=useMemo(()=>loadSession(),[]);
+  const [screen,setScreen]=useState(_saved?.screen||'dashboard');
   const [dataVersion,setDataVersion]=useState(0);
-  const [step,setStep]=useState(1);
+  const [step,setStep]=useState(_saved?.step||1);
   const [master,setMaster]=useState(()=>{
     const saved=Storage.loadMaster();
     return saved||{supervisors:[],operators:[...INIT_OPERATORS],equipDefaults:EQUIP_DEFAULTS};
   });
-  const [shiftData,setShiftData]=useState({shiftDate:today(),shiftNum:'',shiftHrs:'',enteredBy:''});
-  const [selectedEquip,setSelectedEquip]=useState([]);
-  const [equipData,setEquipData]=useState({});
+  const [shiftData,setShiftData]=useState(_saved?.shiftData||{shiftDate:today(),shiftNum:'',shiftHrs:'',enteredBy:''});
+  const [selectedEquip,setSelectedEquip]=useState(_saved?.selectedEquip||[]);
+  const [equipData,setEquipData]=useState(_saved?.equipData||{});
   const [isOnline,setIsOnline]=useState(navigator.onLine);
+
+  // Persist wizard session on every relevant state change
+  useEffect(()=>{
+    if(screen==='entry'&&step>=1){
+      saveSession({screen,step,shiftData,selectedEquip,equipData});
+    }
+  },[screen,step,shiftData,selectedEquip,equipData]);
 
   // Keep global shiftData reference in sync for individual hour submissions
   useEffect(()=>{_currentShiftData=shiftData;},[shiftData]);
@@ -4383,7 +4398,25 @@ function App({authUser,onLogout}){
   function toggleEquip(c){setSelectedEquip(p=>p.includes(c)?p.filter(x=>x!==c):[...p,c]);}
   function handleEquipNext(){
     const n=parseInt(shiftData.shiftHrs);const nd={};
-    selectedEquip.forEach(ec=>{if(!equipData[ec]){const dp=master.equipDefaults[ec]||'';nd[ec]=makeHourData(ec,dp,n,shiftData.shiftNum,shiftData.shiftHrs);}else nd[ec]=equipData[ec];});
+    // Check server data for already-submitted hours on this date/shift
+    const serverEntries=Storage._cache.filter(e=>e.equipCode&&e.hourData&&e.shiftData&&e.shiftData.shiftDate===shiftData.shiftDate&&e.shiftData.shiftNum===shiftData.shiftNum);
+    const serverByEquip={};
+    serverEntries.forEach(e=>{if(!serverByEquip[e.equipCode])serverByEquip[e.equipCode]={};serverByEquip[e.equipCode][e.hourIdx||e.hourData.hourIdx]=e.hourData;});
+    selectedEquip.forEach(ec=>{
+      if(equipData[ec]){nd[ec]=equipData[ec];}
+      else{
+        const dp=master.equipDefaults[ec]||'';
+        const freshHours=makeHourData(ec,dp,n,shiftData.shiftNum,shiftData.shiftHrs);
+        // Merge any already-submitted hours from server
+        if(serverByEquip[ec]){
+          freshHours.forEach((hr,idx)=>{
+            const srv=serverByEquip[ec][hr.hourIdx];
+            if(srv){freshHours[idx]={...srv,submitted:true};}
+          });
+        }
+        nd[ec]=freshHours;
+      }
+    });
     setEquipData(p=>({...p,...nd}));setStep(3);
   }
   function handleUpdateEquip(ec,hrs){setEquipData(p=>({...p,[ec]:hrs}));}
@@ -4430,7 +4463,7 @@ function App({authUser,onLogout}){
     } else {
       showToast('Shift submitted!');
     }
-    setStep(1);setShiftData({shiftDate:today(),shiftNum:'',shiftHrs:'',enteredBy:''});setSelectedEquip([]);setEquipData({});setScreen('dashboard');
+    clearSession();setStep(1);setShiftData({shiftDate:today(),shiftNum:'',shiftHrs:'',enteredBy:''});setSelectedEquip([]);setEquipData({});setScreen('dashboard');
   }
   function handleReorderEquip(fromIdx,toIdx){
     setSelectedEquip(p=>{const arr=[...p];const [item]=arr.splice(fromIdx,1);arr.splice(toIdx,0,item);return arr;});
