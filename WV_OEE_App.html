@@ -1035,6 +1035,13 @@ function makeHourData(ec,dp,numH,sn,sh){
   });
 }
 
+// Deduplicate records: last entry wins for same date+shift+equip+hour
+function dedup(records){
+  const map=new Map();
+  records.forEach(r=>{const k=r.date+'|'+r.shiftNum+'|'+r.equipCode+'|'+r.hourIdx;map.set(k,r);});
+  return Array.from(map.values());
+}
+
 let _toast=null;
 function showToast(msg,type){if(!_toast){_toast=document.createElement('div');_toast.className='toast';document.body.appendChild(_toast);}_toast.textContent=msg;_toast.style.background=type==='warn'?'#F59E0B':type==='error'?'#DC2626':'#1B3D6E';_toast.classList.add('show');clearTimeout(_toast._t);_toast._t=setTimeout(()=>_toast.classList.remove('show'),2500);}
 
@@ -1656,7 +1663,7 @@ function Dashboard({dataVersion,master}){
         records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
       }
     });
-    return records;
+    return dedup(records);
   },[dataVersion]);
 
   const filtered=useMemo(()=>{
@@ -2551,7 +2558,7 @@ function AnalyticsView({dataVersion,master}){
         records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
       }
     });
-    return records;
+    return dedup(records);
   },[dataVersion]);
 
   // ── Filtered records ──
@@ -3149,7 +3156,7 @@ function TVView({dataVersion,master}){
         records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
       }
     });
-    return records;
+    return dedup(records);
   },[dataVersion]);
 
   // Equipment in selected process with today's data

@@ -176,6 +176,17 @@ function registerRoutes() {
         dataToStore.hourData = rest.hourData;
         dataToStore.resubmit = rest.resubmit || false;
       }
+      // For individual hour resubmissions, update existing record instead of creating duplicate
+      if (rest.equipCode && shiftData?.shiftDate && shiftData?.shiftNum) {
+        const existing = await pool.query(
+          `SELECT id FROM submissions WHERE shift_date = $1 AND shift_num = $2 AND data->>'equipCode' = $3 AND (data->>'hourIdx')::text = $4 LIMIT 1`,
+          [shiftData.shiftDate, shiftData.shiftNum, rest.equipCode, String(rest.hourIdx)]
+        );
+        if (existing.rows.length > 0) {
+          await pool.query('UPDATE submissions SET data = $1, submitted_at = NOW() WHERE id = $2', [JSON.stringify(dataToStore), existing.rows[0].id]);
+          return res.json({ ok: true, id: existing.rows[0].id, updated: true });
+        }
+      }
       const result = await pool.query(
         'INSERT INTO submissions (user_id, client_id, shift_date, shift_num, data) VALUES ($1, $2, $3, $4, $5) RETURNING id',
         [req.session.userId, clientId || null, shiftData?.shiftDate, shiftData?.shiftNum, JSON.stringify(dataToStore)]
@@ -232,6 +243,18 @@ function registerRoutes() {
           dataToStore.hourIdx = rest.hourIdx;
           dataToStore.hourData = rest.hourData;
           dataToStore.resubmit = rest.resubmit || false;
+        }
+        // For individual hour resubmissions, update existing record instead of creating duplicate
+        if (rest.equipCode && shiftData?.shiftDate && shiftData?.shiftNum) {
+          const existing = await pool.query(
+            `SELECT id FROM submissions WHERE shift_date = $1 AND shift_num = $2 AND data->>'equipCode' = $3 AND (data->>'hourIdx')::text = $4 LIMIT 1`,
+            [shiftData.shiftDate, shiftData.shiftNum, rest.equipCode, String(rest.hourIdx)]
+          );
+          if (existing.rows.length > 0) {
+            await pool.query('UPDATE submissions SET data = $1, submitted_at = NOW() WHERE id = $2', [JSON.stringify(dataToStore), existing.rows[0].id]);
+            results.push({ clientId, ok: true, id: existing.rows[0].id, updated: true });
+            continue;
+          }
         }
         const result = await pool.query(
           'INSERT INTO submissions (user_id, client_id, shift_date, shift_num, data) VALUES ($1, $2, $3, $4, $5) RETURNING id',
