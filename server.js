@@ -157,16 +157,28 @@ function registerRoutes() {
   // ── DATA ROUTES ──
   app.post('/api/submit', requireAuth, async (req, res) => {
     try {
-      const { shiftData, equipData, clientId } = req.body;
+      const { clientId, ...rest } = req.body;
+      const shiftData = rest.shiftData || null;
+      const equipData = rest.equipData || null;
+      const selectedEquip = rest.selectedEquip || null;
       if (clientId) {
         const existing = await pool.query('SELECT id FROM submissions WHERE client_id = $1', [clientId]);
         if (existing.rows.length > 0) {
           return res.json({ ok: true, id: existing.rows[0].id, duplicate: true });
         }
       }
+      // Store the full payload so no data is lost (individual hours, full shifts, etc.)
+      const dataToStore = { shiftData, equipData, selectedEquip };
+      // For individual hour submissions, also store the hour-level fields
+      if (rest.equipCode) {
+        dataToStore.equipCode = rest.equipCode;
+        dataToStore.hourIdx = rest.hourIdx;
+        dataToStore.hourData = rest.hourData;
+        dataToStore.resubmit = rest.resubmit || false;
+      }
       const result = await pool.query(
         'INSERT INTO submissions (user_id, client_id, shift_date, shift_num, data) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-        [req.session.userId, clientId || null, shiftData?.shiftDate, shiftData?.shiftNum, JSON.stringify({ shiftData, equipData })]
+        [req.session.userId, clientId || null, shiftData?.shiftDate, shiftData?.shiftNum, JSON.stringify(dataToStore)]
       );
       res.json({ ok: true, id: result.rows[0].id });
     } catch (err) {
@@ -202,7 +214,10 @@ function registerRoutes() {
       if (!Array.isArray(submissions)) return res.status(400).json({ error: 'Expected submissions array' });
       const results = [];
       for (const sub of submissions) {
-        const { shiftData, equipData, clientId } = sub;
+        const { clientId, ...rest } = sub;
+        const shiftData = rest.shiftData || null;
+        const equipData = rest.equipData || null;
+        const selectedEquip = rest.selectedEquip || null;
         if (clientId) {
           const existing = await pool.query('SELECT id FROM submissions WHERE client_id = $1', [clientId]);
           if (existing.rows.length > 0) {
@@ -210,9 +225,17 @@ function registerRoutes() {
             continue;
           }
         }
+        // Store the full payload so no data is lost
+        const dataToStore = { shiftData, equipData, selectedEquip };
+        if (rest.equipCode) {
+          dataToStore.equipCode = rest.equipCode;
+          dataToStore.hourIdx = rest.hourIdx;
+          dataToStore.hourData = rest.hourData;
+          dataToStore.resubmit = rest.resubmit || false;
+        }
         const result = await pool.query(
           'INSERT INTO submissions (user_id, client_id, shift_date, shift_num, data) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [req.session.userId, clientId || null, shiftData?.shiftDate, shiftData?.shiftNum, JSON.stringify({ shiftData, equipData })]
+          [req.session.userId, clientId || null, shiftData?.shiftDate, shiftData?.shiftNum, JSON.stringify(dataToStore)]
         );
         results.push({ clientId, ok: true, id: result.rows[0].id });
       }

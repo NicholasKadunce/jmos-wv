@@ -1457,10 +1457,19 @@ async function submitToServer(data){
   }
 }
 
-function queueData(data){submitToServer(data).then(r=>{
-  if(r.synced)showToast('Data saved & synced');
-  else showToast('Data saved offline — will sync when connected','warn');
-});}
+// Global reference to current shift data so individual hour submissions include context
+let _currentShiftData=null;
+
+function queueData(data){
+  // For individual hour submissions, include shiftData context if available
+  const enriched=(data.equipCode && data.hourData && !data.shiftData && _currentShiftData)
+    ? {...data, shiftData:_currentShiftData}
+    : data;
+  submitToServer(enriched).then(r=>{
+    if(r.synced)showToast('Data saved & synced');
+    else showToast('Data saved offline — will sync when connected','warn');
+  });
+}
 
 // ─── BEST DEMONSTRATED RATE (BDR) SYSTEM ─────────────────────────────────────
 const BDR_STORAGE_KEY='oee_bdr_data';
@@ -4314,6 +4323,9 @@ function App({authUser,onLogout}){
   const [selectedEquip,setSelectedEquip]=useState([]);
   const [equipData,setEquipData]=useState({});
   const [isOnline,setIsOnline]=useState(navigator.onLine);
+
+  // Keep global shiftData reference in sync for individual hour submissions
+  useEffect(()=>{_currentShiftData=shiftData;},[shiftData]);
   const [pendingCount,setPendingCount]=useState(0);
   const [showUserMenu,setShowUserMenu]=useState(false);
 
