@@ -59,6 +59,11 @@ async function initDB() {
     );
     CREATE INDEX IF NOT EXISTS idx_submissions_date ON submissions(shift_date);
     CREATE INDEX IF NOT EXISTS idx_submissions_client ON submissions(client_id);
+    CREATE TABLE IF NOT EXISTS settings (
+      key VARCHAR(100) PRIMARY KEY,
+      value JSONB NOT NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   // Create default admin user if no users exist
@@ -217,6 +222,30 @@ function registerRoutes() {
     } catch (err) {
       console.error('Dedup error:', err);
       res.status(500).json({ error: 'Dedup failed' });
+    }
+  });
+
+  // ── Master/settings persistence (survives cache clear) ──
+  app.get('/api/settings/:key', requireAuth, async (req, res) => {
+    try {
+      const { rows } = await pool.query('SELECT value FROM settings WHERE key = $1', [req.params.key]);
+      res.json(rows.length > 0 ? rows[0].value : null);
+    } catch (err) {
+      console.error('Settings fetch error:', err);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+  app.put('/api/settings/:key', requireAuth, async (req, res) => {
+    try {
+      await pool.query(
+        `INSERT INTO settings (key, value, updated_at) VALUES ($1, $2, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`,
+        [req.params.key, JSON.stringify(req.body.value)]
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('Settings save error:', err);
+      res.status(500).json({ error: 'Failed to save settings' });
     }
   });
 

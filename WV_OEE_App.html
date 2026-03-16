@@ -983,7 +983,7 @@ const DT_CODES={1:'Tooling',2:'Hydraulic Issues',3:'Air Issues',4:'Water Issues'
 const DEF_CODES={1:'Bent Bar',2:'Burr',3:'Bad Ribs',4:'Failing Bar Length',5:'Failing Peel Length',6:'Failing Diameter',7:'Cross Thread',8:'Incomplete Starter Thread',9:'Cracked Threads',10:'Failing Thread Length',11:'Failing Stamp',12:'Head Off-Center',13:'Failing Washer',14:'Failing Tensile',15:'Failing Yield',16:'Bad Break',17:'Rounded Head',18:'Improper Assembly',19:'Failing Width',20:'Failing Length',21:'Cracked Steel',22:'Bend Cable',23:'Broken Strand',24:'Broken Housing',25:'Failing Cable Length',26:'Failing Bird Cage',27:'Failing Crimp',28:'Failing Teeth Depth',29:'Failing Weld',30:'Hole Alignment',31:'Missing Component'};
 const EQUIP_DT_CODES={'WV-SHEAR-AS1':[1,2,3,5,6,8,10,11,12,14,15,16,17,18],'WV-SHEAR-AS2':[1,2,3,5,6,8,10,11,12,14,15,16,17,18],'WV-PRESS-400':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-PRESS-500A':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-PRESS-500B':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-HEAD-H1':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-H2':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-H3':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-AUTO':[1,3,4,5,6,8,9,10,11,12,14,15,16,17,19,21],'WV-THREAD-T1':[1,3,5,8,9,10,11,12,14,15,16],'WV-THREAD-T2':[1,3,5,8,9,10,11,12,14,15,16],'WV-THREAD-AT':[1,3,5,6,8,9,10,11,12,14,15,16],'WV-PEEL-MAN':[1,3,4,5,6,8,9,10,11,12,14,15,16,17],'WV-PEEL-AUTO':[1,3,4,5,6,8,9,10,11,12,14,15,16,17,19],'WV-PEEL-SWAG':[1,3,4,5,6,8,9,10,11,12,14,15,16,17],'WV-ASSY-A1':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A2':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A3':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A4':[1,5,6,8,10,11,12,14,15,16],'WV-CABLE-C1':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-CABLE-C2':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-CABLE-C3':[1,2,3,5,6,7,8,10,11,13,14,15,16,17,20],'WV-CABLE-C4':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-MISC-BIGSAW':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-TIELINE':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-OFFWELD':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-EYEBOLT':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-LANDISASSM':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-UNITS':[1,2,3,5,6,8,9,10,11,12,14,15,16]};
 const EQUIP_DEF_CODES={'WV-SHEAR-AS1':[1,2,3,4],'WV-SHEAR-AS2':[1,2,3,4],'WV-PRESS-400':[2,11,19,20,21,14],'WV-PRESS-500A':[2,11,19,20,21,14],'WV-PRESS-500B':[2,11,19,20,21,14],'WV-HEAD-H1':[1,2,11,12,13,4,14,15,16,17],'WV-HEAD-H2':[1,2,11,12,13,4,14,15,16,17],'WV-HEAD-H3':[1,2,11,12,13,4,14,15,16,17],'WV-HEAD-AUTO':[1,2,11,12,13,4,14,15,16,17],'WV-THREAD-T1':[1,2,7,8,9,6,10],'WV-THREAD-T2':[1,2,7,8,9,6,10],'WV-THREAD-AT':[1,2,7,8,9,6,10],'WV-PEEL-MAN':[1,2,5,6,21],'WV-PEEL-AUTO':[1,2,5,6,21],'WV-PEEL-SWAG':[1,2,5,6,21],'WV-ASSY-A1':[1,18,31],'WV-ASSY-A2':[1,18,31],'WV-ASSY-A3':[1,18,31],'WV-ASSY-A4':[1,18,31],'WV-CABLE-C1':[22,23,24,25,26,27],'WV-CABLE-C2':[22,23,24,25,26,27],'WV-CABLE-C3':[22,23,24,25,26,27,29],'WV-CABLE-C4':[22,23,24,25,26,27],'WV-MISC-BIGSAW':[20,21],'WV-MISC-TIELINE':[28,30],'WV-MISC-OFFWELD':[29],'WV-MISC-EYEBOLT':[1],'WV-MISC-LANDISASSM':[1,7,8,9],'WV-MISC-UNITS':[1,18,31]};
-const EQUIP_DEFAULTS={'WV-SHEAR-AS1':'P-SHR-016','WV-SHEAR-AS2':'P-SHR-012','WV-PRESS-400':'P-PRS-001','WV-PRESS-500A':'P-PRS-005','WV-PRESS-500B':'P-PRS-002','WV-HEAD-H1':'P-HDG-007','WV-HEAD-H2':'P-HDG-002','WV-HEAD-H3':'P-HDG-004','WV-THREAD-T1':'P-TR1-001','WV-THREAD-T2':'P-TR2-001','WV-THREAD-AT':'P-ATH-006','WV-PEEL-MAN':'P-MPL-001','WV-PEEL-AUTO':'P-APL-001','WV-PEEL-SWAG':'P-SWG-001','WV-ASSY-A1':'P-ASY-007','WV-ASSY-A2':'P-ASY-007','WV-ASSY-A3':'P-ASY-003','WV-ASSY-A4':'P-ASY-017','WV-CABLE-C1':'P-CBL-001','WV-CABLE-C2':'P-CBL-003','WV-CABLE-C3':'P-CBL-007','WV-CABLE-C4':'P-CBL-004','WV-MISC-BIGSAW':'P-SAW-002','WV-MISC-TIELINE':'P-TIE-001','WV-MISC-OFFWELD':'P-WLD-001'};
+const EQUIP_DEFAULTS={'WV-SHEAR-AS1':'P-SHR-016','WV-SHEAR-AS2':'P-SHR-012','WV-PRESS-400':'P-PRS-001','WV-PRESS-500A':'P-PRS-005','WV-PRESS-500B':'P-PRS-002','WV-HEAD-H1':'P-HDG-007','WV-HEAD-H2':'P-HDG-002','WV-HEAD-H3':'P-HDG-004','WV-THREAD-T1':'P-TR1-001','WV-THREAD-T2':'P-TR2-001','WV-THREAD-AT':'P-ATH-006','WV-PEEL-MAN':'P-MPL-001','WV-PEEL-AUTO':'P-APL-001','WV-PEEL-SWAG':'P-SWG-001','WV-ASSY-A1':'P-ASY-007','WV-ASSY-A2':'P-ASY-007','WV-ASSY-A3':'P-ASY-003','WV-ASSY-A4':'P-ASY-017','WV-CABLE-C1':'P-CBL-001','WV-CABLE-C2':'P-CBL-003','WV-CABLE-C3':'P-CBL-007','WV-CABLE-C4':'P-CBL-004','WV-MISC-BIGSAW':'P-SAW-002','WV-MISC-TIELINE':'P-TIE-001','WV-MISC-OFFWELD':'P-WLD-001','WV-MISC-UNITS':'P-UNT-001','WV-MISC-EYEBOLT':'P-EYE-001','WV-MISC-LANDISASSM':'P-LND-001'};
 
 // ─── DOWNTIME SUB-ITEMS ──────────────────────────────────────────────────────
 const DT_SUBITEMS={
@@ -1145,21 +1145,33 @@ const Storage={
 
   // ── Save master data (supervisors, operators, equipment defaults) ──
   saveMaster(masterData){
-    if(STORAGE_CONFIG.mode==='local'){
-      try{localStorage.setItem(STORAGE_CONFIG.masterKey,JSON.stringify(masterData));}catch(e){console.error('Master save error:',e);}
+    try{localStorage.setItem(STORAGE_CONFIG.masterKey,JSON.stringify(masterData));}catch(e){console.error('Master save error:',e);}
+    // Also persist to server so it survives cache clears
+    if(navigator.onLine){
+      fetch('/api/settings/master',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({value:masterData})}).catch(()=>{});
     }
     return Promise.resolve();
   },
 
   // ── Load master data ──
   loadMaster(){
-    if(STORAGE_CONFIG.mode==='local'){
-      try{
-        const raw=localStorage.getItem(STORAGE_CONFIG.masterKey);
-        return raw?JSON.parse(raw):null;
-      }catch(e){return null;}
-    }
-    return null;
+    try{
+      const raw=localStorage.getItem(STORAGE_CONFIG.masterKey);
+      return raw?JSON.parse(raw):null;
+    }catch(e){return null;}
+  },
+
+  // ── Load master from server (async, for when localStorage is empty) ──
+  async loadMasterFromServer(){
+    try{
+      const r=await fetch('/api/settings/master');
+      if(!r.ok)return null;
+      const data=await r.json();
+      if(data){
+        try{localStorage.setItem(STORAGE_CONFIG.masterKey,JSON.stringify(data));}catch(e){}
+      }
+      return data;
+    }catch(e){return null;}
   },
 
   // ──────────────────────────────────────────────────────────────
@@ -4417,6 +4429,14 @@ function App({authUser,onLogout}){
   },[pendingCount]);
 
   useEffect(()=>{Storage.saveMaster(master);},[master]);
+  // If localStorage master was empty (cache cleared), fetch from server
+  useEffect(()=>{
+    if(!Storage.loadMaster()&&navigator.onLine){
+      Storage.loadMasterFromServer().then(serverMaster=>{
+        if(serverMaster)setMaster(serverMaster);
+      });
+    }
+  },[]);
   function toggleEquip(c){setSelectedEquip(p=>p.includes(c)?p.filter(x=>x!==c):[...p,c]);}
   function handleEquipNext(){
     const n=parseInt(shiftData.shiftHrs);const nd={};
