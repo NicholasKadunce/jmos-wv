@@ -187,13 +187,13 @@ function registerRoutes() {
     }
   });
 
-  // ── Cleanup: delete empty submission records ──
-  app.post('/api/admin/cleanup-empty', requireAuth, async (req, res) => {
+  // Temporary: delete test records
+  app.post('/api/admin/cleanup-test', requireAuth, async (req, res) => {
     try {
       const result = await pool.query(
-        `DELETE FROM submissions WHERE data::text = '{}' OR data IS NULL RETURNING id`
+        `DELETE FROM submissions WHERE data->>'shiftData' IS NOT NULL AND (data->'shiftData'->>'enteredBy' = 'test-verify' OR data->'shiftData'->>'enteredBy' = 'deploy-test') RETURNING id`
       );
-      res.json({ deleted: result.rowCount, ids: result.rows.map(r => r.id) });
+      res.json({ deleted: result.rowCount });
     } catch (err) {
       console.error('Cleanup error:', err);
       res.status(500).json({ error: 'Cleanup failed' });
