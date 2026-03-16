@@ -1010,7 +1010,10 @@ const SHIFT_TEMPLATES={
   '1-9':{startup:{h:1,mins:15},lunch:{h:5,mins:30},cleanup:{h:9,mins:15}},
   '2-9':{startup:{h:1,mins:15},lunch:{h:4,mins:30},cleanup:{h:9,mins:15}},
 };
-const SHIFT_START_HOURS={1:5,2:15};
+// Shift 1 always starts at 5 AM; Shift 2 starts right after Shift 1 ends
+// Shift 2 start = 5 + (shift 1 hours, assumed same as shift 2 hours)
+const SHIFT_START_HOURS={1:5,2:14};
+function getShiftStart(sn,sh){if(sn==1)return 5;return 5+parseInt(sh||9);}
 
 function today(){return new Date().toISOString().split('T')[0];}
 function getTemplate(sn,sh){return SHIFT_TEMPLATES[`${sn}-${sh}`]||SHIFT_TEMPLATES['1-8'];}
@@ -1026,7 +1029,7 @@ function getActiveEquipment(master){
 function totalDTMins(arr){return arr.reduce((s,e)=>s+parseInt(e.mins||0),0);}
 function makeNewDT(){return{id:Date.now()+Math.random(),mins:'',dtCode:'',subItem:''};}
 function makeNewDef(){return{id:Date.now()+Math.random(),qty:'',defCode:''};}
-function getTimeRange(hi,sn){const st=SHIFT_START_HOURS[sn]||5;const h1=(st+hi-1)%24;const h2=(st+hi)%24;const f=h=>{const p=h>=12?'PM':'AM';return`${h%12||12} ${p}`;};return`${f(h1)} - ${f(h2)}`;}
+function getTimeRange(hi,sn,sh){const st=sh?getShiftStart(sn,sh):(SHIFT_START_HOURS[sn]||5);const h1=(st+hi-1)%24;const h2=(st+hi)%24;const f=h=>{const p=h>=12?'PM':'AM';return`${h%12||12} ${p}`;};return`${f(h1)} - ${f(h2)}`;}
 function makeHourData(ec,dp,numH,sn,sh){
   const tpl=getTemplate(sn,sh);
   return Array.from({length:numH},(_,i)=>{
@@ -3856,7 +3859,7 @@ function CumulativeBar({hours,totalShiftHours}){
 }
 
 // ── HOUR CARD ──
-function HourCard({hourData,hourIdx,equipCode,allProducts,scheduledInfo,shiftNum,onUpdate,prevHour,isAssembly,operators,opsExpanded,onToggleOps}){
+function HourCard({hourData,hourIdx,equipCode,allProducts,scheduledInfo,shiftNum,shiftHrs,onUpdate,prevHour,isAssembly,operators,opsExpanded,onToggleOps}){
   const [collapsed,setCollapsed]=useState(false);
   const{productCode,scheduledMins,target,goodUnits,downtime,defects,submitted}=hourData;
   const hourOps=hourData.operators||[];
@@ -3865,7 +3868,7 @@ function HourCard({hourData,hourIdx,equipCode,allProducts,scheduledInfo,shiftNum
   const maxDTMins=60-scheduledMins;
   const dtOverMax=usedDTMins>maxDTMins;
   const totalDef=defects.reduce((s,d)=>s+parseInt(d.qty||0),0);
-  const timeRange=getTimeRange(hourIdx,shiftNum);
+  const timeRange=getTimeRange(hourIdx,shiftNum,shiftHrs);
   const numPeople=hourOps.length;
   const guNum=parseInt(goodUnits||0);
   const isAboveTarget=goodUnits!==''&&guNum>=target&&target>0;
@@ -4041,7 +4044,7 @@ function EquipPanel({equipCode,hours,shiftNum,shiftHrs,onUpdateHour,operators,on
       const h1=tpl.startup&&tpl.startup.h===hd.hourIdx;
       const h2=tpl.lunch&&tpl.lunch.h===hd.hourIdx;
       const h3=tpl.cleanup&&tpl.cleanup.h===hd.hourIdx;
-      return h(HourCard,{key:hd.hourIdx,hourData:hd,hourIdx:hd.hourIdx,equipCode,allProducts,isAssembly:isAssy,shiftNum,operators,
+      return h(HourCard,{key:hd.hourIdx,hourData:hd,hourIdx:hd.hourIdx,equipCode,allProducts,isAssembly:isAssy,shiftNum,shiftHrs,operators,
         opsExpanded,onToggleOps:()=>setOpsExpanded(p=>!p),
         scheduledInfo:{isStartup:h1,isLunch:h2,isCleanup:h3},
         onUpdate:(updated,opts)=>{if(opts&&opts.cascade)onUpdateHour(hd.hourIdx,updated,true);else onUpdateHour(hd.hourIdx,updated,false);},
@@ -4210,7 +4213,7 @@ function ProductionEntry({selectedEquip,shiftNum,shiftHrs,equipData,onUpdateEqui
           h('div',{style:{marginBottom:18}},
             h('label',{className:'form-label'},'Starting Hour'),
             h('select',{className:'form-select',value:addStartHr,onChange:e=>setAddStartHr(parseInt(e.target.value))},
-              Array.from({length:shn},(_,i)=>h('option',{key:i+1,value:i+1},'Hour ',i+1,' (',getTimeRange(i+1,parseInt(shiftNum)),')'))
+              Array.from({length:shn},(_,i)=>h('option',{key:i+1,value:i+1},'Hour ',i+1,' (',getTimeRange(i+1,parseInt(shiftNum),shiftHrs),')'))
             ),
             h('p',{style:{fontSize:11,color:'var(--jm-text-sec)',marginTop:6}},'Hours ',addStartHr,' through ',shn,' will be created (',shn-addStartHr+1,' hour',shn-addStartHr>0?'s':'',')')
           )
