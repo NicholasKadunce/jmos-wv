@@ -3891,6 +3891,10 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
                   h('div',{style:{fontSize:18,fontWeight:800,color:'#059669'}},b.newRate||b.detectedRate,'/hr')
                 ),
                 h('div',{style:{background:'var(--jm-bg)',borderRadius:8,padding:'8px 12px',textAlign:'center'}},
+                  h('div',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)',marginBottom:2}},'Total Production'),
+                  h('div',{style:{fontSize:18,fontWeight:800,color:'var(--jm-navy)'}},(b.totalGood||0).toLocaleString())
+                ),
+                h('div',{style:{background:'var(--jm-bg)',borderRadius:8,padding:'8px 12px',textAlign:'center'}},
                   h('div',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)',marginBottom:2}},'Hours'),
                   h('div',{style:{fontSize:18,fontWeight:800,color:'var(--jm-navy)'}},b.hoursCount)
                 ),
