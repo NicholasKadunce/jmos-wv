@@ -3393,9 +3393,10 @@ function TVView({dataVersion,master}){
       // Current product (last entered hour)
       const lastHour=[...s2,...s1].pop();
       const currentProduct=lastHour?lastHour.productCode:null;
-      // OEE for today
+      // OEE for current shift only
+      const currentShiftRecs=s2.length>0?s2:(s1.length>0?s1:[]);
       let sm=0,dtm=0,tgt=0,good=0,def=0;
-      todayEq.forEach(r=>{const av=60-r.scheduledMins;sm+=av;dtm+=totalDTMins(r.downtime);tgt+=r.target;good+=r.goodUnits;def+=r.defects.reduce((s2x,d)=>s2x+parseInt(d.qty||0),0);});
+      currentShiftRecs.forEach(r=>{const av=60-r.scheduledMins;sm+=av;dtm+=totalDTMins(r.downtime);tgt+=r.target;good+=r.goodUnits;def+=r.defects.reduce((s2x,d)=>s2x+parseInt(d.qty||0),0);});
       const run=sm-dtm,tp=good+def,a=sm>0?(run/sm)*100:0,p=run>0&&tgt>0?((tp*sm)/(run*tgt))*100:0,q=tp>0?(good/tp)*100:100;
       const oee=(a*p*q)/10000;
       // Range OEE (WTD/MTD)
@@ -3561,10 +3562,10 @@ function TVView({dataVersion,master}){
           // Chart
           h('div',{style:{flex:1,minHeight:0}},
             h(ResponsiveContainer,{width:'100%',height:'100%'},
-              h(BarChart,{data:chartData,margin:{top:16,right:2,bottom:0,left:-15},barGap:1,barCategoryGap:'20%'},
+              h(BarChart,{data:chartData,margin:{top:16,right:2,bottom:0,left:0},barGap:1,barCategoryGap:'20%'},
                 h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E7EB',vertical:false}),
                 h(XAxis,{dataKey:'hour',tick:{fontSize:8,fill:'#64748B'},tickLine:false,axisLine:{stroke:'#E5E7EB'}}),
-                h(YAxis,{tick:{fontSize:7,fill:'#94A3B8'},tickLine:false,axisLine:false,width:28}),
+                h(YAxis,{tick:{fontSize:8,fill:'#94A3B8'},tickLine:false,axisLine:false,width:32}),
                 h(ReferenceLine,{y:tgtVal,stroke:'#F59E0B',strokeDasharray:'4 3',strokeWidth:1.5,label:{value:'Target: '+tgtVal,position:'insideTopLeft',fontSize:7,fill:'#F59E0B',fontWeight:600}}),
                 priorLabel&&h(Bar,{dataKey:'prior',name:'Prior',fill:'#CBD5E1',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:20}),
                 h(Bar,{dataKey:'current',name:'Current',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:20},
