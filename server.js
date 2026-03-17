@@ -490,11 +490,12 @@ function registerRoutes() {
           defByEquip[eqName] += defQty;
         }
       });
-      // Availability = (runTime - downtime) / runTime, where runTime = totalMins - scheduledMins
+      // OEE formulas matching the dashboard exactly
       const totalMins = totalHours * 60;
-      const runTime = totalMins - totalScheduled;
-      const avail = runTime > 0 ? (runTime - totalDT) / runTime : 0;
-      const perf = totalTarget > 0 ? totalGood / totalTarget : 0;
+      const sm = totalMins - totalScheduled;  // planned production time (60 - scheduledMins per hour)
+      const run = sm - totalDT;               // actual operating time
+      const avail = sm > 0 ? run / sm : 0;
+      const perf = run > 0 && totalTarget > 0 ? (totalProduced * sm) / (run * totalTarget) : 0;
       const qual = totalProduced > 0 ? totalGood / totalProduced : (totalTarget > 0 ? 0 : 1);
       const oee = avail * perf * qual;
       const topDT = Object.entries(dtByEquip).sort((a, b) => b[1] - a[1]).slice(0, 5);

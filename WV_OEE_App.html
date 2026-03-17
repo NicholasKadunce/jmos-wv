@@ -3697,6 +3697,9 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   // Database browser state
   const [dbRecords,setDbRecords]=useState([]);const [dbLoading,setDbLoading]=useState(false);const [dbDateFrom,setDbDateFrom]=useState('');const [dbDateTo,setDbDateTo]=useState('');
   const [dbExpanded,setDbExpanded]=useState(null);
+  // Daily report state
+  const [reportDate,setReportDate]=useState(()=>{const d=toET(new Date());d.setDate(d.getDate()-1);return fmtDate(d);});
+  const [reportSending,setReportSending]=useState(false);const [reportMsg,setReportMsg]=useState('');
   // Load users when tab switches
   useEffect(()=>{if(tab==='users'){API.getUsers().then(u=>setUsers(u)).catch(e=>setUserMsg('Error loading users: '+e.message));}},[tab]);
   useEffect(()=>{if(tab==='rates'){BDR.loadFromServer().then(()=>refreshBdr());}},[tab]);
@@ -4083,6 +4086,20 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
 
     // ═══ DATABASE BROWSER TAB ═══
     tab==='data'&&h('div',{className:'admin-storage'},
+      h('div',{className:'admin-storage-section'},
+        h('div',{className:'admin-storage-title'},'Daily OEE Email Report'),
+        h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}},
+          h('input',{type:'date',value:reportDate,onChange:e=>setReportDate(e.target.value),style:{height:34,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:12,fontFamily:'inherit'}}),
+          h('button',{className:'btn btn-primary btn-sm',disabled:reportSending,onClick:async()=>{
+            setReportSending(true);setReportMsg('');
+            try{const r=await fetch('/api/report/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:reportDate})});const d=await r.json();setReportMsg(d.sent?'Sent to '+d.to:(d.error||d.reason||'Failed'));}
+            catch(e){setReportMsg('Error: '+e.message);}
+            setReportSending(false);
+          }},reportSending?'Sending...':'\uD83D\uDCE7 Send Report'),
+          h('a',{href:'/api/report/preview?date='+reportDate,target:'_blank',className:'btn btn-secondary btn-sm'},'\uD83D\uDC41 Preview'),
+          reportMsg&&h('span',{style:{fontSize:12,marginLeft:4,color:reportMsg.startsWith('Sent')?'var(--jm-success)':'var(--jm-error)'}},reportMsg)
+        )
+      ),
       h('div',{className:'admin-storage-section'},
         h('div',{className:'admin-storage-title'},'Production Data Browser'),
         h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:12}},
