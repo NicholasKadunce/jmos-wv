@@ -1708,7 +1708,19 @@ const BDR={
   },
 
   // Scan server data for BDR candidates (retroactive detection)
+  // Only detects BDR for shifts where ALL hours have been submitted
   async scanServerData(cache){
+    // First, count total hours per date+shift+equip to know if shift is complete
+    const equipHourCounts={};
+    cache.forEach(entry=>{
+      if(!entry.equipCode||!entry.hourData)return;
+      const sd=entry.shiftData||{};
+      const shiftHrs=parseInt(sd.shiftHrs)||9;
+      const cntKey=sd.shiftDate+'|'+sd.shiftNum+'|'+entry.equipCode;
+      if(!equipHourCounts[cntKey])equipHourCounts[cntKey]={count:0,shiftHrs};
+      equipHourCounts[cntKey].count++;
+    });
+    // Now group by date+shift+equip+product for BDR detection
     const groups={};
     cache.forEach(entry=>{
       if(!entry.equipCode||!entry.hourData)return;
@@ -1716,6 +1728,10 @@ const BDR={
       const hr=entry.hourData;
       const pc=hr.productCode;
       if(!pc)return;
+      // Only include if the full shift is complete for this equip
+      const cntKey=sd.shiftDate+'|'+sd.shiftNum+'|'+entry.equipCode;
+      const cnt=equipHourCounts[cntKey];
+      if(!cnt||cnt.count<cnt.shiftHrs)return; // Shift not fully submitted yet
       const key=sd.shiftDate+'|'+sd.shiftNum+'|'+entry.equipCode+'|'+pc;
       if(!groups[key])groups[key]={equipCode:entry.equipCode,productCode:pc,shiftDate:sd.shiftDate,hours:[],operators:new Set()};
       groups[key].hours.push(hr);
