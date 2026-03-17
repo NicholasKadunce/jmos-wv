@@ -685,15 +685,25 @@ function registerRoutes() {
       if (!apiKey) return res.status(503).json({ error: 'AI not configured — ANTHROPIC_API_KEY not set' });
       const { question, context, section } = req.body;
       if (!question || !context) return res.status(400).json({ error: 'Missing question or context' });
-      const systemPrompt = `You are an OEE (Overall Equipment Effectiveness) analytics expert for the JMOS Dashboard at a manufacturing bolt plant. You analyze production data and provide concise, actionable insights for C-Suite executives. Keep responses to 2-4 sentences. Be specific — reference actual numbers from the data. Focus on root causes and actionable recommendations. The section being analyzed is: ${section || 'general'}.`;
+      const systemPrompt = `You are an expert OEE (Overall Equipment Effectiveness) analyst for the JMOS Dashboard at the Jennmar West Virginia Bolt Plant. You have FULL ACCESS to all production data across every chart and metric on the dashboard.
+
+CRITICAL RULES:
+- You MUST analyze the data yourself and give a direct, complete answer. NEVER tell the user to "look into", "dig into", "investigate", or "check" something — YOU do the analysis and report your findings.
+- Cross-reference data across all sections (hourly OEE, equipment, downtime, defects, operators, loss waterfall) to give comprehensive answers.
+- Reference specific numbers, equipment names, downtime reasons, and percentages from the data.
+- If the user asks about a trend or root cause, trace it through the data: which equipment, which downtime codes, which operators, which hours.
+- Keep responses to 3-5 sentences. Be direct and authoritative.
+- Format key findings clearly. Use numbers to support every claim.
+
+The user is currently viewing the "${section || 'general'}" section but you have access to ALL dashboard data.`;
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
+          max_tokens: 600,
           system: systemPrompt,
-          messages: [{ role: 'user', content: `Here is the current data for this chart:\n${context}\n\nQuestion: ${question}` }]
+          messages: [{ role: 'user', content: `Here is the COMPLETE dashboard data (all charts, all metrics):\n${context}\n\nQuestion: ${question}` }]
         })
       });
       if (!resp.ok) { const err = await resp.text(); return res.status(502).json({ error: 'AI API error: ' + resp.status }); }
