@@ -649,7 +649,15 @@ function registerRoutes() {
 
   async function buildReportPNG(report) {
     const svg = buildReportSVG(report);
-    return sharp(Buffer.from(svg)).png().toBuffer();
+    console.log('SVG generated, length:', svg.length);
+    try {
+      const buf = await sharp(Buffer.from(svg)).png().toBuffer();
+      console.log('PNG generated, size:', buf.length);
+      return buf;
+    } catch (err) {
+      console.error('Sharp PNG error:', err);
+      throw err;
+    }
   }
 
   // Email via Resend HTTP API (no SMTP needed, works on Railway)
@@ -719,15 +727,21 @@ function registerRoutes() {
     }
   });
 
-  // API: send report now (admin only)
+  // API: send report now (admin only) — with 30s timeout
   app.post('/api/report/send', requireAdmin, async (req, res) => {
+    const timeout = setTimeout(() => {
+      if (!res.headersSent) res.status(504).json({ error: 'Report generation timed out' });
+    }, 30000);
     try {
       const dateStr = req.body.date || getPreviousWorkday(new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' })));
+      console.log('Generating report for', dateStr);
       const result = await sendDailyReport(dateStr);
-      res.json(result);
+      clearTimeout(timeout);
+      if (!res.headersSent) res.json(result);
     } catch (err) {
+      clearTimeout(timeout);
       console.error('Report send error:', err);
-      res.status(500).json({ error: 'Failed to send report' });
+      if (!res.headersSent) res.status(500).json({ error: 'Failed to send report: ' + err.message });
     }
   });
 
