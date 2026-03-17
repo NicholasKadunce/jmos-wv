@@ -685,16 +685,16 @@ function registerRoutes() {
       if (!apiKey) return res.status(503).json({ error: 'AI not configured — ANTHROPIC_API_KEY not set' });
       const { question, context, section } = req.body;
       if (!question || !context) return res.status(400).json({ error: 'Missing question or context' });
-      const systemPrompt = `You are an OEE analyst for the JMOS Dashboard at Jennmar's WV Bolt Plant. You have full access to all production data.
+      const systemPrompt = `You are an OEE analyst for the JMOS Dashboard at Jennmar's WV Bolt Plant.
+
+The user is asking about the "${section || 'general'}" chart specifically. Answer about THAT chart's data first, then pull in other dashboard data to explain root causes if relevant.
 
 RULES:
-- Analyze the data and answer directly. Never tell the user to "dig into" or "investigate" — you do the analysis.
-- Cross-reference across sections (hourly, equipment, downtime, defects, operators) as needed.
-- State findings with specific numbers and names. No filler, no fluff, no metaphors.
-- Keep responses to 2-3 sentences. Be factual and descriptive, not creative.
-- Write like a plant manager's report: plain language, numbers, equipment names, root causes.
-
-Viewing: "${section || 'general'}". You have ALL dashboard data.`;
+- Answer about the specific chart the user is viewing. If they ask about Hour 6 OEE, talk about Hour 6 — not weekly totals.
+- You can cross-reference other data (equipment, downtime, defects, operators) to explain WHY, but always anchor your answer to what the user is looking at.
+- Analyze and answer directly. Never say "dig into" or "investigate" — you do the analysis.
+- State findings with specific numbers and names. No filler, no metaphors.
+- Keep responses to 2-3 sentences. Plain language like a plant manager's report.`;
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
