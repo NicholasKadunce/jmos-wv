@@ -1426,6 +1426,26 @@ const API={
   async resetPassword(id,password){
     const r=await fetch('/api/users/'+id+'/password',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
     const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  // BDR & Rates
+  async getRates(){const r=await fetch('/api/rates');if(!r.ok)throw new Error('Fetch failed');return r.json();},
+  async seedRates(rates){
+    const r=await fetch('/api/rates/seed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rates})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  async getRateHistory(){const r=await fetch('/api/rates/history');if(!r.ok)throw new Error('Fetch failed');return r.json();},
+  async getBDRs(status){const url=status?'/api/bdr?status='+status:'/api/bdr';const r=await fetch(url);if(!r.ok)throw new Error('Fetch failed');return r.json();},
+  async submitBDR(data){
+    const r=await fetch('/api/bdr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  async approveBDR(id,approvedBy){
+    const r=await fetch('/api/bdr/'+id+'/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approvedBy})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  async declineBDR(id,declinedBy,reason){
+    const r=await fetch('/api/bdr/'+id+'/decline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({declinedBy,reason})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
   }
 };
 
@@ -1545,78 +1565,102 @@ function queueData(data){
 }
 
 // ─── BEST DEMONSTRATED RATE (BDR) SYSTEM ─────────────────────────────────────
-const BDR_STORAGE_KEY='oee_bdr_data';
 const BDR={
-  _data:null,
-  _load(){
-    if(this._data)return this._data;
-    try{const raw=localStorage.getItem(BDR_STORAGE_KEY);this._data=raw?JSON.parse(raw):{pending:[],approved:[],history:[]};}
-    catch(e){this._data={pending:[],approved:[],history:[]};}
-    if(!this._data.pending)this._data.pending=[];
-    if(!this._data.approved)this._data.approved=[];
-    if(!this._data.history)this._data.history=[];
-    return this._data;
-  },
-  _save(){try{localStorage.setItem(BDR_STORAGE_KEY,JSON.stringify(this._data));}catch(e){console.error('BDR save error:',e);}},
+  _pending:[],
+  _approved:[],
+  _history:[],
+  _rateHistory:[],
+  _loaded:false,
 
-  // Get current BDR for a product×equipment combo
-  getBDR(equipCode,productCode){
-    const d=this._load();
-    return d.approved.find(b=>b.equipCode===equipCode&&b.productCode===productCode)||null;
+  // Load BDR data from server
+  async loadFromServer(){
+    try{
+      const [pending,approved,declined,rateHist]=await Promise.all([
+        API.getBDRs('pending'),API.getBDRs('approved'),API.getBDRs('declined'),API.getRateHistory()
+      ]);
+      this._pending=pending.map(b=>({id:b.id,equipCode:b.equip_code,productCode:b.product_code,
+        newRate:b.detected_rate,currentTarget:b.current_target,hoursCount:b.hours_count,
+        totalGood:b.total_good,date:b.shift_date,operators:b.operators||[],createdAt:b.created_at}));
+      this._approved=approved.map(b=>({id:b.id,equipCode:b.equip_code,productCode:b.product_code,
+        newRate:b.detected_rate,currentTarget:b.current_target,hoursCount:b.hours_count,
+        totalGood:b.total_good,date:b.shift_date,operators:b.operators||[],
+        approvedBy:b.decided_by,approvedDate:b.decided_at}));
+      this._history=[...approved,...declined].map(b=>({id:b.id,equipCode:b.equip_code,productCode:b.product_code,
+        newRate:b.detected_rate,oldRate:b.current_target,hoursCount:b.hours_count,
+        date:b.shift_date,operators:b.operators||[],action:b.status,
+        approvedBy:b.status==='approved'?b.decided_by:undefined,approvedDate:b.status==='approved'?b.decided_at:undefined,
+        declinedBy:b.status==='declined'?b.decided_by:undefined,declinedDate:b.status==='declined'?b.decided_at:undefined,
+        reason:b.decline_reason})).sort((a,b)=>(b.approvedDate||b.declinedDate||'')>(a.approvedDate||a.declinedDate||'')?1:-1);
+      this._rateHistory=rateHist.map(h=>({equipCode:h.equip_code,productCode:h.product_code,
+        oldRate:h.old_rate,newRate:h.new_rate,source:h.source,changedAt:h.changed_at,changedBy:h.changed_by,notes:h.notes}));
+      // Apply approved BDRs to TARGET_RATES
+      this._approved.forEach(b=>{TARGET_RATES[b.equipCode+'_'+b.productCode]=b.newRate;});
+      this._loaded=true;
+    }catch(e){console.error('BDR load error:',e);this._loaded=true;}
   },
 
-  // Get current target rate (from TARGET_RATES, overridden by approved BDR)
+  // Seed default rates to DB (one-time)
+  async seedDefaultRates(){
+    try{
+      const dbRates=await API.getRates();
+      if(dbRates.length>0)return; // Already seeded
+      const rates=[];
+      Object.entries(TARGET_RATES).forEach(([key,rate])=>{
+        // Keys are EQUIP_PRODUCT, e.g. "WV-SHEAR-AS1_P-SHR-001"
+        const idx=key.indexOf('_');
+        if(idx<0)return;
+        const equipCode=key.substring(0,idx);
+        const productCode=key.substring(idx+1);
+        rates.push({equipCode,productCode,rate});
+      });
+      if(rates.length>0)await API.seedRates(rates);
+    }catch(e){console.error('Rate seed error:',e);}
+  },
+
+  // Get current target rate (TARGET_RATES already has BDR overrides applied)
   getEffectiveTarget(equipCode,productCode){
-    const bdr=this.getBDR(equipCode,productCode);
-    if(bdr)return bdr.newRate;
     return TARGET_RATES[equipCode+'_'+productCode]||0;
   },
 
-  // Submit a pending BDR for admin review
-  submitPending(record){
-    const d=this._load();
-    // Don't duplicate pending for same combo
-    const existing=d.pending.findIndex(p=>p.equipCode===record.equipCode&&p.productCode===record.productCode);
-    if(existing>=0)d.pending[existing]=record;
-    else d.pending.push(record);
-    this._save();
+  // Submit a pending BDR for admin review (async, calls server)
+  async submitPending(record){
+    try{
+      const result=await API.submitBDR({
+        equipCode:record.equipCode,productCode:record.productCode,
+        detectedRate:record.newRate,currentTarget:record.currentTarget,
+        hoursCount:record.hoursCount,totalGood:record.totalGood,
+        shiftDate:record.date,operators:record.operators
+      });
+      // Refresh local cache
+      await this.loadFromServer();
+      return result;
+    }catch(e){console.error('BDR submit error:',e);}
   },
 
-  // Admin approves a pending BDR
-  approve(idx,approvedBy){
-    const d=this._load();
-    if(idx<0||idx>=d.pending.length)return;
-    const item=d.pending.splice(idx,1)[0];
-    const oldRate=TARGET_RATES[item.equipCode+'_'+item.productCode]||0;
-    const prevBdr=d.approved.find(b=>b.equipCode===item.equipCode&&b.productCode===item.productCode);
-    if(prevBdr){
-      // Archive old BDR to history
-      d.history.push({...prevBdr,archivedDate:new Date().toISOString(),replacedBy:item.newRate});
-      prevBdr.newRate=item.newRate;prevBdr.avgRate=item.avgRate;prevBdr.date=item.date;
-      prevBdr.operators=item.operators;prevBdr.hoursCount=item.hoursCount;prevBdr.approvedBy=approvedBy;prevBdr.approvedDate=new Date().toISOString();
-    } else {
-      d.approved.push({...item,approvedBy,approvedDate:new Date().toISOString()});
-    }
-    // Log to history
-    d.history.push({equipCode:item.equipCode,productCode:item.productCode,oldRate:prevBdr?prevBdr.newRate:oldRate,newRate:item.newRate,
-      date:item.date,operators:item.operators,approvedBy,approvedDate:new Date().toISOString(),action:'approved'});
-    // Update the live TARGET_RATES
-    TARGET_RATES[item.equipCode+'_'+item.productCode]=item.newRate;
-    this._save();
+  // Admin approves a pending BDR (async)
+  async approve(bdrId,approvedBy){
+    try{
+      const result=await API.approveBDR(bdrId,approvedBy);
+      // Update live TARGET_RATES immediately
+      const bdr=this._pending.find(b=>b.id===bdrId);
+      if(bdr)TARGET_RATES[bdr.equipCode+'_'+bdr.productCode]=bdr.newRate;
+      await this.loadFromServer();
+      return result;
+    }catch(e){console.error('BDR approve error:',e);}
   },
 
-  // Admin declines a pending BDR
-  decline(idx,declinedBy,reason){
-    const d=this._load();
-    if(idx<0||idx>=d.pending.length)return;
-    const item=d.pending.splice(idx,1)[0];
-    d.history.push({...item,declinedBy,declinedDate:new Date().toISOString(),reason,action:'declined'});
-    this._save();
+  // Admin declines a pending BDR (async)
+  async decline(bdrId,declinedBy,reason){
+    try{
+      await API.declineBDR(bdrId,declinedBy,reason);
+      await this.loadFromServer();
+    }catch(e){console.error('BDR decline error:',e);}
   },
 
-  getPending(){return this._load().pending;},
-  getApproved(){return this._load().approved;},
-  getHistory(){return this._load().history;},
+  getPending(){return this._pending;},
+  getApproved(){return this._approved;},
+  getHistory(){return this._history;},
+  getRateHistory(){return this._rateHistory;},
 
   // Detect if a shift's data qualifies as a new BDR
   // Requires: 8+ hours, 80%+ above current target
@@ -1625,7 +1669,6 @@ const BDR={
     if(eligible.length<8)return null; // Must sustain for 8+ hours
     const currentTarget=this.getEffectiveTarget(equipCode,productCode);
     if(!currentTarget||currentTarget<=0)return null;
-    // Calculate average rate per hour (units per available minute × 60)
     let totalGood=0,totalAvailMins=0;
     eligible.forEach(hr=>{
       totalGood+=parseInt(hr.goodUnits||0);
@@ -1634,20 +1677,16 @@ const BDR={
     });
     if(totalAvailMins<=0)return null;
     const avgRate=Math.round(totalGood/eligible.length);
-    // Only qualifies if average exceeds current target
     if(avgRate<=currentTarget)return null;
-    // Check that individual hours are consistently above target (at least 80% of hours)
     const aboveTarget=eligible.filter(hr=>parseInt(hr.goodUnits||0)>=hr.target).length;
     if(aboveTarget/eligible.length<0.8)return null;
     return{
       equipCode,productCode,date:shiftDate||today(),operators:operators||[],
       hoursCount:eligible.length,avgRate,newRate:avgRate,
-      currentTarget,totalGood,id:Date.now()+'-'+Math.random().toString(36).substr(2,6)
+      currentTarget,totalGood
     };
   }
 };
-// On init, apply any approved BDRs to TARGET_RATES
-(function(){const approved=BDR.getApproved();approved.forEach(b=>{TARGET_RATES[b.equipCode+'_'+b.productCode]=b.newRate;});})();
 
 // ── CONFIRM DIALOG ──
 let _confirmResolve=null;
@@ -3595,6 +3634,7 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   const [dbExpanded,setDbExpanded]=useState(null);
   // Load users when tab switches
   useEffect(()=>{if(tab==='users'){API.getUsers().then(u=>setUsers(u)).catch(e=>setUserMsg('Error loading users: '+e.message));}},[tab]);
+  useEffect(()=>{if(tab==='rates'){BDR.loadFromServer().then(()=>refreshBdr());}},[tab]);
   // Load data when tab switches
   useEffect(()=>{if(tab==='data'){loadDbRecords();}},[tab]);
   function loadDbRecords(){
@@ -3637,12 +3677,13 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   const [bdrPending,setBdrPending]=useState(BDR.getPending());
   const [bdrApproved,setBdrApproved]=useState(BDR.getApproved());
   const [bdrHistory,setBdrHistory]=useState(BDR.getHistory());
+  const [bdrRateHistory,setBdrRateHistory]=useState(BDR.getRateHistory());
   const [bdrHistFilter,setBdrHistFilter]=useState('all');
   const [rateSearch,setRateSearch]=useState('');
   const [histSearch,setHistSearch]=useState('');
-  function refreshBdr(){setBdrPending(BDR.getPending());setBdrApproved(BDR.getApproved());setBdrHistory(BDR.getHistory());}
-  function approveBdr(idx){BDR.approve(idx,master.supervisors[0]||'Admin');refreshBdr();showToast('BDR approved — target rate updated');}
-  function declineBdr(idx){BDR.decline(idx,master.supervisors[0]||'Admin','Declined by admin');refreshBdr();showToast('BDR declined');}
+  function refreshBdr(){setBdrPending(BDR.getPending());setBdrApproved(BDR.getApproved());setBdrHistory(BDR.getHistory());setBdrRateHistory(BDR.getRateHistory());}
+  async function approveBdr(bdrId){await BDR.approve(bdrId,master.supervisors[0]||'Admin');refreshBdr();showToast('BDR approved — target rate updated');}
+  async function declineBdr(bdrId){await BDR.decline(bdrId,master.supervisors[0]||'Admin','Declined by admin');refreshBdr();showToast('BDR declined');}
   // Equipment helpers - merge INIT_EQUIPMENT with master overrides
   const equipList=useMemo(()=>{
     const custom=master.customEquipment||[];
@@ -3791,8 +3832,8 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
                 h('td',{style:{fontSize:12}},b.date),
                 h('td',{style:{fontSize:11}},(b.operators||[]).join(', ')),
                 h('td',null,h('div',{style:{display:'flex',gap:4}},
-                  h('button',{className:'btn btn-primary btn-sm',onClick:()=>approveBdr(i),style:{fontSize:11,padding:'3px 8px'}},'Approve'),
-                  h('button',{className:'btn btn-sm',onClick:()=>declineBdr(i),style:{fontSize:11,padding:'3px 8px',background:'#FF3B30',color:'#fff'}},'Decline')
+                  h('button',{className:'btn btn-primary btn-sm',onClick:()=>approveBdr(b.id),style:{fontSize:11,padding:'3px 8px'}},'Approve'),
+                  h('button',{className:'btn btn-sm',onClick:()=>declineBdr(b.id),style:{fontSize:11,padding:'3px 8px',background:'#FF3B30',color:'#fff'}},'Decline')
                 ))
               )
             ))
@@ -3829,28 +3870,56 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
         )
       ),
 
-      // Rate change history
+      // Rate change history (from server)
       h('div',{className:'admin-storage-section'},
         h('div',{className:'admin-storage-title'},'Rate Change History'),
+        h('p',{style:{fontSize:12,color:'var(--jm-text-sec)',marginBottom:10}},'Complete audit trail of all target rate changes with previous rates and effective dates.'),
         h('div',{style:{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap',alignItems:'center'}},
-          ['all','approved','declined'].map(f=>h('button',{key:f,className:'btn btn-sm'+(bdrHistFilter===f?' btn-primary':' btn-secondary'),onClick:()=>setBdrHistFilter(f),style:{fontSize:11,padding:'3px 10px'}},f.charAt(0).toUpperCase()+f.slice(1))),
-          h('input',{placeholder:'Search history...',value:histSearch,onChange:e=>setHistSearch(e.target.value),style:{height:28,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:11,fontFamily:'inherit',marginLeft:'auto',maxWidth:200}})
+          h('input',{placeholder:'Search equipment or product...',value:histSearch,onChange:e=>setHistSearch(e.target.value),style:{height:28,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:11,fontFamily:'inherit',maxWidth:300}})
         ),
-        bdrHistory.filter(h2=>{
-          if(bdrHistFilter!=='all'&&h2.action!==bdrHistFilter)return false;
+        bdrRateHistory.filter(h2=>{
           if(!histSearch)return true;const s=histSearch.toLowerCase();
           return getEquipName(h2.equipCode).toLowerCase().includes(s)||getProductName(h2.productCode).toLowerCase().includes(s);
         }).length===0
           ?h('p',{style:{fontSize:13,color:'var(--jm-text-ter)',textAlign:'center',padding:16}},'No rate change history')
           :h('table',{className:'admin-table'},
-            h('thead',null,h('tr',null,h('th',null,'Date'),h('th',null,'Equipment'),h('th',null,'Product'),h('th',{className:'num'},'Old'),h('th',{className:'num'},'New'),h('th',null,'Action'),h('th',null,'By'))),
-            h('tbody',null,bdrHistory.filter(h2=>{
-              if(bdrHistFilter!=='all'&&h2.action!==bdrHistFilter)return false;
+            h('thead',null,h('tr',null,h('th',null,'Date Changed'),h('th',null,'Equipment'),h('th',null,'Product'),h('th',{className:'num'},'Previous Rate'),h('th',{className:'num'},'New Rate'),h('th',null,'Changed By'),h('th',null,'Notes'))),
+            h('tbody',null,bdrRateHistory.filter(h2=>{
               if(!histSearch)return true;const s=histSearch.toLowerCase();
               return getEquipName(h2.equipCode).toLowerCase().includes(s)||getProductName(h2.productCode).toLowerCase().includes(s);
-            }).reverse().map((h2,i)=>
+            }).map((h2,i)=>
               h('tr',{key:i},
-                h('td',{style:{fontSize:12}},h2.approvedDate?h2.approvedDate.split('T')[0]:h2.declinedDate?h2.declinedDate.split('T')[0]:h2.date||'—'),
+                h('td',{style:{fontSize:12}},h2.changedAt?new Date(h2.changedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'),
+                h('td',{style:{fontSize:12}},getEquipName(h2.equipCode)),
+                h('td',{style:{fontSize:12}},getProductName(h2.productCode)),
+                h('td',{className:'num'},h2.oldRate),
+                h('td',{className:'num',style:{fontWeight:700,color:'#34C759'}},h2.newRate),
+                h('td',{style:{fontSize:12}},h2.changedBy||'—'),
+                h('td',{style:{fontSize:11,color:'var(--jm-text-sec)',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis'}},h2.notes||'—')
+              )
+            ))
+          ),
+      ),
+
+      // BDR decision history (approved/declined)
+      h('div',{className:'admin-storage-section'},
+        h('div',{className:'admin-storage-title'},'BDR Decision Log'),
+        h('div',{style:{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap',alignItems:'center'}},
+          ['all','approved','declined'].map(f=>h('button',{key:f,className:'btn btn-sm'+(bdrHistFilter===f?' btn-primary':' btn-secondary'),onClick:()=>setBdrHistFilter(f),style:{fontSize:11,padding:'3px 10px'}},f.charAt(0).toUpperCase()+f.slice(1)))
+        ),
+        bdrHistory.filter(h2=>{
+          if(bdrHistFilter!=='all'&&h2.action!==bdrHistFilter)return false;
+          return true;
+        }).length===0
+          ?h('p',{style:{fontSize:13,color:'var(--jm-text-ter)',textAlign:'center',padding:16}},'No BDR decisions yet')
+          :h('table',{className:'admin-table'},
+            h('thead',null,h('tr',null,h('th',null,'Shift Date'),h('th',null,'Equipment'),h('th',null,'Product'),h('th',{className:'num'},'Current'),h('th',{className:'num'},'BDR Rate'),h('th',null,'Decision'),h('th',null,'By'))),
+            h('tbody',null,bdrHistory.filter(h2=>{
+              if(bdrHistFilter!=='all'&&h2.action!==bdrHistFilter)return false;
+              return true;
+            }).map((h2,i)=>
+              h('tr',{key:i},
+                h('td',{style:{fontSize:12}},h2.date||'—'),
                 h('td',{style:{fontSize:12}},getEquipName(h2.equipCode)),
                 h('td',{style:{fontSize:12}},getProductName(h2.productCode)),
                 h('td',{className:'num'},h2.oldRate||h2.currentTarget||'—'),
@@ -4498,10 +4567,16 @@ function AppWrapper(){
   const [authChecked,setAuthChecked]=useState(false);
 
   useEffect(()=>{
-    API.me().then(user=>{setAuthUser(user);setAuthChecked(true);}).catch(()=>setAuthChecked(true));
+    API.me().then(async user=>{
+      setAuthUser(user);setAuthChecked(true);
+      if(user){await BDR.seedDefaultRates();await BDR.loadFromServer();}
+    }).catch(()=>setAuthChecked(true));
   },[]);
 
-  function handleLogin(user){setAuthUser(user);}
+  async function handleLogin(user){
+    setAuthUser(user);
+    await BDR.seedDefaultRates();await BDR.loadFromServer();
+  }
   function handleLogout(){API.logout().then(()=>setAuthUser(null)).catch(()=>setAuthUser(null));}
 
   if(!authChecked)return h('div',{className:'login-bg',style:{justifyContent:'center'}},
@@ -4666,7 +4741,7 @@ function App({authUser,onLogout}){
       showToast('Hours removed from '+getEquipName(ec));
     }
   }
-  function handleSubmit(){
+  async function handleSubmit(){
     queueData({shiftData,selectedEquip,equipData});setDataVersion(v=>v+1);
     // BDR detection per equipment — merge in-memory + server-stored hours
     const bdrDetected=[];
@@ -4678,8 +4753,7 @@ function App({authUser,onLogout}){
         serverHours[entry.equipCode][entry.hourIdx||entry.hourData.hourIdx]=entry.hourData;
       }
     });
-    selectedEquip.forEach(ec=>{
-      // Merge: start with in-memory equipData, overlay with server data by hourIdx
+    for(const ec of selectedEquip){
       const memHrs=equipData[ec]||[];
       const srvMap=serverHours[ec]||{};
       const merged={};
@@ -4687,13 +4761,13 @@ function App({authUser,onLogout}){
       Object.keys(srvMap).forEach(hi=>{const h=srvMap[hi];if(!merged[hi]||!merged[hi].goodUnits)merged[hi]=h;});
       const allHrs=Object.values(merged);
       const products=[...new Set(allHrs.map(h2=>h2.productCode).filter(Boolean))];
-      products.forEach(pc=>{
+      for(const pc of products){
         const prodHrs=allHrs.filter(h2=>h2.productCode===pc);
         const ops=[...new Set(prodHrs.flatMap(h2=>h2.operators||[]).filter(Boolean))];
         const result=BDR.detectBDR(ec,pc,prodHrs,shiftData.shiftDate,ops);
-        if(result){BDR.submitPending(result);bdrDetected.push(result);}
-      });
-    });
+        if(result){await BDR.submitPending(result);bdrDetected.push(result);}
+      }
+    }
     if(bdrDetected.length>0){
       showToast('Shift submitted — '+bdrDetected.length+' new best rate'+(bdrDetected.length>1?'s':'')+' detected (pending approval)');
     } else {

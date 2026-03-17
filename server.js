@@ -64,6 +64,43 @@ async function initDB() {
       value JSONB NOT NULL,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS target_rates (
+      id SERIAL PRIMARY KEY,
+      equip_code VARCHAR(50) NOT NULL,
+      product_code VARCHAR(50) NOT NULL,
+      rate INTEGER NOT NULL,
+      source VARCHAR(20) DEFAULT 'default',
+      effective_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      set_by VARCHAR(100),
+      UNIQUE(equip_code, product_code)
+    );
+    CREATE TABLE IF NOT EXISTS target_rate_history (
+      id SERIAL PRIMARY KEY,
+      equip_code VARCHAR(50) NOT NULL,
+      product_code VARCHAR(50) NOT NULL,
+      old_rate INTEGER NOT NULL,
+      new_rate INTEGER NOT NULL,
+      source VARCHAR(20) DEFAULT 'bdr',
+      changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      changed_by VARCHAR(100),
+      notes TEXT
+    );
+    CREATE TABLE IF NOT EXISTS bdr_records (
+      id SERIAL PRIMARY KEY,
+      equip_code VARCHAR(50) NOT NULL,
+      product_code VARCHAR(50) NOT NULL,
+      detected_rate INTEGER NOT NULL,
+      current_target INTEGER NOT NULL,
+      hours_count INTEGER NOT NULL,
+      total_good INTEGER NOT NULL,
+      shift_date VARCHAR(10),
+      operators TEXT[],
+      status VARCHAR(20) DEFAULT 'pending',
+      decided_by VARCHAR(100),
+      decided_at TIMESTAMP,
+      decline_reason TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   // Create default admin user if no users exist
@@ -677,6 +714,163 @@ function registerRoutes() {
     }
   });
 
+
+  // ══════════════════════════════════════════
+  // ── BDR & TARGET RATE MANAGEMENT ──
+  // ══════════════════════════════════════════
+
+  // Get all current target rates (from DB, falling back to hardcoded defaults)
+  app.get('/api/rates', requireAuth, async (req, res) => {
+    try {
+      const { rows } = await pool.query('SELECT equip_code, product_code, rate, source, effective_date, set_by FROM target_rates ORDER BY equip_code, product_code');
+      res.json(rows);
+    } catch (err) {
+      console.error('Rates fetch error:', err);
+      res.status(500).json({ error: 'Failed to fetch rates' });
+    }
+  });
+
+  // Seed default rates into DB (called once from client on first load)
+  app.post('/api/rates/seed', requireAuth, async (req, res) => {
+    try {
+      const { rates } = req.body; // [{equipCode, productCode, rate}, ...]
+      if (!Array.isArray(rates)) return res.status(400).json({ error: 'Expected rates array' });
+      let seeded = 0;
+      for (const r of rates) {
+        const result = await pool.query(
+          `INSERT INTO target_rates (equip_code, product_code, rate, source, set_by)
+           VALUES ($1, $2, $3, 'default', 'system')
+           ON CONFLICT (equip_code, product_code) DO NOTHING`,
+          [r.equipCode, r.productCode, r.rate]
+        );
+        seeded += result.rowCount;
+      }
+      res.json({ ok: true, seeded });
+    } catch (err) {
+      console.error('Rates seed error:', err);
+      res.status(500).json({ error: 'Failed to seed rates' });
+    }
+  });
+
+  // Get rate change history
+  app.get('/api/rates/history', requireAuth, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        'SELECT * FROM target_rate_history ORDER BY changed_at DESC LIMIT 200'
+      );
+      res.json(rows);
+    } catch (err) {
+      console.error('Rate history fetch error:', err);
+      res.status(500).json({ error: 'Failed to fetch rate history' });
+    }
+  });
+
+  // Get all BDR records (pending + decided)
+  app.get('/api/bdr', requireAuth, async (req, res) => {
+    try {
+      const status = req.query.status; // 'pending', 'approved', 'declined', or omit for all
+      let query = 'SELECT * FROM bdr_records';
+      const params = [];
+      if (status) { query += ' WHERE status = $1'; params.push(status); }
+      query += ' ORDER BY created_at DESC';
+      const { rows } = await pool.query(query, params);
+      res.json(rows);
+    } catch (err) {
+      console.error('BDR fetch error:', err);
+      res.status(500).json({ error: 'Failed to fetch BDR records' });
+    }
+  });
+
+  // Submit a new pending BDR
+  app.post('/api/bdr', requireAuth, async (req, res) => {
+    try {
+      const { equipCode, productCode, detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators } = req.body;
+      if (!equipCode || !productCode || !detectedRate) return res.status(400).json({ error: 'Missing required fields' });
+      // Check if there's already a pending BDR for this combo — update it if so
+      const existing = await pool.query(
+        "SELECT id FROM bdr_records WHERE equip_code = $1 AND product_code = $2 AND status = 'pending'",
+        [equipCode, productCode]
+      );
+      if (existing.rows.length > 0) {
+        await pool.query(
+          `UPDATE bdr_records SET detected_rate = $1, current_target = $2, hours_count = $3,
+           total_good = $4, shift_date = $5, operators = $6, created_at = NOW()
+           WHERE id = $7`,
+          [detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators || [], existing.rows[0].id]
+        );
+        return res.json({ ok: true, id: existing.rows[0].id, updated: true });
+      }
+      const result = await pool.query(
+        `INSERT INTO bdr_records (equip_code, product_code, detected_rate, current_target, hours_count, total_good, shift_date, operators)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+        [equipCode, productCode, detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators || []]
+      );
+      res.json({ ok: true, id: result.rows[0].id });
+    } catch (err) {
+      console.error('BDR submit error:', err);
+      res.status(500).json({ error: 'Failed to submit BDR' });
+    }
+  });
+
+  // Approve a pending BDR
+  app.post('/api/bdr/:id/approve', requireAdmin, async (req, res) => {
+    try {
+      const bdrId = parseInt(req.params.id);
+      const approvedBy = req.body.approvedBy || req.session.displayName || 'Admin';
+      // Get the BDR record
+      const { rows } = await pool.query("SELECT * FROM bdr_records WHERE id = $1 AND status = 'pending'", [bdrId]);
+      if (rows.length === 0) return res.status(404).json({ error: 'Pending BDR not found' });
+      const bdr = rows[0];
+      // Get current rate from target_rates table
+      const rateRow = await pool.query(
+        'SELECT rate FROM target_rates WHERE equip_code = $1 AND product_code = $2',
+        [bdr.equip_code, bdr.product_code]
+      );
+      const oldRate = rateRow.rows.length > 0 ? rateRow.rows[0].rate : bdr.current_target;
+      // Log rate change to history
+      await pool.query(
+        `INSERT INTO target_rate_history (equip_code, product_code, old_rate, new_rate, source, changed_by, notes)
+         VALUES ($1, $2, $3, $4, 'bdr', $5, $6)`,
+        [bdr.equip_code, bdr.product_code, oldRate, bdr.detected_rate, approvedBy,
+         'BDR from ' + bdr.shift_date + ' (' + bdr.hours_count + 'hrs, operators: ' + (bdr.operators || []).join(', ') + ')']
+      );
+      // Update or insert the target rate
+      await pool.query(
+        `INSERT INTO target_rates (equip_code, product_code, rate, source, effective_date, set_by)
+         VALUES ($1, $2, $3, 'bdr', NOW(), $4)
+         ON CONFLICT (equip_code, product_code) DO UPDATE SET rate = $3, source = 'bdr', effective_date = NOW(), set_by = $4`,
+        [bdr.equip_code, bdr.product_code, bdr.detected_rate, approvedBy]
+      );
+      // Mark BDR as approved
+      await pool.query(
+        "UPDATE bdr_records SET status = 'approved', decided_by = $1, decided_at = NOW() WHERE id = $2",
+        [approvedBy, bdrId]
+      );
+      res.json({ ok: true, oldRate, newRate: bdr.detected_rate });
+    } catch (err) {
+      console.error('BDR approve error:', err);
+      res.status(500).json({ error: 'Failed to approve BDR' });
+    }
+  });
+
+  // Decline a pending BDR
+  app.post('/api/bdr/:id/decline', requireAdmin, async (req, res) => {
+    try {
+      const bdrId = parseInt(req.params.id);
+      const declinedBy = req.body.declinedBy || req.session.displayName || 'Admin';
+      const reason = req.body.reason || 'Declined by admin';
+      const { rows } = await pool.query("SELECT * FROM bdr_records WHERE id = $1 AND status = 'pending'", [bdrId]);
+      if (rows.length === 0) return res.status(404).json({ error: 'Pending BDR not found' });
+      await pool.query(
+        "UPDATE bdr_records SET status = 'declined', decided_by = $1, decided_at = NOW(), decline_reason = $2 WHERE id = $3",
+        [declinedBy, reason, bdrId]
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('BDR decline error:', err);
+      res.status(500).json({ error: 'Failed to decline BDR' });
+    }
+  });
 
   // ── AI INSIGHTS (Claude API proxy) ──
   app.post('/api/ai/ask', requireAuth, async (req, res) => {
