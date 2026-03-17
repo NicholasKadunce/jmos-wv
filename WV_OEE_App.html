@@ -648,11 +648,21 @@ input[type=number]{-moz-appearance:textfield}
 .tv-equip-name{display:flex;flex-direction:column;gap:1px;min-width:0;flex-shrink:1}
 .tv-equip-title{font-size:14px;font-weight:700;letter-spacing:-0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tv-equip-product{font-size:9px;opacity:0.7;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tv-oee-pills{display:flex;gap:5px;flex-shrink:0}
-.tv-oee-pill{background:#fff;border-radius:6px;padding:3px 8px;text-align:center;min-width:48px;border-left:3px solid;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
-.tv-oee-pill-val{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.5px}
-.tv-oee-pill-label{font-size:7px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;margin-top:0}
-.tv-oee-pill-range{background:rgba(255,255,255,0.9);border-left-style:dashed}
+.tv-oee-pills{display:flex;gap:5px;flex-shrink:0;align-items:center}
+.tv-oee-pill{background:#fff;border-radius:6px;padding:2px 6px;text-align:center;min-width:40px;border-left:3px solid;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.tv-oee-pill-val{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-0.3px}
+.tv-oee-pill-label{font-size:6px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px}
+.tv-oee-pill.oee-hero{padding:4px 10px;min-width:56px;border-left-width:4px;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+.tv-oee-pill.oee-hero .tv-oee-pill-val{font-size:18px;font-weight:900;letter-spacing:-0.5px}
+.tv-oee-pill.oee-hero .tv-oee-pill-label{font-size:7px}
+.tv-bar-row{display:flex;align-items:center;gap:4px;margin-bottom:2px}
+.tv-bar-label{font-size:8px;font-weight:600;color:#64748B;width:36px;text-align:right;flex-shrink:0}
+.tv-bar-track{flex:1;height:14px;background:#F1F5F9;border-radius:3px;position:relative;overflow:hidden}
+.tv-bar-fill{height:100%;border-radius:3px;position:relative;min-width:1px}
+.tv-bar-val{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:8px;font-weight:700;color:#fff}
+.tv-bar-val-out{font-size:8px;font-weight:700;flex-shrink:0;min-width:24px}
+.tv-bar-prev{height:100%;position:absolute;top:0;left:0;background:#D1D5DB;border-radius:3px;opacity:0.5}
+.tv-prev-info{font-size:7px;color:#94A3B8;padding:1px 8px;font-style:italic}
 .tv-summary-row{display:flex;gap:1px;background:var(--jm-border-light);flex-shrink:0}
 .tv-summary-stat{flex:1;text-align:center;padding:6px 4px;background:var(--jm-surface)}
 .tv-summary-val{display:block;font-size:14px;font-weight:800;color:var(--jm-navy);font-variant-numeric:tabular-nums}
@@ -3299,7 +3309,6 @@ function AnalyticsView({dataVersion,master}){
 }
 
 function TVView({dataVersion,master}){
-  const {ResponsiveContainer,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,Cell,ComposedChart,Line,ReferenceLine,Area,LabelList}=Recharts;
   const [processFilter,setProcessFilter]=useState('');
   const [timeRange,setTimeRange]=useState('today');
   const processes=[...new Set(INIT_EQUIPMENT.map(e=>e.process))].sort();
@@ -3390,15 +3399,39 @@ function TVView({dataVersion,master}){
       // Defect pareto — product-specific (current product)
       const defMap={};todayEq.forEach(r=>{if(currentProduct&&r.productCode!==currentProduct)return;r.defects.forEach(d=>{const c=d.defCode;if(!c)return;const nm=DEF_CODES[c]||('Code '+c);if(!defMap[nm])defMap[nm]={name:nm,qty:0,count:0};defMap[nm].qty+=parseInt(d.qty||0);defMap[nm].count++;});});
       const defPareto=Object.values(defMap).sort((ax,bx)=>bx.qty-ax.qty);
-      // Previous day with same equipment+product for comparison
-      const prevDayHours=(()=>{
-        if(!currentProduct)return[];
-        const cands=allRecords.filter(r=>r.equipCode===ec&&r.productCode===currentProduct&&r.date<todayStr);
-        if(cands.length===0)return[];
-        const maxDate=cands.reduce((mx,r)=>r.date>mx?r.date:mx,'');
-        return cands.filter(r=>r.date===maxDate).sort((a2,b2)=>a2.hourIdx-b2.hourIdx);
+      // Find the prior shift for same equipment+product
+      // If current is S1 today → prior is S2 yesterday (or most recent S2 with same product)
+      // If current is S2 today → prior is S1 today (or most recent S1 with same product)
+      const currentShift=s2.length>0?'2':(s1.length>0?'1':null);
+      const priorShift=(()=>{
+        if(!currentProduct||!currentShift)return{hours:[],operators:[],shiftLabel:''};
+        let priorHrs=[];let priorOps=[];let label='';
+        if(currentShift==='2'){
+          // Prior is S1 today with same product
+          priorHrs=s1.filter(r=>r.productCode===currentProduct);
+          if(priorHrs.length>0){label='S1 Today';priorOps=[...new Set(priorHrs.flatMap(r=>(r.operators||[])))];}
+        }
+        if(currentShift==='1'||priorHrs.length===0){
+          // Prior is most recent S2 (yesterday or before) with same product
+          const cands=allRecords.filter(r=>r.equipCode===ec&&r.productCode===currentProduct&&r.shiftNum==='2'&&r.date<todayStr);
+          if(cands.length>0){
+            const maxDate=cands.reduce((mx,r)=>r.date>mx?r.date:mx,'');
+            priorHrs=cands.filter(r=>r.date===maxDate).sort((a2,b2)=>a2.hourIdx-b2.hourIdx);
+            label='S2 '+maxDate.slice(5);priorOps=[...new Set(priorHrs.flatMap(r=>(r.operators||[])))];
+          }
+        }
+        if(priorHrs.length===0&&currentShift==='2'){
+          // Fallback: most recent S1 with same product before today
+          const cands=allRecords.filter(r=>r.equipCode===ec&&r.productCode===currentProduct&&r.shiftNum==='1'&&r.date<todayStr);
+          if(cands.length>0){
+            const maxDate=cands.reduce((mx,r)=>r.date>mx?r.date:mx,'');
+            priorHrs=cands.filter(r=>r.date===maxDate).sort((a2,b2)=>a2.hourIdx-b2.hourIdx);
+            label='S1 '+maxDate.slice(5);priorOps=[...new Set(priorHrs.flatMap(r=>(r.operators||[])))];
+          }
+        }
+        return{hours:priorHrs,operators:priorOps,shiftLabel:label};
       })();
-      return{ec,name:eqInfo.name,s1,s2,yestS2,currentProduct,oee,a,p,q,good,tgt,def,dtm,roee,ra,rp,rq,rgood,rtgt,rdef,rdtm,dtPareto,defPareto,prevDayHours,hasData:todayEq.length>0||yestS2.length>0};
+      return{ec,name:eqInfo.name,s1,s2,yestS2,currentProduct,currentShift,oee,a,p,q,good,tgt,def,dtm,roee,ra,rp,rq,rgood,rtgt,rdef,rdtm,dtPareto,defPareto,priorShift,hasData:todayEq.length>0||yestS2.length>0};
     }).filter(e=>e.hasData);
   },[activeEquipCodes,todayRecords,rangeRecords,allRecords]);
 
@@ -3438,28 +3471,28 @@ function TVView({dataVersion,master}){
     ):
     h('div',{className:'tv-grid',style:gridStyle},
     equipData.map(eq=>h('div',{key:eq.ec,className:'tv-equip-card'},
-      // Equipment header with OEE pills
+      // Equipment header with OEE pills — OEE stands out
       h('div',{className:'tv-equip-header'},
         h('div',{className:'tv-equip-name'},
           h('div',{className:'tv-equip-title'},eq.name),
           eq.currentProduct&&h('div',{className:'tv-equip-product'},'Running: ',getProductName(eq.currentProduct))
         ),
         h('div',{className:'tv-oee-pills'},
-          h('div',{className:'tv-oee-pill',style:{borderLeftColor:oeeColor(eq.oee)}},
+          h('div',{className:'tv-oee-pill oee-hero',style:{borderLeftColor:oeeColor(eq.oee)}},
             h('div',{className:'tv-oee-pill-label'},'OEE'),
             h('div',{className:'tv-oee-pill-val',style:{color:oeeColor(eq.oee)}},eq.oee.toFixed(1)+'%')
           ),
-          h('div',{className:'tv-oee-pill',style:{borderLeftColor:'#34C759'}},
+          h('div',{className:'tv-oee-pill',style:{borderLeftColor:oeeColor(eq.a)}},
             h('div',{className:'tv-oee-pill-label'},'A'),
-            h('div',{className:'tv-oee-pill-val',style:{color:'#34C759'}},eq.a.toFixed(1)+'%')
+            h('div',{className:'tv-oee-pill-val',style:{color:oeeColor(eq.a)}},eq.a.toFixed(0)+'%')
           ),
-          h('div',{className:'tv-oee-pill',style:{borderLeftColor:'#FF9500'}},
+          h('div',{className:'tv-oee-pill',style:{borderLeftColor:oeeColor(eq.p)}},
             h('div',{className:'tv-oee-pill-label'},'P'),
-            h('div',{className:'tv-oee-pill-val',style:{color:'#FF9500'}},eq.p.toFixed(1)+'%')
+            h('div',{className:'tv-oee-pill-val',style:{color:oeeColor(eq.p)}},eq.p.toFixed(0)+'%')
           ),
-          h('div',{className:'tv-oee-pill',style:{borderLeftColor:'#8B5CF6'}},
+          h('div',{className:'tv-oee-pill',style:{borderLeftColor:oeeColor(eq.q)}},
             h('div',{className:'tv-oee-pill-label'},'Q'),
-            h('div',{className:'tv-oee-pill-val',style:{color:'#8B5CF6'}},eq.q.toFixed(1)+'%')
+            h('div',{className:'tv-oee-pill-val',style:{color:oeeColor(eq.q)}},eq.q.toFixed(0)+'%')
           )
         )
       ),
@@ -3487,65 +3520,58 @@ function TVView({dataVersion,master}){
         )
       ),
 
-      // ── Charts: Waterfall + Paired Hourly ──
+      // ── Simple HTML bars: Hourly production with prior shift comparison ──
       (()=>{
-        const hourly=[];
-        if(eq.yestS2.length>0)eq.yestS2.forEach(hr=>hourly.push({label:'Y2-H'+hr.hourIdx,good:hr.goodUnits,target:hr.target,hourIdx:hr.hourIdx,shift:'Prior S2'}));
-        if(eq.s1.length>0)eq.s1.forEach(hr=>hourly.push({label:'S1-H'+hr.hourIdx,good:hr.goodUnits,target:hr.target,hourIdx:hr.hourIdx,shift:'Shift 1'}));
-        if(eq.s2.length>0)eq.s2.forEach(hr=>hourly.push({label:'S2-H'+hr.hourIdx,good:hr.goodUnits,target:hr.target,hourIdx:hr.hourIdx,shift:'Shift 2'}));
-        if(hourly.length===0)return null;
+        // Build current shift hours
+        const currentHrs=eq.currentShift==='2'?eq.s2:(eq.s1.length>0?eq.s1:[]);
+        if(currentHrs.length===0)return null;
+        const priorHrs=eq.priorShift.hours||[];
+        const priorOps=eq.priorShift.operators||[];
+        const priorLabel=eq.priorShift.shiftLabel||'';
+        // Find max value for scaling
+        const allVals=[...currentHrs.map(r=>r.goodUnits),...currentHrs.map(r=>r.target),...priorHrs.map(r=>r.goodUnits)];
+        const maxVal=Math.max(...allVals,1);
 
-        // Waterfall: cumulative gap
-        let cumGood=0,cumTarget=0;
-        const waterfallData=hourly.map(hr=>{cumGood+=hr.good;cumTarget+=hr.target;return{label:hr.label,gap:cumGood-cumTarget,cumGood,cumTarget};});
-
-        // Paired bars: current vs previous day
-        const prevHrs=eq.prevDayHours||[];
-        const pairedData=hourly.map(hr=>{
-          const prev=prevHrs.find(p=>p.hourIdx===hr.hourIdx);
-          return{label:hr.label,current:hr.good,target:hr.target,previous:prev?prev.goodUnits:null};
-        });
-
-        return h('div',{className:'tv-content-grid'},
-          // Left: Waterfall gap chart
-          h('div',{className:'tv-section'},
-            h('div',{className:'tv-section-title'},'Gap to Target'),
-            h('div',{className:'tv-chart-wrap'},
-              h(ResponsiveContainer,{width:'100%',height:'100%'},
-                h(BarChart,{data:waterfallData,margin:{top:8,right:4,bottom:2,left:-10}},
-                  h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E5EA',vertical:false}),
-                  h(XAxis,{dataKey:'label',tick:{fontSize:7},interval:Math.max(0,Math.floor(waterfallData.length/6)-1),height:20}),
-                  h(YAxis,{tick:{fontSize:8},tickFormatter:v=>v>=1000||v<=-1000?(v/1000).toFixed(0)+'k':v}),
-                  h(Tooltip,{contentStyle:{borderRadius:6,border:'1px solid #E5E5EA',fontSize:10},
-                    formatter:(val,name,props)=>{const d=props.payload;return[(val>=0?'+':'')+val.toLocaleString()+' units','Gap (Actual: '+d.cumGood.toLocaleString()+', Target: '+d.cumTarget.toLocaleString()+')'];}}),
-                  h(ReferenceLine,{y:0,stroke:'#94A3B8',strokeWidth:1.5}),
-                  h(Bar,{dataKey:'gap',name:'Gap',radius:[2,2,0,0],isAnimationActive:false},
-                    waterfallData.map((d,i)=>h(Cell,{key:i,fill:d.gap>=0?'#34C759':'#FF3B30'}))
-                  )
-                )
-              )
+        return h('div',{className:'tv-section',style:{flex:1,minHeight:0,overflowY:'auto',padding:'4px 8px'}},
+          // Section title with prior shift info
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}},
+            h('div',{className:'tv-section-title',style:{margin:0}},'Hourly Production — S'+eq.currentShift),
+            priorLabel&&h('div',{style:{fontSize:7,color:'#94A3B8',display:'flex',alignItems:'center',gap:4}},
+              h('span',{style:{width:16,height:6,background:'#D1D5DB',borderRadius:2,display:'inline-block'}}),
+              'Prior: ',priorLabel
             )
           ),
-
-          // Right: Paired hourly bars (current green/red + previous grey)
-          h('div',{className:'tv-section'},
-            h('div',{className:'tv-section-title'},'Hourly: Current',prevHrs.length>0?' vs Prior Run':''),
-            h('div',{className:'tv-chart-wrap'},
-              h(ResponsiveContainer,{width:'100%',height:'100%'},
-                h(BarChart,{data:pairedData,margin:{top:8,right:4,bottom:2,left:-10}},
-                  h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E5EA',vertical:false}),
-                  h(XAxis,{dataKey:'label',tick:{fontSize:7},interval:Math.max(0,Math.floor(pairedData.length/6)-1),height:20}),
-                  h(YAxis,{tick:{fontSize:8}}),
-                  h(Tooltip,{contentStyle:{borderRadius:6,border:'1px solid #E5E5EA',fontSize:10},
-                    formatter:(val,name)=>[val!=null?val.toLocaleString():'—',name==='previous'?'Prior Run':'Current']}),
-                  h(ReferenceLine,{y:pairedData[0].target,stroke:'#F0A500',strokeDasharray:'4 3',strokeWidth:1,label:{value:'Tgt',position:'insideTopRight',fontSize:7,fill:'#F0A500'}}),
-                  prevHrs.length>0&&h(Bar,{dataKey:'previous',name:'Previous',radius:[2,2,0,0],fill:'#D1D5DB',isAnimationActive:false,barSize:pairedData.length>8?6:10}),
-                  h(Bar,{dataKey:'current',name:'Current',radius:[2,2,0,0],isAnimationActive:false,barSize:pairedData.length>8?6:10},
-                    pairedData.map((d,i)=>h(Cell,{key:i,fill:d.current>=d.target?'#34C759':'#FF3B30'}))
-                  )
+          // Prior operators
+          priorOps.length>0&&h('div',{className:'tv-prev-info'},'Prior operators: ',priorOps.join(', ')),
+          // Hour rows
+          currentHrs.map((hr,i)=>{
+            const pct=maxVal>0?(hr.goodUnits/maxVal)*100:0;
+            const tgtPct=maxVal>0?(hr.target/maxVal)*100:0;
+            const prev=priorHrs.find(p=>p.hourIdx===hr.hourIdx);
+            const prevPct=prev&&maxVal>0?(prev.goodUnits/maxVal)*100:0;
+            const onTrack=hr.goodUnits>=hr.target;
+            const barColor=onTrack?'#34C759':'#FF3B30';
+            return h('div',{key:i,className:'tv-bar-row'},
+              h('div',{className:'tv-bar-label'},'H'+hr.hourIdx),
+              h('div',{className:'tv-bar-track'},
+                // Prior shift ghost bar
+                prev&&h('div',{className:'tv-bar-prev',style:{width:prevPct+'%'}}),
+                // Target marker line
+                h('div',{style:{position:'absolute',left:tgtPct+'%',top:0,bottom:0,width:2,background:'#F59E0B',zIndex:2,borderRadius:1}}),
+                // Current bar
+                h('div',{className:'tv-bar-fill',style:{width:pct+'%',background:barColor,zIndex:1}},
+                  pct>18&&h('div',{className:'tv-bar-val'},hr.goodUnits)
                 )
-              )
-            )
+              ),
+              pct<=18&&h('div',{className:'tv-bar-val-out',style:{color:barColor}},hr.goodUnits)
+            );
+          }),
+          // Legend row
+          h('div',{style:{display:'flex',gap:8,marginTop:2,justifyContent:'center'}},
+            h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:6,background:'#34C759',borderRadius:1,display:'inline-block'}}),'At/Over'),
+            h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:6,background:'#FF3B30',borderRadius:1,display:'inline-block'}}),'Under'),
+            h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:2,background:'#F59E0B',borderRadius:1,display:'inline-block'}}),'Target'),
+            priorLabel&&h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:6,background:'#D1D5DB',borderRadius:1,display:'inline-block'}}),'Prior')
           )
         );
       })()
