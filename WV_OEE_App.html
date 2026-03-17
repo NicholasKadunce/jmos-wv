@@ -672,7 +672,7 @@ input[type=number]{-moz-appearance:textfield}
 .tv-section-title{font-size:9px;font-weight:700;color:var(--jm-navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;flex-shrink:0}
 .tv-chart-wrap{flex:1;min-height:0}
 .tv-no-data{font-size:11px;color:var(--jm-text-ter);font-style:italic;padding:8px 0}
-@media(max-width:768px){.tv-display{height:auto}.tv-grid{grid-template-columns:1fr!important;overflow-y:auto}.tv-equip-card{min-height:280px}.tv-content-grid{grid-template-columns:1fr}.tv-equip-header{flex-direction:column;align-items:flex-start}.tv-oee-pills{width:100%}.tv-summary-row{flex-wrap:wrap}.tv-summary-stat{flex:1 1 45%}.tv-equip-title{font-size:16px}.tv-oee-pill-val{font-size:14px}.tv-summary-val{font-size:16px}.tv-section{padding:8px 12px}.tv-section-title{font-size:11px;margin-bottom:6px}}
+@media(max-width:1024px){.tv-display{height:auto;overflow-y:auto}.tv-grid{grid-template-columns:1fr!important;overflow-y:auto;overflow-x:hidden;max-height:none}.tv-equip-card{min-height:auto}.tv-content-grid{grid-template-columns:1fr}.tv-equip-header{flex-direction:column;align-items:flex-start}.tv-oee-pills{width:100%;flex-wrap:wrap}.tv-summary-row{flex-wrap:wrap}.tv-summary-stat{flex:1 1 45%}.tv-equip-title{font-size:16px}.tv-oee-pill-val{font-size:14px}.tv-summary-val{font-size:16px}.tv-section{padding:8px 12px}.tv-section-title{font-size:11px;margin-bottom:6px}.tv-chart-wrap{min-height:120px}}
 
 /* Grid & Cards */
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
@@ -1580,7 +1580,10 @@ const BDR={
       ]);
       this._pending=pending.map(b=>({id:b.id,equipCode:b.equip_code,productCode:b.product_code,
         newRate:b.detected_rate,currentTarget:b.current_target,hoursCount:b.hours_count,
-        totalGood:b.total_good,date:b.shift_date,operators:b.operators||[],createdAt:b.created_at}));
+        totalGood:b.total_good,date:b.shift_date,operators:b.operators||[],createdAt:b.created_at,
+        totalDTMinutes:b.total_dt_minutes||0,totalDefects:b.total_defects||0,
+        availability:parseFloat(b.availability)||0,performance:parseFloat(b.performance)||0,
+        quality:parseFloat(b.quality)||0,oee:parseFloat(b.oee)||0}));
       this._approved=approved.map(b=>({id:b.id,equipCode:b.equip_code,productCode:b.product_code,
         newRate:b.detected_rate,currentTarget:b.current_target,hoursCount:b.hours_count,
         totalGood:b.total_good,date:b.shift_date,operators:b.operators||[],
@@ -1629,7 +1632,10 @@ const BDR={
         equipCode:record.equipCode,productCode:record.productCode,
         detectedRate:record.newRate,currentTarget:record.currentTarget,
         hoursCount:record.hoursCount,totalGood:record.totalGood,
-        shiftDate:record.date,operators:record.operators
+        shiftDate:record.date,operators:record.operators,
+        totalDTMinutes:record.totalDTMinutes||0,totalDefects:record.totalDefects||0,
+        availability:record.availability||0,performance:record.performance||0,
+        quality:record.quality||0,oee:record.oee||0
       });
       // Refresh local cache
       await this.loadFromServer();
@@ -1669,10 +1675,15 @@ const BDR={
     if(eligible.length<8)return null; // Must sustain for 8+ hours
     const currentTarget=this.getEffectiveTarget(equipCode,productCode);
     if(!currentTarget||currentTarget<=0)return null;
-    let totalGood=0,totalAvailMins=0;
+    let totalGood=0,totalAvailMins=0,totalSchedMins=0,totalDTMinutes=0,totalDefects=0;
     eligible.forEach(hr=>{
       totalGood+=parseInt(hr.goodUnits||0);
-      const avail=60-hr.scheduledMins-totalDTMins(hr.downtime);
+      const sm=hr.scheduledMins||0;
+      const dtm=totalDTMins(hr.downtime);
+      totalSchedMins+=sm;
+      totalDTMinutes+=dtm;
+      totalDefects+=(hr.defects||[]).reduce((s,d)=>s+parseInt(d.qty||0),0);
+      const avail=60-sm-dtm;
       totalAvailMins+=Math.max(avail,0);
     });
     if(totalAvailMins<=0)return null;
@@ -1680,11 +1691,48 @@ const BDR={
     if(avgRate<=currentTarget)return null;
     const aboveTarget=eligible.filter(hr=>parseInt(hr.goodUnits||0)>=hr.target).length;
     if(aboveTarget/eligible.length<0.8)return null;
+    // Calculate OEE metrics for the BDR record
+    const totalPlannedMins=eligible.length*60;
+    const totalRunMins=totalPlannedMins-totalSchedMins-totalDTMinutes;
+    const availability=totalPlannedMins>0?Math.round((totalPlannedMins-totalSchedMins-totalDTMinutes)/(totalPlannedMins-totalSchedMins)*1000)/10:0;
+    const totalTarget=eligible.reduce((s,hr)=>s+(hr.target||0),0);
+    const performance=totalTarget>0?Math.round(totalGood/totalTarget*1000)/10:0;
+    const quality=totalGood>0?Math.round((totalGood-totalDefects)/totalGood*1000)/10:100;
+    const oee=Math.round(availability*performance*quality/10000*10)/10;
     return{
       equipCode,productCode,date:shiftDate||today(),operators:operators||[],
       hoursCount:eligible.length,avgRate,newRate:avgRate,
-      currentTarget,totalGood
+      currentTarget,totalGood,totalDTMinutes,totalDefects,
+      availability,performance,quality,oee
     };
+  },
+
+  // Scan server data for BDR candidates (retroactive detection)
+  async scanServerData(cache){
+    const groups={};
+    cache.forEach(entry=>{
+      if(!entry.equipCode||!entry.hourData)return;
+      const sd=entry.shiftData||{};
+      const hr=entry.hourData;
+      const pc=hr.productCode;
+      if(!pc)return;
+      const key=sd.shiftDate+'|'+sd.shiftNum+'|'+entry.equipCode+'|'+pc;
+      if(!groups[key])groups[key]={equipCode:entry.equipCode,productCode:pc,shiftDate:sd.shiftDate,hours:[],operators:new Set()};
+      groups[key].hours.push(hr);
+      (hr.operators||[]).forEach(op=>groups[key].operators.add(op));
+    });
+    let detected=0;
+    for(const g of Object.values(groups)){
+      // Skip if already pending or approved for this combo+date
+      const alreadyPending=this._pending.find(p=>p.equipCode===g.equipCode&&p.productCode===g.productCode&&p.date===g.shiftDate);
+      if(alreadyPending)continue;
+      const result=this.detectBDR(g.equipCode,g.productCode,g.hours,g.shiftDate,Array.from(g.operators));
+      if(result){
+        await this.submitPending(result);
+        detected++;
+      }
+    }
+    return detected;
   }
 };
 
@@ -3820,24 +3868,57 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
         h('p',{style:{fontSize:12,color:'var(--jm-text-sec)',marginBottom:10}},'New best demonstrated rates (BDR) detected during production. Review and approve to update target rates, or decline.'),
         bdrPending.length===0
           ?h('p',{style:{fontSize:13,color:'var(--jm-text-ter)',textAlign:'center',padding:16}},'No pending BDRs')
-          :h('table',{className:'admin-table'},
-            h('thead',null,h('tr',null,h('th',null,'Equipment'),h('th',null,'Product'),h('th',{className:'num'},'Current'),h('th',{className:'num'},'New Rate'),h('th',{className:'num'},'Hours'),h('th',null,'Date'),h('th',null,'Operators'),h('th',{style:{width:120}}))),
-            h('tbody',null,bdrPending.map((b,i)=>
-              h('tr',{key:b.id||i},
-                h('td',{style:{fontSize:12}},getEquipName(b.equipCode)),
-                h('td',{style:{fontSize:12}},getProductName(b.productCode)),
-                h('td',{className:'num'},b.currentTarget),
-                h('td',{className:'num',style:{fontWeight:700,color:'#34C759'}},b.newRate),
-                h('td',{className:'num'},b.hoursCount),
-                h('td',{style:{fontSize:12}},b.date),
-                h('td',{style:{fontSize:11}},(b.operators||[]).join(', ')),
-                h('td',null,h('div',{style:{display:'flex',gap:4}},
-                  h('button',{className:'btn btn-primary btn-sm',onClick:()=>approveBdr(b.id),style:{fontSize:11,padding:'3px 8px'}},'Approve'),
-                  h('button',{className:'btn btn-sm',onClick:()=>declineBdr(b.id),style:{fontSize:11,padding:'3px 8px',background:'#FF3B30',color:'#fff'}},'Decline')
-                ))
+          :h('div',null,bdrPending.map((b,i)=>
+            h('div',{key:b.id||i,style:{border:'1.5px solid var(--jm-border)',borderRadius:10,padding:16,marginBottom:12,background:'var(--jm-surface)'}},
+              h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:8,marginBottom:12}},
+                h('div',null,
+                  h('div',{style:{fontSize:15,fontWeight:700,color:'var(--jm-navy)'}},getEquipName(b.equipCode)),
+                  h('div',{style:{fontSize:13,color:'var(--jm-text-sec)',marginTop:2}},getProductName(b.productCode)),
+                  h('div',{style:{fontSize:11,color:'var(--jm-text-ter)',marginTop:4}},b.date,' \u2022 ',(b.operators||[]).join(', '))
+                ),
+                h('div',{style:{display:'flex',gap:4}},
+                  h('button',{className:'btn btn-primary btn-sm',onClick:()=>approveBdr(b.id),style:{fontSize:12,padding:'6px 14px'}},'Approve'),
+                  h('button',{className:'btn btn-sm',onClick:()=>declineBdr(b.id),style:{fontSize:12,padding:'6px 14px',background:'#FF3B30',color:'#fff'}},'Decline')
+                )
+              ),
+              h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(100px,1fr))',gap:8,marginBottom:8}},
+                h('div',{style:{background:'var(--jm-bg)',borderRadius:8,padding:'8px 12px',textAlign:'center'}},
+                  h('div',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)',marginBottom:2}},'Current Rate'),
+                  h('div',{style:{fontSize:18,fontWeight:800,color:'var(--jm-navy)'}},b.currentTarget,'/hr')
+                ),
+                h('div',{style:{background:'#ECFDF5',borderRadius:8,padding:'8px 12px',textAlign:'center'}},
+                  h('div',{style:{fontSize:11,fontWeight:600,color:'#059669',marginBottom:2}},'New Rate'),
+                  h('div',{style:{fontSize:18,fontWeight:800,color:'#059669'}},b.newRate||b.detectedRate,'/hr')
+                ),
+                h('div',{style:{background:'var(--jm-bg)',borderRadius:8,padding:'8px 12px',textAlign:'center'}},
+                  h('div',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)',marginBottom:2}},'Hours'),
+                  h('div',{style:{fontSize:18,fontWeight:800,color:'var(--jm-navy)'}},b.hoursCount)
+                ),
+                h('div',{style:{background:'var(--jm-bg)',borderRadius:8,padding:'8px 12px',textAlign:'center'}},
+                  h('div',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)',marginBottom:2}},'DT Mins'),
+                  h('div',{style:{fontSize:18,fontWeight:800,color:'#EF4444'}},b.totalDTMinutes||0)
+                )
+              ),
+              (b.oee||b.availability)&&h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}},
+                h('div',{style:{background:'var(--jm-bg)',borderRadius:8,padding:'6px 8px',textAlign:'center'}},
+                  h('div',{style:{fontSize:10,fontWeight:600,color:'var(--jm-text-ter)'}},'OEE'),
+                  h('div',{style:{fontSize:16,fontWeight:800,color:b.oee>=85?'#059669':b.oee>=60?'#F59E0B':'#EF4444'}},b.oee,'%')
+                ),
+                h('div',{style:{background:'var(--jm-bg)',borderRadius:8,padding:'6px 8px',textAlign:'center'}},
+                  h('div',{style:{fontSize:10,fontWeight:600,color:'var(--jm-text-ter)'}},'Avail'),
+                  h('div',{style:{fontSize:16,fontWeight:800,color:'var(--jm-navy)'}},b.availability,'%')
+                ),
+                h('div',{style:{background:'var(--jm-bg)',borderRadius:8,padding:'6px 8px',textAlign:'center'}},
+                  h('div',{style:{fontSize:10,fontWeight:600,color:'var(--jm-text-ter)'}},'Perf'),
+                  h('div',{style:{fontSize:16,fontWeight:800,color:'var(--jm-navy)'}},b.performance,'%')
+                ),
+                h('div',{style:{background:'var(--jm-bg)',borderRadius:8,padding:'6px 8px',textAlign:'center'}},
+                  h('div',{style:{fontSize:10,fontWeight:600,color:'var(--jm-text-ter)'}},'Quality'),
+                  h('div',{style:{fontSize:16,fontWeight:800,color:'var(--jm-navy)'}},b.quality,'%')
+                )
               )
-            ))
-          )
+            )
+          ))
       ),
 
       // Current BDR rates
@@ -4650,7 +4731,17 @@ function App({authUser,onLogout}){
       }
     }).catch(e=>console.warn('Could not fetch server data:',e));
   },[]);
-  useEffect(()=>{fetchServerData();},[]);
+  useEffect(()=>{
+    fetchServerData();
+    // Scan for BDR candidates from existing server data after initial load
+    setTimeout(()=>{
+      if(Storage._cache.length>0){
+        BDR.scanServerData(Storage._cache).then(n=>{
+          if(n>0)showToast(n+' new best rate'+(n>1?'s':'')+' detected!');
+        });
+      }
+    },3000);
+  },[]);
   // Auto-poll every 30s for live TV/Dashboard updates
   useEffect(()=>{
     const iv=setInterval(fetchServerData,30000);

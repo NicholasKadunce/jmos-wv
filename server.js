@@ -99,8 +99,23 @@ async function initDB() {
       decided_by VARCHAR(100),
       decided_at TIMESTAMP,
       decline_reason TEXT,
+      total_dt_minutes INTEGER DEFAULT 0,
+      total_defects INTEGER DEFAULT 0,
+      availability NUMERIC(5,1) DEFAULT 0,
+      performance NUMERIC(5,1) DEFAULT 0,
+      quality NUMERIC(5,1) DEFAULT 0,
+      oee NUMERIC(5,1) DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    -- Add OEE columns if they don't exist yet (safe migration)
+    DO $$ BEGIN
+      ALTER TABLE bdr_records ADD COLUMN IF NOT EXISTS total_dt_minutes INTEGER DEFAULT 0;
+      ALTER TABLE bdr_records ADD COLUMN IF NOT EXISTS total_defects INTEGER DEFAULT 0;
+      ALTER TABLE bdr_records ADD COLUMN IF NOT EXISTS availability NUMERIC(5,1) DEFAULT 0;
+      ALTER TABLE bdr_records ADD COLUMN IF NOT EXISTS performance NUMERIC(5,1) DEFAULT 0;
+      ALTER TABLE bdr_records ADD COLUMN IF NOT EXISTS quality NUMERIC(5,1) DEFAULT 0;
+      ALTER TABLE bdr_records ADD COLUMN IF NOT EXISTS oee NUMERIC(5,1) DEFAULT 0;
+    END $$;
   `);
 
   // Create default admin user if no users exist
@@ -784,7 +799,8 @@ function registerRoutes() {
   // Submit a new pending BDR
   app.post('/api/bdr', requireAuth, async (req, res) => {
     try {
-      const { equipCode, productCode, detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators } = req.body;
+      const { equipCode, productCode, detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators,
+              totalDTMinutes, totalDefects, availability, performance, quality, oee } = req.body;
       if (!equipCode || !productCode || !detectedRate) return res.status(400).json({ error: 'Missing required fields' });
       // Check if there's already a pending BDR for this combo — update it if so
       const existing = await pool.query(
@@ -794,16 +810,21 @@ function registerRoutes() {
       if (existing.rows.length > 0) {
         await pool.query(
           `UPDATE bdr_records SET detected_rate = $1, current_target = $2, hours_count = $3,
-           total_good = $4, shift_date = $5, operators = $6, created_at = NOW()
-           WHERE id = $7`,
-          [detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators || [], existing.rows[0].id]
+           total_good = $4, shift_date = $5, operators = $6, total_dt_minutes = $7,
+           total_defects = $8, availability = $9, performance = $10, quality = $11, oee = $12, created_at = NOW()
+           WHERE id = $13`,
+          [detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators || [],
+           totalDTMinutes || 0, totalDefects || 0, availability || 0, performance || 0, quality || 0, oee || 0,
+           existing.rows[0].id]
         );
         return res.json({ ok: true, id: existing.rows[0].id, updated: true });
       }
       const result = await pool.query(
-        `INSERT INTO bdr_records (equip_code, product_code, detected_rate, current_target, hours_count, total_good, shift_date, operators)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-        [equipCode, productCode, detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators || []]
+        `INSERT INTO bdr_records (equip_code, product_code, detected_rate, current_target, hours_count, total_good, shift_date, operators,
+         total_dt_minutes, total_defects, availability, performance, quality, oee)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
+        [equipCode, productCode, detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators || [],
+         totalDTMinutes || 0, totalDefects || 0, availability || 0, performance || 0, quality || 0, oee || 0]
       );
       res.json({ ok: true, id: result.rows[0].id });
     } catch (err) {
