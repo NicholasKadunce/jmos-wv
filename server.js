@@ -381,20 +381,7 @@ function registerRoutes() {
     }
   });
 
-  app.put('/api/users/:id/password', requireAdmin, async (req, res) => {
-    try {
-      const { password } = req.body;
-      if (!password || password.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
-      const hash = await bcrypt.hash(password, 10);
-      await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, req.params.id]);
-      res.json({ ok: true });
-    } catch (err) {
-      console.error('Password update error:', err);
-      res.status(500).json({ error: 'Failed to update password' });
-    }
-  });
-
-  // Self-service password change (any authenticated user)
+  // Self-service password change (any authenticated user) — MUST be before /:id route
   app.put('/api/users/me/password', requireAuth, async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
@@ -410,6 +397,20 @@ function registerRoutes() {
     } catch (err) {
       console.error('Self password change error:', err);
       res.status(500).json({ error: 'Failed to change password' });
+    }
+  });
+
+  // Admin: reset any user's password by ID
+  app.put('/api/users/:id/password', requireAdmin, async (req, res) => {
+    try {
+      const { password } = req.body;
+      if (!password || password.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
+      const hash = await bcrypt.hash(password, 10);
+      await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, req.params.id]);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('Password update error:', err);
+      res.status(500).json({ error: 'Failed to update password' });
     }
   });
 
