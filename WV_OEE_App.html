@@ -537,8 +537,8 @@ input[type=number]{-moz-appearance:textfield}
 .bdr-panel-heading{font-size:22px;font-weight:300;letter-spacing:-0.5px}
 .bdr-panel-heading strong{font-weight:800}
 .bdr-panel-count{margin-top:8px;font-size:12px;color:rgba(255,255,255,0.55);font-weight:500}
-.bdr-panel-close{position:absolute;top:20px;right:20px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.2s}
-.bdr-panel-close:hover{background:rgba(255,255,255,0.1);color:#fff}
+.bdr-panel-close{position:absolute;top:20px;right:20px;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.8);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;transition:all 0.2s;z-index:2}
+.bdr-panel-close:hover{background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.4)}
 .bdr-panel-body{flex:1;overflow-y:auto;padding:20px}
 .bdr-card{background:#fff;border-radius:12px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.06);transition:box-shadow 0.2s}
 .bdr-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08)}
@@ -557,7 +557,7 @@ input[type=number]{-moz-appearance:textfield}
 .bdr-metric-val{font-size:13px;font-weight:800;color:#0f172a;margin-top:1px;font-variant-numeric:tabular-nums}
 .bdr-card-actions{padding:12px 18px 16px;display:flex;gap:8px}
 .bdr-btn-approve{flex:1;height:42px;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:0.3px;color:#fff;background:linear-gradient(135deg,#065f46,#059669);box-shadow:0 2px 8px rgba(5,150,105,0.25);transition:all 0.2s;position:relative;overflow:hidden}
-.bdr-btn-approve::before{content:'\u5370';position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:20px;opacity:0.15;font-weight:400}
+.bdr-btn-approve::before{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);width:22px;height:22px;border:2px solid rgba(255,255,255,0.15);border-radius:50%}
 .bdr-btn-approve:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(5,150,105,0.35)}
 .bdr-btn-approve:active{transform:translateY(0)}
 .bdr-btn-decline{flex:1;height:42px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#64748b;background:#fff;transition:all 0.2s}
@@ -3838,8 +3838,8 @@ function BDRNotificationPanel({open,onClose,pending,onApprove,onDecline}){
             h('div',{className:'bdr-metric'},h('div',{className:'bdr-metric-label'},'DT Min'),h('div',{className:'bdr-metric-val',style:{color:b.totalDTMinutes>0?'#dc2626':undefined}},b.totalDTMinutes||0))
           ),
           h('div',{className:'bdr-card-actions'},
-            h('button',{className:'bdr-btn-approve',onClick:()=>onApprove(b.id)},'\u627F\u8A8D  Approve'),
-            h('button',{className:'bdr-btn-decline',onClick:()=>onDecline(b.id)},'\u8F9E\u9000  Decline')
+            h('button',{className:'bdr-btn-approve',onClick:()=>onApprove(b.id)},'\u2713  Approve'),
+            h('button',{className:'bdr-btn-decline',onClick:()=>onDecline(b.id)},'\u2715  Decline')
           )
         ))
       )
