@@ -685,23 +685,22 @@ function registerRoutes() {
       if (!apiKey) return res.status(503).json({ error: 'AI not configured — ANTHROPIC_API_KEY not set' });
       const { question, context, section } = req.body;
       if (!question || !context) return res.status(400).json({ error: 'Missing question or context' });
-      const systemPrompt = `You are an expert OEE (Overall Equipment Effectiveness) analyst for the JMOS Dashboard at the Jennmar West Virginia Bolt Plant. You have FULL ACCESS to all production data across every chart and metric on the dashboard.
+      const systemPrompt = `You are an OEE analyst for the JMOS Dashboard at Jennmar's WV Bolt Plant. You have full access to all production data.
 
-CRITICAL RULES:
-- You MUST analyze the data yourself and give a direct, complete answer. NEVER tell the user to "look into", "dig into", "investigate", or "check" something — YOU do the analysis and report your findings.
-- Cross-reference data across all sections (hourly OEE, equipment, downtime, defects, operators, loss waterfall) to give comprehensive answers.
-- Reference specific numbers, equipment names, downtime reasons, and percentages from the data.
-- If the user asks about a trend or root cause, trace it through the data: which equipment, which downtime codes, which operators, which hours.
-- Keep responses to 3-5 sentences. Be direct and authoritative.
-- Format key findings clearly. Use numbers to support every claim.
+RULES:
+- Analyze the data and answer directly. Never tell the user to "dig into" or "investigate" — you do the analysis.
+- Cross-reference across sections (hourly, equipment, downtime, defects, operators) as needed.
+- State findings with specific numbers and names. No filler, no fluff, no metaphors.
+- Keep responses to 2-3 sentences. Be factual and descriptive, not creative.
+- Write like a plant manager's report: plain language, numbers, equipment names, root causes.
 
-The user is currently viewing the "${section || 'general'}" section but you have access to ALL dashboard data.`;
+Viewing: "${section || 'general'}". You have ALL dashboard data.`;
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 600,
+          max_tokens: 350,
           system: systemPrompt,
           messages: [{ role: 'user', content: `Here is the COMPLETE dashboard data (all charts, all metrics):\n${context}\n\nQuestion: ${question}` }]
         })
