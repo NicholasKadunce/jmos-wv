@@ -413,21 +413,41 @@ function registerRoutes() {
 
   function computeDailyReport(dateStr, submissions) {
     const shifts = { '1': [], '2': [] };
+    // Deduplicate individual hour entries (keep latest by equip+hour)
+    const hourMap = {};
     submissions.forEach(sub => {
       const d = sub.data || sub;
       const sd = d.shiftData || {};
-      const ed = d.equipData || {};
       const shiftNum = sd.shiftNum || '1';
       if (!shifts[shiftNum]) shifts[shiftNum] = [];
+      // Handle full-shift submissions (equipData object)
+      const ed = d.equipData || {};
       Object.entries(ed).forEach(([equip, hours]) => {
         (hours || []).forEach(hr => {
-          if (hr && hr.productCode) shifts[shiftNum].push({ ...hr, equipCode: equip });
+          if (hr && hr.productCode) {
+            const key = shiftNum + '|' + equip + '|' + hr.hourIdx;
+            hourMap[key] = { ...hr, equipCode: equip, _shift: shiftNum };
+          }
         });
       });
+      // Handle individual hour submissions (equipCode + hourData)
+      if (d.equipCode && d.hourData) {
+        const hr = d.hourData;
+        if (hr && hr.productCode) {
+          const key = shiftNum + '|' + d.equipCode + '|' + (d.hourIdx || hr.hourIdx);
+          hourMap[key] = { ...hr, equipCode: d.equipCode, _shift: shiftNum };
+        }
+      }
+    });
+    // Distribute deduplicated records into shifts
+    Object.values(hourMap).forEach(hr => {
+      const sn = hr._shift;
+      if (!shifts[sn]) shifts[sn] = [];
+      shifts[sn].push(hr);
     });
 
     function calcShift(records) {
-      let totalTarget = 0, totalGood = 0, totalProduced = 0, totalScheduled = 0, totalDT = 0;
+      let totalTarget = 0, totalGood = 0, totalProduced = 0, totalScheduled = 0, totalDT = 0, totalHours = 0;
       const dtByEquip = {}, defByEquip = {};
       records.forEach(r => {
         const target = parseInt(r.target || 0);
@@ -441,6 +461,7 @@ function registerRoutes() {
         totalProduced += good + defQty;
         totalScheduled += sched;
         totalDT += dtMins;
+        totalHours++;
         if (dtMins > 0) {
           if (!dtByEquip[eqName]) dtByEquip[eqName] = 0;
           dtByEquip[eqName] += dtMins;
@@ -450,8 +471,11 @@ function registerRoutes() {
           defByEquip[eqName] += defQty;
         }
       });
-      const avail = totalScheduled > 0 ? (totalScheduled - totalDT) / totalScheduled : 0;
-      const perf = (totalTarget > 0 && (totalScheduled - totalDT) > 0) ? totalProduced / totalTarget : 0;
+      // Availability = (runTime - downtime) / runTime, where runTime = totalMins - scheduledMins
+      const totalMins = totalHours * 60;
+      const runTime = totalMins - totalScheduled;
+      const avail = runTime > 0 ? (runTime - totalDT) / runTime : 0;
+      const perf = totalTarget > 0 ? totalGood / totalTarget : 0;
       const qual = totalProduced > 0 ? totalGood / totalProduced : (totalTarget > 0 ? 0 : 1);
       const oee = avail * perf * qual;
       const topDT = Object.entries(dtByEquip).sort((a, b) => b[1] - a[1]).slice(0, 5);
