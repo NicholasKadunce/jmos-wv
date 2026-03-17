@@ -930,6 +930,72 @@ function registerRoutes() {
     }
   });
 
+  // ── AI SETTINGS ASSISTANT ──
+  app.post('/api/ai/settings', requireAuth, async (req, res) => {
+    try {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) return res.status(503).json({ error: 'AI not configured — ANTHROPIC_API_KEY not set', reply: 'AI assistant is not configured. Please ask your administrator to set up the ANTHROPIC_API_KEY.', actions: [] });
+      const { message, context, currentData } = req.body;
+      if (!message) return res.status(400).json({ error: 'Missing message' });
+      const systemPrompt = `You are the JMOS Settings Assistant — a C-Suite level AI for configuring the JMOS OEE Dashboard at Jennmar's WV Bolt Plant.
+
+Your role is to help authorized personnel manage:
+- Personnel (data entry staff who appear in the "Entered By" dropdown)
+- Operators (shop floor workers assigned to equipment each hour)
+- Equipment (machines and workstations)
+- Products (part types run on equipment)
+
+The user is currently in the "${context || 'general'}" section.
+
+CURRENT DATA:
+${JSON.stringify(currentData || {}, null, 2)}
+
+RESPONSE FORMAT: Always respond with valid JSON:
+{
+  "reply": "A professional, concise response (1-3 sentences). Confirm what you're doing and any relevant notes.",
+  "actions": [
+    { "type": "add_personnel", "name": "LAST, FIRST" },
+    { "type": "add_operator", "name": "LAST, FIRST" },
+    { "type": "add_equipment", "code": "WV-PROC-XX", "name": "Equipment Name", "process": "Process Group" },
+    { "type": "add_product", "code": "P-XXX-001", "name": "Product Description" }
+  ]
+}
+
+RULES:
+- Names should be formatted as LAST, FIRST (all caps)
+- Equipment codes should follow pattern: WV-[PROCESS]-[ID]
+- Product codes should follow pattern: P-[TYPE]-[NUM]
+- Only include actions the user explicitly requested
+- If user asks to add multiple items, include all as separate actions
+- If something already exists in currentData, mention it and skip that action
+- Keep reply professional and succinct — this is a C-Suite level tool`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 600,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: message }]
+        })
+      });
+      if (!resp.ok) { const err = await resp.text(); return res.status(502).json({ error: 'AI API error', reply: 'AI request failed. Please try again.', actions: [] }); }
+      const data = await resp.json();
+      const raw = data.content && data.content[0] ? data.content[0].text : '{}';
+      let parsed = { reply: raw, actions: [] };
+      try { parsed = JSON.parse(raw); } catch(e) {
+        // Try to extract JSON from the text
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (match) { try { parsed = JSON.parse(match[0]); } catch(e2) { parsed = { reply: raw, actions: [] }; } }
+      }
+      res.json({ reply: parsed.reply || 'Request processed.', actions: parsed.actions || [] });
+    } catch (err) {
+      console.error('AI settings error:', err);
+      res.status(500).json({ error: 'Failed to process request', reply: 'An error occurred. Please try again.', actions: [] });
+    }
+  });
+
   // ── AI INSIGHTS (Claude API proxy) ──
   app.post('/api/ai/ask', requireAuth, async (req, res) => {
     try {
