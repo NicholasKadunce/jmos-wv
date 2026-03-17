@@ -839,6 +839,14 @@ function registerRoutes() {
       const { equipCode, productCode, detectedRate, currentTarget, hoursCount, totalGood, shiftDate, operators,
               totalDTMinutes, totalDefects, availability, performance, quality, oee } = req.body;
       if (!equipCode || !productCode || !detectedRate) return res.status(400).json({ error: 'Missing required fields' });
+      // Skip if already approved or declined for the same equip+product+date
+      if (shiftDate) {
+        const decided = await pool.query(
+          "SELECT id FROM bdr_records WHERE equip_code = $1 AND product_code = $2 AND shift_date = $3 AND status IN ('approved','declined')",
+          [equipCode, productCode, shiftDate]
+        );
+        if (decided.rows.length > 0) return res.json({ ok: true, id: decided.rows[0].id, skipped: true });
+      }
       // Check if there's already a pending BDR for this combo — update it if so
       const existing = await pool.query(
         "SELECT id FROM bdr_records WHERE equip_code = $1 AND product_code = $2 AND status = 'pending'",

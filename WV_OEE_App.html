@@ -523,6 +523,49 @@ input[type=number]{-moz-appearance:textfield}
 /* NAV */
 .nav-footer{display:flex;justify-content:space-between;align-items:center;padding:20px 0 8px;gap:12px}
 
+/* BDR NOTIFICATION — Japanese Executive */
+.bdr-notif-badge{position:relative;display:inline-flex}
+.bdr-notif-dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 2px 8px rgba(220,38,38,0.4);animation:bdrPulse 2.5s ease-in-out infinite}
+@keyframes bdrPulse{0%,100%{box-shadow:0 2px 8px rgba(220,38,38,0.4)}50%{box-shadow:0 2px 16px rgba(220,38,38,0.7)}}
+.bdr-panel-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.4);z-index:1001;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
+.bdr-panel{width:440px;max-width:92vw;height:100vh;background:#fafaf8;box-shadow:-8px 0 40px rgba(0,0,0,0.12);display:flex;flex-direction:column;animation:bdrSlide 0.35s cubic-bezier(0.16,1,0.3,1)}
+@keyframes bdrSlide{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+.bdr-panel-header{padding:28px 24px 20px;background:linear-gradient(160deg,#0f172a 0%,#1e3a5f 100%);color:#fff;flex-shrink:0;position:relative;overflow:hidden}
+.bdr-panel-header::after{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border:2px solid rgba(255,255,255,0.05);border-radius:50%}
+.bdr-panel-header::before{content:'';position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;border:1.5px solid rgba(255,255,255,0.04);border-radius:50%}
+.bdr-panel-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:4px}
+.bdr-panel-heading{font-size:22px;font-weight:300;letter-spacing:-0.5px}
+.bdr-panel-heading strong{font-weight:800}
+.bdr-panel-count{margin-top:8px;font-size:12px;color:rgba(255,255,255,0.55);font-weight:500}
+.bdr-panel-close{position:absolute;top:20px;right:20px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.2s}
+.bdr-panel-close:hover{background:rgba(255,255,255,0.1);color:#fff}
+.bdr-panel-body{flex:1;overflow-y:auto;padding:20px}
+.bdr-card{background:#fff;border-radius:12px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.06);transition:box-shadow 0.2s}
+.bdr-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+.bdr-card-top{padding:16px 18px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.bdr-card-equip{font-size:15px;font-weight:700;color:#0f172a;letter-spacing:-0.3px}
+.bdr-card-product{font-size:12px;color:#64748b;margin-top:2px;font-weight:500}
+.bdr-card-date{font-size:10px;color:#94a3b8;margin-top:4px;font-weight:600;letter-spacing:0.3px}
+.bdr-card-delta{text-align:right;flex-shrink:0}
+.bdr-card-arrow{font-size:10px;color:#94a3b8;font-weight:600;letter-spacing:0.5px;text-transform:uppercase}
+.bdr-card-rates{display:flex;align-items:baseline;gap:6px;margin-top:2px}
+.bdr-card-old{font-size:14px;color:#94a3b8;text-decoration:line-through;font-weight:500}
+.bdr-card-new{font-size:20px;font-weight:800;color:#059669;letter-spacing:-0.5px}
+.bdr-card-metrics{padding:10px 18px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.bdr-metric{text-align:center;padding:6px 4px;background:#f8fafc;border-radius:6px}
+.bdr-metric-label{font-size:8px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px}
+.bdr-metric-val{font-size:13px;font-weight:800;color:#0f172a;margin-top:1px;font-variant-numeric:tabular-nums}
+.bdr-card-actions{padding:12px 18px 16px;display:flex;gap:8px}
+.bdr-btn-approve{flex:1;height:42px;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:0.3px;color:#fff;background:linear-gradient(135deg,#065f46,#059669);box-shadow:0 2px 8px rgba(5,150,105,0.25);transition:all 0.2s;position:relative;overflow:hidden}
+.bdr-btn-approve::before{content:'\u5370';position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:20px;opacity:0.15;font-weight:400}
+.bdr-btn-approve:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(5,150,105,0.35)}
+.bdr-btn-approve:active{transform:translateY(0)}
+.bdr-btn-decline{flex:1;height:42px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#64748b;background:#fff;transition:all 0.2s}
+.bdr-btn-decline:hover{border-color:#fca5a5;color:#dc2626;background:#fef2f2}
+.bdr-panel-empty{text-align:center;padding:40px 20px;color:#94a3b8}
+.bdr-panel-empty-icon{font-size:36px;margin-bottom:12px;opacity:0.5}
+.bdr-panel-empty-text{font-size:14px;font-weight:600;color:#64748b}
+.bdr-panel-empty-sub{font-size:12px;margin-top:4px}
 /* AI ASSISTANT */
 .ai-fab{position:fixed;bottom:28px;right:28px;z-index:999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--jm-navy),#2a5199);border:none;cursor:pointer;box-shadow:0 6px 24px rgba(27,61,110,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;transition:transform 0.2s,box-shadow 0.2s}
 .ai-fab:hover{transform:scale(1.08);box-shadow:0 10px 32px rgba(27,61,110,0.55)}
@@ -1801,9 +1844,11 @@ const BDR={
     });
     let detected=0;
     for(const g of Object.values(groups)){
-      // Skip if already pending or approved for this combo+date
+      // Skip if already pending, approved, or declined for this combo+date
       const alreadyPending=this._pending.find(p=>p.equipCode===g.equipCode&&p.productCode===g.productCode&&p.date===g.shiftDate);
       if(alreadyPending)continue;
+      const alreadyDecided=this._history.find(p=>p.equipCode===g.equipCode&&p.productCode===g.productCode&&p.date===g.shiftDate);
+      if(alreadyDecided)continue;
       const result=this.detectBDR(g.equipCode,g.productCode,g.hours,g.shiftDate,Array.from(g.operators));
       if(result){
         await this.submitPending(result);
@@ -3753,6 +3798,55 @@ function TVView({dataVersion,master}){
   );
 }
 
+// ── BDR NOTIFICATION PANEL (Japanese Executive Design) ──
+function BDRNotificationPanel({open,onClose,pending,onApprove,onDecline}){
+  if(!open)return null;
+  return h('div',{className:'bdr-panel-overlay',onClick:e=>{if(e.target===e.currentTarget)onClose();}},
+    h('div',{className:'bdr-panel'},
+      h('div',{className:'bdr-panel-header'},
+        h('div',{className:'bdr-panel-title'},'Rate Approval'),
+        h('div',{className:'bdr-panel-heading'},'Best Demonstrated ',h('strong','Rates')),
+        h('div',{className:'bdr-panel-count'},pending.length,' pending review'+(pending.length!==1?'s':'')),
+        h('button',{className:'bdr-panel-close',onClick:onClose},'\u00D7')
+      ),
+      h('div',{className:'bdr-panel-body'},
+        pending.length===0?h('div',{className:'bdr-panel-empty'},
+          h('div',{className:'bdr-panel-empty-icon'},'\u2714\uFE0F'),
+          h('div',{className:'bdr-panel-empty-text'},'All Cleared'),
+          h('div',{className:'bdr-panel-empty-sub'},'No pending rate changes require your attention.')
+        ):
+        pending.map((b,i)=>h('div',{key:b.id||i,className:'bdr-card'},
+          h('div',{className:'bdr-card-top'},
+            h('div',null,
+              h('div',{className:'bdr-card-equip'},getEquipName(b.equipCode)),
+              h('div',{className:'bdr-card-product'},getProductName(b.productCode)),
+              h('div',{className:'bdr-card-date'},b.date,' \u2022 ',(b.operators||[]).join(', '))
+            ),
+            h('div',{className:'bdr-card-delta'},
+              h('div',{className:'bdr-card-arrow'},'Rate Change'),
+              h('div',{className:'bdr-card-rates'},
+                h('span',{className:'bdr-card-old'},b.currentTarget),
+                h('span',{style:{color:'#94a3b8',fontSize:14}},'\u2192'),
+                h('span',{className:'bdr-card-new'},(b.newRate||b.detectedRate)+'/hr')
+              )
+            )
+          ),
+          h('div',{className:'bdr-card-metrics'},
+            h('div',{className:'bdr-metric'},h('div',{className:'bdr-metric-label'},'OEE'),h('div',{className:'bdr-metric-val',style:{color:b.oee>=85?'#059669':b.oee>=60?'#d97706':'#dc2626'}},b.oee?b.oee+'%':'\u2014')),
+            h('div',{className:'bdr-metric'},h('div',{className:'bdr-metric-label'},'Hours'),h('div',{className:'bdr-metric-val'},b.hoursCount)),
+            h('div',{className:'bdr-metric'},h('div',{className:'bdr-metric-label'},'Output'),h('div',{className:'bdr-metric-val'},(b.totalGood||0).toLocaleString())),
+            h('div',{className:'bdr-metric'},h('div',{className:'bdr-metric-label'},'DT Min'),h('div',{className:'bdr-metric-val',style:{color:b.totalDTMinutes>0?'#dc2626':undefined}},b.totalDTMinutes||0))
+          ),
+          h('div',{className:'bdr-card-actions'},
+            h('button',{className:'bdr-btn-approve',onClick:()=>onApprove(b.id)},'\u627F\u8A8D  Approve'),
+            h('button',{className:'bdr-btn-decline',onClick:()=>onDecline(b.id)},'\u8F9E\u9000  Decline')
+          )
+        ))
+      )
+    )
+  );
+}
+
 // ── AI SETTINGS ASSISTANT ──
 function AISettingsAssistant({master,onUpdate,activeTab}){
   const [open,setOpen]=useState(false);
@@ -4855,13 +4949,13 @@ function AppWrapper(){
   useEffect(()=>{
     API.me().then(async user=>{
       setAuthUser(user);setAuthChecked(true);
-      if(user){await BDR.seedDefaultRates();await BDR.loadFromServer();}
+      if(user){await BDR.seedDefaultRates();await BDR.loadFromServer();refreshBdrGlobal();}
     }).catch(()=>setAuthChecked(true));
   },[]);
 
   async function handleLogin(user){
     setAuthUser(user);
-    await BDR.seedDefaultRates();await BDR.loadFromServer();
+    await BDR.seedDefaultRates();await BDR.loadFromServer();refreshBdrGlobal();
   }
   function handleLogout(){API.logout().then(()=>setAuthUser(null)).catch(()=>setAuthUser(null));}
 
@@ -4912,6 +5006,14 @@ function App({authUser,onLogout}){
   const [pendingCount,setPendingCount]=useState(0);
   const [showUserMenu,setShowUserMenu]=useState(false);
   const [showChangePw,setShowChangePw]=useState(false);
+  // BDR notification state
+  const [bdrPendingGlobal,setBdrPendingGlobal]=useState([]);
+  const [showBdrPanel,setShowBdrPanel]=useState(false);
+  const refreshBdrGlobal=useCallback(()=>{setBdrPendingGlobal(BDR.getPending());},[]);
+  // Load BDR counts after login
+  useEffect(()=>{if(authUser){const t=setTimeout(()=>refreshBdrGlobal(),1500);return()=>clearTimeout(t);}},[authUser]);
+  async function handleBdrApprove(id){await BDR.approve(id,authUser?.displayName||'Admin');refreshBdrGlobal();showToast('Rate approved \u2014 target updated');}
+  async function handleBdrDecline(id){await BDR.decline(id,authUser?.displayName||'Admin','Declined');refreshBdrGlobal();showToast('Rate change declined');}
 
   // Track online/offline status
   useEffect(()=>{
@@ -5062,6 +5164,9 @@ function App({authUser,onLogout}){
       const allHrs=Object.values(merged);
       const products=[...new Set(allHrs.map(h2=>h2.productCode).filter(Boolean))];
       for(const pc of products){
+        // Skip if already decided for this combo+date
+        const alreadyDecided=BDR._history.find(p=>p.equipCode===ec&&p.productCode===pc&&p.date===shiftData.shiftDate);
+        if(alreadyDecided)continue;
         const prodHrs=allHrs.filter(h2=>h2.productCode===pc);
         const ops=[...new Set(prodHrs.flatMap(h2=>h2.operators||[]).filter(Boolean))];
         const result=BDR.detectBDR(ec,pc,prodHrs,shiftData.shiftDate,ops);
@@ -5069,6 +5174,7 @@ function App({authUser,onLogout}){
       }
     }
     if(bdrDetected.length>0){
+      refreshBdrGlobal();
       showToast('Shift submitted — '+bdrDetected.length+' new best rate'+(bdrDetected.length>1?'s':'')+' detected (pending approval)');
     } else {
       showToast('Shift submitted!');
@@ -5091,7 +5197,14 @@ function App({authUser,onLogout}){
         h('button',{className:'sidebar-btn'+(screen==='entry'?' active':''),onClick:()=>setScreen('entry'),title:'Enter Data'},h(Icon.clipboard)),
         h('button',{className:'sidebar-btn'+(screen==='tv'?' active':''),onClick:()=>setScreen('tv'),title:'TV Display'},h(Icon.tv)),
         (authUser.role==='admin'||authUser.role==='supervisor')&&h('button',{className:'sidebar-btn'+(screen==='analytics'?' active':''),onClick:()=>setScreen('analytics'),title:'Analytics'},h(Icon.analytics)),
-        (authUser.role==='admin'||authUser.role==='supervisor')&&h('button',{className:'sidebar-btn'+(screen==='admin'?' active':''),onClick:()=>setScreen('admin'),title:'Settings'},h(Icon.settings))
+        (authUser.role==='admin'||authUser.role==='supervisor')&&h('button',{className:'sidebar-btn'+(screen==='admin'?' active':''),onClick:()=>setScreen('admin'),title:'Settings'},h(Icon.settings)),
+        (authUser.role==='admin'||authUser.role==='supervisor')&&bdrPendingGlobal.length>0&&h('button',{className:'sidebar-btn bdr-notif-badge',onClick:()=>setShowBdrPanel(true),title:bdrPendingGlobal.length+' pending rate approvals',style:{position:'relative'}},
+          h('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
+            h('path',{d:'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9'}),
+            h('path',{d:'M13.73 21a2 2 0 0 1-3.46 0'})
+          ),
+          h('span',{className:'bdr-notif-dot'},bdrPendingGlobal.length)
+        )
       ),
       // Change Password & Sign Out
       h('div',{style:{marginTop:'auto',padding:'8px 6px',display:'flex',flexDirection:'column',alignItems:'center',gap:4}},
@@ -5131,6 +5244,8 @@ function App({authUser,onLogout}){
         step===3&&h(ProductionEntry,{selectedEquip,shiftNum:shiftData.shiftNum,shiftHrs:shiftData.shiftHrs,equipData,onUpdateEquip:handleUpdateEquip,onAddEquip:handleAddEquip,onRemoveHoursFrom:handleRemoveHoursFrom,onReorderEquip:handleReorderEquip,onBack:()=>setStep(2),onNext:()=>setStep(4),operators:master.operators,master}),
         step===4&&h(ReviewSubmit,{shiftData,selectedEquip,equipData,onBack:()=>setStep(3),onSubmit:handleSubmit})
       ),
+      // BDR Notification Panel
+      h(BDRNotificationPanel,{open:showBdrPanel,onClose:()=>setShowBdrPanel(false),pending:bdrPendingGlobal,onApprove:handleBdrApprove,onDecline:handleBdrDecline}),
       // Change Password Modal
       showChangePw&&h('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.45)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'},onClick:()=>setShowChangePw(false)},
         h(ChangePasswordModal,{onClose:()=>setShowChangePw(false)})
