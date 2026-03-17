@@ -1709,26 +1709,33 @@ function AskAI({section,context}){
     if(listening){if(recognitionRef.current)recognitionRef.current.stop();setListening(false);return;}
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR)return;
-    const rec=new SR();rec.continuous=false;rec.interimResults=false;rec.lang='en-US';
-    rec.onresult=e=>{const t=e.results[0][0].transcript;setQ(t);setListening(false);};
+    const rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang='en-US';
+    rec.onresult=e=>{
+      let final='',interim='';
+      for(let i=0;i<e.results.length;i++){
+        if(e.results[i].isFinal)final+=e.results[i][0].transcript;
+        else interim+=e.results[i][0].transcript;
+      }
+      setQ(final||interim);
+    };
     rec.onerror=()=>setListening(false);
     rec.onend=()=>setListening(false);
     recognitionRef.current=rec;rec.start();setListening(true);
   };
   const hasMic=!!(window.SpeechRecognition||window.webkitSpeechRecognition);
   const micSvg=h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z'}),h('path',{d:'M19 10v2a7 7 0 0 1-14 0v-2'}),h('line',{x1:12,y1:19,x2:12,y2:23}),h('line',{x1:8,y1:23,x2:16,y2:23}));
-  const sparkSvg=h('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'currentColor'},h('path',{d:'M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z'}));
+  const aiIcon=h('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'}),h('line',{x1:8,y1:9,x2:16,y2:9}),h('line',{x1:8,y1:13,x2:13,y2:13}));
   const sendSvg=h('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round'},h('line',{x1:5,y1:12,x2:19,y2:12}),h('polyline',{points:'12 5 19 12 12 19'}));
   if(!open)return h('div',{className:'ai-ask-toggle'},
     h('button',{className:'ai-ask-btn',onClick:()=>setOpen(true)},
-      h('span',{className:'ai-ask-icon'},sparkSvg),
+      h('span',{className:'ai-ask-icon'},aiIcon),
       h('span',{className:'ai-ask-btn-text'},'Ask AI about this data')
     )
   );
   return h('div',{className:'ai-ask-panel'},
     h('div',{className:'ai-ask-header'},
       h('div',{className:'ai-ask-header-left'},
-        h('span',{className:'ai-ask-icon'},sparkSvg),
+        h('span',{className:'ai-ask-icon'},aiIcon),
         h('span',{className:'ai-ask-title'},'AI Insights')
       ),
       h('button',{className:'ai-ask-close',onClick:()=>{setOpen(false);setAnswer('');setQ('');}},'\u00D7')
@@ -1743,7 +1750,7 @@ function AskAI({section,context}){
       h('span',{style:{fontSize:11,color:'#9CA3AF',marginLeft:8}},'Analyzing data...')
     ),
     answer&&h('div',{className:'ai-ask-answer'},
-      h('div',{className:'ai-ask-answer-header'},h('span',{className:'ai-ask-icon ai-ask-icon-sm'},sparkSvg),' AI Insight'),
+      h('div',{className:'ai-ask-answer-header'},h('span',{className:'ai-ask-icon ai-ask-icon-sm'},aiIcon),' AI Insight'),
       h('div',{className:'ai-ask-answer-body'},answer)
     )
   );
