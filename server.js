@@ -255,28 +255,6 @@ function registerRoutes() {
     }
   });
 
-  // One-time: remove duplicate individual hour entries (keep latest)
-  app.post('/api/admin/dedup', requireAuth, async (req, res) => {
-    try {
-      const result = await pool.query(`
-        DELETE FROM submissions WHERE id IN (
-          SELECT id FROM (
-            SELECT id, ROW_NUMBER() OVER (
-              PARTITION BY shift_date, shift_num, data->>'equipCode', data->>'hourIdx'
-              ORDER BY submitted_at DESC
-            ) AS rn
-            FROM submissions
-            WHERE data->>'equipCode' IS NOT NULL
-          ) sub WHERE rn > 1
-        ) RETURNING id
-      `);
-      res.json({ deleted: result.rowCount });
-    } catch (err) {
-      console.error('Dedup error:', err);
-      res.status(500).json({ error: 'Dedup failed' });
-    }
-  });
-
   // ── Master/settings persistence (survives cache clear) ──
   app.get('/api/settings/:key', requireAuth, async (req, res) => {
     try {
