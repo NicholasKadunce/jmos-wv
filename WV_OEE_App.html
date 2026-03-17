@@ -3309,6 +3309,7 @@ function AnalyticsView({dataVersion,master}){
 }
 
 function TVView({dataVersion,master}){
+  const {ResponsiveContainer,BarChart,Bar,XAxis,YAxis,CartesianGrid,Cell,ReferenceLine,LabelList}=Recharts;
   const [processFilter,setProcessFilter]=useState('');
   const [timeRange,setTimeRange]=useState('today');
   const processes=[...new Set(INIT_EQUIPMENT.map(e=>e.process))].sort();
@@ -3354,14 +3355,24 @@ function TVView({dataVersion,master}){
   // Records for current day (always used for live view)
   const todayRecords=useMemo(()=>allRecords.filter(r=>r.date===todayStr),[allRecords,todayStr]);
 
-  // Equipment that has data today (or yesterday shift 2 if today has no data yet)
+  // Determine which shift is currently active (based on ET time)
+  const currentActiveShift=useMemo(()=>{
+    const now=toET(new Date());const hr=now.getHours();
+    // S1 runs roughly 5am-2pm, S2 runs roughly 2pm onward
+    return hr>=14?'2':'1';
+  },[]);
+
+  // Only show equipment currently being entered for (has data for the active shift today)
   const activeEquipCodes=useMemo(()=>{
-    const todayCodes=new Set(todayRecords.filter(r=>processEquip.some(eq=>eq.code===r.equipCode)).map(r=>r.equipCode));
-    // Also include yesterday's shift 2 equipment
-    const yest=toET(new Date());yest.setDate(yest.getDate()-1);const yestStr=fmtDate(yest);
-    allRecords.filter(r=>r.date===yestStr&&r.shiftNum==='2'&&processEquip.some(eq=>eq.code===r.equipCode)).forEach(r=>todayCodes.add(r.equipCode));
-    return[...todayCodes];
-  },[todayRecords,allRecords,processEquip]);
+    const codes=new Set();
+    // Equipment with data for the current active shift today
+    todayRecords.filter(r=>r.shiftNum===currentActiveShift&&processEquip.some(eq=>eq.code===r.equipCode)).forEach(r=>codes.add(r.equipCode));
+    // If no equipment for current shift yet, fall back to showing any today data
+    if(codes.size===0){
+      todayRecords.filter(r=>processEquip.some(eq=>eq.code===r.equipCode)).forEach(r=>codes.add(r.equipCode));
+    }
+    return[...codes];
+  },[todayRecords,processEquip,currentActiveShift]);
 
   // Records for time range and process
   const rangeRecords=useMemo(()=>{
@@ -3520,7 +3531,7 @@ function TVView({dataVersion,master}){
         )
       ),
 
-      // ── Simple HTML bars: Hourly production with prior shift comparison ──
+      // ── Vertical bar chart: paired prior (grey) + current (green/red) ──
       (()=>{
         // Build current shift hours
         const currentHrs=eq.currentShift==='2'?eq.s2:(eq.s1.length>0?eq.s1:[]);
@@ -3528,50 +3539,44 @@ function TVView({dataVersion,master}){
         const priorHrs=eq.priorShift.hours||[];
         const priorOps=eq.priorShift.operators||[];
         const priorLabel=eq.priorShift.shiftLabel||'';
-        // Find max value for scaling
-        const allVals=[...currentHrs.map(r=>r.goodUnits),...currentHrs.map(r=>r.target),...priorHrs.map(r=>r.goodUnits)];
-        const maxVal=Math.max(...allVals,1);
 
-        return h('div',{className:'tv-section',style:{flex:1,minHeight:0,overflowY:'auto',padding:'4px 8px'}},
-          // Section title with prior shift info
-          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}},
-            h('div',{className:'tv-section-title',style:{margin:0}},'Hourly Production — S'+eq.currentShift),
-            priorLabel&&h('div',{style:{fontSize:7,color:'#94A3B8',display:'flex',alignItems:'center',gap:4}},
-              h('span',{style:{width:16,height:6,background:'#D1D5DB',borderRadius:2,display:'inline-block'}}),
-              'Prior: ',priorLabel
+        // Build paired chart data
+        const chartData=currentHrs.map(hr=>{
+          const prev=priorHrs.find(p=>p.hourIdx===hr.hourIdx);
+          return{hour:'H'+hr.hourIdx,current:hr.goodUnits,prior:prev?prev.goodUnits:0,target:hr.target};
+        });
+        const tgtVal=chartData.length>0?chartData[0].target:0;
+
+        return h('div',{className:'tv-section',style:{flex:1,minHeight:0,padding:'4px 8px',display:'flex',flexDirection:'column'}},
+          // Header with prior shift info + operators
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:1,flexShrink:0}},
+            h('div',{className:'tv-section-title',style:{margin:0}},'Hourly — Shift ',eq.currentShift),
+            h('div',{style:{display:'flex',gap:8,alignItems:'center'}},
+              h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#34C759'}}),'Over'),
+              h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#FF3B30'}}),'Under'),
+              priorLabel&&h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#CBD5E1'}}),'Prior')
             )
           ),
-          // Prior operators
-          priorOps.length>0&&h('div',{className:'tv-prev-info'},'Prior operators: ',priorOps.join(', ')),
-          // Hour rows
-          currentHrs.map((hr,i)=>{
-            const pct=maxVal>0?(hr.goodUnits/maxVal)*100:0;
-            const tgtPct=maxVal>0?(hr.target/maxVal)*100:0;
-            const prev=priorHrs.find(p=>p.hourIdx===hr.hourIdx);
-            const prevPct=prev&&maxVal>0?(prev.goodUnits/maxVal)*100:0;
-            const onTrack=hr.goodUnits>=hr.target;
-            const barColor=onTrack?'#34C759':'#FF3B30';
-            return h('div',{key:i,className:'tv-bar-row'},
-              h('div',{className:'tv-bar-label'},'H'+hr.hourIdx),
-              h('div',{className:'tv-bar-track'},
-                // Prior shift ghost bar
-                prev&&h('div',{className:'tv-bar-prev',style:{width:prevPct+'%'}}),
-                // Target marker line
-                h('div',{style:{position:'absolute',left:tgtPct+'%',top:0,bottom:0,width:2,background:'#F59E0B',zIndex:2,borderRadius:1}}),
-                // Current bar
-                h('div',{className:'tv-bar-fill',style:{width:pct+'%',background:barColor,zIndex:1}},
-                  pct>18&&h('div',{className:'tv-bar-val'},hr.goodUnits)
+          priorOps.length>0&&h('div',{style:{fontSize:7,color:'#94A3B8',marginBottom:1,flexShrink:0,fontStyle:'italic'}},'Prior (',priorLabel,'): ',priorOps.join(', ')),
+          // Chart
+          h('div',{style:{flex:1,minHeight:0}},
+            h(ResponsiveContainer,{width:'100%',height:'100%'},
+              h(BarChart,{data:chartData,margin:{top:4,right:2,bottom:0,left:-15},barGap:1,barCategoryGap:'20%'},
+                h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E7EB',vertical:false}),
+                h(XAxis,{dataKey:'hour',tick:{fontSize:8,fill:'#64748B'},tickLine:false,axisLine:{stroke:'#E5E7EB'}}),
+                h(YAxis,{tick:{fontSize:7,fill:'#94A3B8'},tickLine:false,axisLine:false,width:28}),
+                h(ReferenceLine,{y:tgtVal,stroke:'#F59E0B',strokeDasharray:'4 3',strokeWidth:1.5,label:{value:'Target: '+tgtVal,position:'insideTopLeft',fontSize:7,fill:'#F59E0B',fontWeight:600}}),
+                priorLabel&&h(Bar,{dataKey:'prior',name:'Prior',fill:'#CBD5E1',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:20}),
+                h(Bar,{dataKey:'current',name:'Current',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:20},
+                  chartData.map((d,i)=>h(Cell,{key:i,fill:d.current>=d.target?'#34C759':'#FF3B30'})),
+                  h(LabelList,{dataKey:'current',position:'top',content:props=>{
+                    const{x,y,width:w,value}=props;
+                    if(typeof value==='undefined')return null;
+                    return h('text',{x:(x||0)+(w||0)/2,y:(y||0)-2,textAnchor:'middle',fontSize:7,fontWeight:700,fill:'#374151'},value);
+                  }})
                 )
-              ),
-              pct<=18&&h('div',{className:'tv-bar-val-out',style:{color:barColor}},hr.goodUnits)
-            );
-          }),
-          // Legend row
-          h('div',{style:{display:'flex',gap:8,marginTop:2,justifyContent:'center'}},
-            h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:6,background:'#34C759',borderRadius:1,display:'inline-block'}}),'At/Over'),
-            h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:6,background:'#FF3B30',borderRadius:1,display:'inline-block'}}),'Under'),
-            h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:2,background:'#F59E0B',borderRadius:1,display:'inline-block'}}),'Target'),
-            priorLabel&&h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:6,background:'#D1D5DB',borderRadius:1,display:'inline-block'}}),'Prior')
+              )
+            )
           )
         );
       })()
