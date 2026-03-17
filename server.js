@@ -394,6 +394,25 @@ function registerRoutes() {
     }
   });
 
+  // Self-service password change (any authenticated user)
+  app.put('/api/users/me/password', requireAuth, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Current and new password required' });
+      if (newPassword.length < 4) return res.status(400).json({ error: 'New password must be at least 4 characters' });
+      const { rows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.session.userId]);
+      if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+      const valid = await bcrypt.compare(currentPassword, rows[0].password_hash);
+      if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+      const hash = await bcrypt.hash(newPassword, 10);
+      await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, req.session.userId]);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('Self password change error:', err);
+      res.status(500).json({ error: 'Failed to change password' });
+    }
+  });
+
   app.delete('/api/users/:id', requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
