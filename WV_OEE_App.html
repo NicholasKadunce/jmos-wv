@@ -670,7 +670,7 @@ input[type=number]{-moz-appearance:textfield}
 .tv-content-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--jm-border-light);flex:1;min-height:0}
 .tv-section{padding:4px 8px;background:var(--jm-surface);display:flex;flex-direction:column;min-height:0}
 .tv-section-title{font-size:9px;font-weight:700;color:var(--jm-navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;flex-shrink:0}
-.tv-chart-wrap{flex:1;min-height:0}
+.tv-chart-wrap{flex:1;min-height:0;position:relative}
 .tv-no-data{font-size:11px;color:var(--jm-text-ter);font-style:italic;padding:8px 0}
 @media(max-width:1024px){.tv-display{height:auto;overflow-y:auto}.tv-grid{grid-template-columns:1fr!important;overflow-y:auto;overflow-x:hidden;max-height:none;height:auto!important}.tv-equip-card{min-height:auto;height:auto!important;overflow:visible}.tv-content-grid{grid-template-columns:1fr}.tv-equip-header{flex-direction:column;align-items:flex-start}.tv-oee-pills{width:100%;flex-wrap:wrap}.tv-summary-row{flex-wrap:wrap}.tv-summary-stat{flex:1 1 45%}.tv-equip-title{font-size:16px}.tv-oee-pill-val{font-size:14px}.tv-summary-val{font-size:16px}.tv-section{padding:8px 12px}.tv-section-title{font-size:11px;margin-bottom:6px}.tv-chart-wrap{min-height:220px}}
 
@@ -3651,20 +3651,21 @@ function TVView({dataVersion,master}){
         });
         const tgtVal=chartData.length>0?chartData[0].target:0;
 
-        return h('div',{className:'tv-section',style:{flex:1,minHeight:0,padding:'4px 8px',display:'flex',flexDirection:'column'}},
+        const isMobile=window.innerWidth<=1024;
+        return h('div',{className:'tv-section',style:{padding:'4px 8px',display:'flex',flexDirection:'column',...(isMobile?{minHeight:'auto'}:{flex:1,minHeight:0})}},
           // Header with prior shift info + operators
           h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:1,flexShrink:0}},
             h('div',{className:'tv-section-title',style:{margin:0}},'Hourly — Shift ',eq.currentShift),
             h('div',{style:{display:'flex',gap:8,alignItems:'center'}},
-              h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#34C759'}}),'Over'),
-              h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#FF3B30'}}),'Under'),
-              priorLabel&&h('span',{style:{fontSize:7,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#CBD5E1'}}),'Prior')
+              h('span',{style:{fontSize:9,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#34C759'}}),'Over'),
+              h('span',{style:{fontSize:9,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#FF3B30'}}),'Under'),
+              priorLabel&&h('span',{style:{fontSize:9,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#CBD5E1'}}),'Prior')
             )
           ),
-          priorOps.length>0&&h('div',{style:{fontSize:7,color:'#94A3B8',marginBottom:1,flexShrink:0,fontStyle:'italic'}},'Prior (',priorLabel,'): ',priorOps.join(', ')),
-          // Chart
-          h('div',{className:'tv-chart-wrap',style:{flex:1,minHeight:0}},
-            h(ResponsiveContainer,{width:'100%',height:'100%'},
+          priorOps.length>0&&h('div',{style:{fontSize:9,color:'#94A3B8',marginBottom:2,flexShrink:0,fontStyle:'italic'}},'Prior (',priorLabel,'): ',priorOps.join(', ')),
+          // Chart — use fixed height on mobile since flex:1 with height:100% collapses
+          h('div',{className:'tv-chart-wrap',style:isMobile?{height:240}:{flex:1,minHeight:0}},
+            h(ResponsiveContainer,{width:'100%',height:isMobile?240:'100%'},
               h(BarChart,{data:chartData,margin:{top:20,right:4,bottom:4,left:0},barGap:1,barCategoryGap:'20%'},
                 h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E7EB',vertical:false}),
                 h(XAxis,{dataKey:'hour',tick:{fontSize:8,fill:'#64748B'},tickLine:false,axisLine:{stroke:'#E5E7EB'}}),
