@@ -584,10 +584,12 @@ input[type=number]{-moz-appearance:textfield}
 .pfd-node{cursor:pointer;transition:opacity 0.2s}
 .pfd-node:hover{opacity:0.85}
 .pfd-node text{pointer-events:none;user-select:none}
-@keyframes pfdGlow{0%,100%{filter:drop-shadow(0 0 2px rgba(220,38,38,0.25))}50%{filter:drop-shadow(0 0 6px rgba(220,38,38,0.55))}}
-.pfd-bottleneck{animation:pfdGlow 2.5s ease-in-out infinite}
+@keyframes pfdGlow{0%,100%{box-shadow:0 0 8px rgba(220,38,38,0.2)}50%{box-shadow:0 0 18px rgba(220,38,38,0.5)}}
+@keyframes pfdGlowSvg{0%,100%{filter:drop-shadow(0 0 3px rgba(220,38,38,0.15))}50%{filter:drop-shadow(0 0 10px rgba(220,38,38,0.45))}}
+.pfd-bottleneck-box{animation:pfdGlowSvg 2.5s ease-in-out infinite}
 .pfd-node-inactive{opacity:0.3}
 .pfd-group-label{font-size:8px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;pointer-events:none}
+.pfd-group-output{font-size:8px;font-weight:700;font-variant-numeric:tabular-nums}
 .pfd-tooltip{position:absolute;z-index:50;background:#0F172A;color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.6;box-shadow:0 8px 30px rgba(0,0,0,0.25);pointer-events:none;max-width:240px;white-space:nowrap}
 .pfd-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0F172A}
 .pfd-tooltip-title{font-weight:700;font-size:13px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:4px}
@@ -2026,28 +2028,113 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
   const svgRef=useRef(null);
   useEffect(()=>{setFlowShift(shiftFilter||'all');},[shiftFilter]);
 
-  // ── Icon-driven process flow v4 ──
-  // Crisp relevant icons, straight lines with rounded bends, vertical stacking,
-  // products shown, unit assembly feeds A3+A4, no arrow overlap
   var ICON_R=14,ROW_H=30;
   var COLORS={bolt:'#1B3D6E',press:'#7C3AED',cable:'#059669',sub:'#D97706',inactive:'#D1D5DB'};
 
-  // SVG icon paths — relevant to each process (18x18 viewBox)
-  var ICONS={
-    shear:'M3 9h12M7 3v12M11 3v12',                                    // cutting blades crossing
-    peel:'M3 14Q9 2 15 6M3 16Q9 4 15 8',                               // peeling strips curving off
-    thread:'M5 3v12M5 6h8M5 10h8M13 3v12',                             // threaded bolt profile
-    header:'M5 3h8v4H5zM7 7v7M11 7v7M5 14h8',                         // bolt head being stamped
-    assembly:'M9 2l5 4-5 4-5-4zM4 10v4l5 3 5-3v-4',                   // box/package assembly
-    press:'M4 4h10M6 4v5M12 4v5M3 9h12v3H3zM5 12v3h8v-3',             // hydraulic press
-    cable:'M3 6q6 8 12 0M3 10q6 8 12 0',                               // cable/wire strands
-    saw:'M9 3v3M4 6a5 5 0 0010 0M4 6h10M9 12v3',                      // circular saw blade
-    weld:'M7 14l2-10 2 10M4 6l2 2M14 6l-2 2M6 2l1 2M12 2l-1 2',      // welding torch sparks
-    pipe:'M3 7h12v5H3zM5 5v2M13 5v2M5 12v2M13 12v2',                  // pipe section
-    unit:'M4 8h4v5H4zM10 8h4v5h-4zM7 3h4v4H7z',                       // component blocks
-    tie:'M2 8h4l1 2h2l1-2h4l1 2h2l1-2',                               // chain links
-    landis:'M4 5h10v3H4zM6 8v5M12 8v5M4 13h10'                        // lathe/threader
-  };
+  // ── Pristine C-Level cartoonish process icons (20x20 viewBox) ──
+  function processIcon(type,color,size){
+    var s=size||20;
+    var icons={
+      // Shear tool — open scissors/shear blades
+      shear:h('svg',{key:'ic-shear',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('circle',{cx:6,cy:5,r:2.5,stroke:color,strokeWidth:1.2}),
+        h('circle',{cx:6,cy:15,r:2.5,stroke:color,strokeWidth:1.2}),
+        h('line',{x1:8,y1:6.5,x2:17,y2:14,stroke:color,strokeWidth:1.4,strokeLinecap:'round'}),
+        h('line',{x1:8,y1:13.5,x2:17,y2:6,stroke:color,strokeWidth:1.4,strokeLinecap:'round'})
+      ),
+      // Peeling — curly wood shaving spiral
+      peel:h('svg',{key:'ic-peel',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('path',{d:'M4 16 C4 10 8 4 14 3',stroke:color,strokeWidth:1.3,strokeLinecap:'round'}),
+        h('path',{d:'M14 3 C12 6 14 8 12 11 C10 14 12 15 11 17',stroke:color,strokeWidth:1.3,strokeLinecap:'round',strokeDasharray:'0'}),
+        h('path',{d:'M8 8 C9 6 11 7 10 9 C9 11 11 12 10 14',stroke:color,strokeWidth:0.9,strokeLinecap:'round',opacity:0.5})
+      ),
+      // Threading — screw with visible thread ridges
+      thread:h('svg',{key:'ic-thread',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('line',{x1:10,y1:2,x2:10,y2:18,stroke:color,strokeWidth:1.8,strokeLinecap:'round'}),
+        h('line',{x1:7,y1:5,x2:13,y2:5,stroke:color,strokeWidth:1.1,strokeLinecap:'round'}),
+        h('line',{x1:6.5,y1:7.5,x2:13.5,y2:7.5,stroke:color,strokeWidth:1.1,strokeLinecap:'round'}),
+        h('line',{x1:7,y1:10,x2:13,y2:10,stroke:color,strokeWidth:1.1,strokeLinecap:'round'}),
+        h('line',{x1:6.5,y1:12.5,x2:13.5,y2:12.5,stroke:color,strokeWidth:1.1,strokeLinecap:'round'}),
+        h('line',{x1:7,y1:15,x2:13,y2:15,stroke:color,strokeWidth:1.1,strokeLinecap:'round'}),
+        h('circle',{cx:10,cy:18,r:1,fill:color,opacity:0.4})
+      ),
+      // Heading — nail/bolt head being stamped (side view)
+      header:h('svg',{key:'ic-header',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('rect',{x:6,y:2,width:8,height:4,rx:1.5,stroke:color,strokeWidth:1.2,fill:color,fillOpacity:0.12}),
+        h('line',{x1:10,y1:6,x2:10,y2:18,stroke:color,strokeWidth:2,strokeLinecap:'round'}),
+        h('line',{x1:8,y1:18,x2:12,y2:18,stroke:color,strokeWidth:1,strokeLinecap:'round',opacity:0.4}),
+        h('path',{d:'M4 3 L6 5',stroke:color,strokeWidth:0.8,strokeLinecap:'round',opacity:0.3}),
+        h('path',{d:'M16 3 L14 5',stroke:color,strokeWidth:0.8,strokeLinecap:'round',opacity:0.3})
+      ),
+      // Assembly — bolt with nut and washer components
+      assembly:h('svg',{key:'ic-assy',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('line',{x1:10,y1:3,x2:10,y2:17,stroke:color,strokeWidth:1.5,strokeLinecap:'round'}),
+        h('rect',{x:6,y:2,width:8,height:3,rx:1,stroke:color,strokeWidth:1,fill:color,fillOpacity:0.1}),
+        h('ellipse',{cx:10,cy:9,rx:5,ry:1.5,stroke:color,strokeWidth:1,fill:color,fillOpacity:0.08}),
+        h('polygon',{points:'10,13 14,15 14,17 10,19 6,17 6,15',stroke:color,strokeWidth:1,fill:color,fillOpacity:0.15,strokeLinejoin:'round'})
+      ),
+      // Press — hydraulic press ram
+      press:h('svg',{key:'ic-press',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('rect',{x:4,y:2,width:12,height:3,rx:1,stroke:color,strokeWidth:1.2,fill:color,fillOpacity:0.12}),
+        h('rect',{x:8,y:5,width:4,height:6,stroke:color,strokeWidth:1.2,fill:color,fillOpacity:0.06}),
+        h('path',{d:'M6 11 L6 13 Q6 15 8 15 L12 15 Q14 15 14 13 L14 11',stroke:color,strokeWidth:1.2,strokeLinecap:'round'}),
+        h('line',{x1:3,y1:17,x2:17,y2:17,stroke:color,strokeWidth:1.5,strokeLinecap:'round'}),
+        h('path',{d:'M9 8 L11 8',stroke:color,strokeWidth:0.8,strokeLinecap:'round',opacity:0.4})
+      ),
+      // Cable — twisted wire strands
+      cable:h('svg',{key:'ic-cable',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('path',{d:'M3 10 Q6 4 10 10 Q14 16 17 10',stroke:color,strokeWidth:1.4,strokeLinecap:'round'}),
+        h('path',{d:'M3 10 Q6 16 10 10 Q14 4 17 10',stroke:color,strokeWidth:1.4,strokeLinecap:'round',opacity:0.5}),
+        h('circle',{cx:3,cy:10,r:1.5,fill:color,fillOpacity:0.15,stroke:color,strokeWidth:0.6}),
+        h('circle',{cx:17,cy:10,r:1.5,fill:color,fillOpacity:0.15,stroke:color,strokeWidth:0.6})
+      ),
+      // Saw — circular saw blade
+      saw:h('svg',{key:'ic-saw',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('circle',{cx:10,cy:10,r:6,stroke:color,strokeWidth:1.2}),
+        h('circle',{cx:10,cy:10,r:1.5,fill:color,fillOpacity:0.3}),
+        h('line',{x1:10,y1:4,x2:10,y2:2,stroke:color,strokeWidth:1,strokeLinecap:'round'}),
+        h('line',{x1:10,y1:16,x2:10,y2:18,stroke:color,strokeWidth:1,strokeLinecap:'round'}),
+        h('line',{x1:4,y1:10,x2:2,y2:10,stroke:color,strokeWidth:1,strokeLinecap:'round'}),
+        h('line',{x1:16,y1:10,x2:18,y2:10,stroke:color,strokeWidth:1,strokeLinecap:'round'})
+      ),
+      // Weld — welding arc sparks
+      weld:h('svg',{key:'ic-weld',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('path',{d:'M10 4 L10 10',stroke:color,strokeWidth:1.5,strokeLinecap:'round'}),
+        h('circle',{cx:10,cy:12,r:2,fill:color,fillOpacity:0.2,stroke:color,strokeWidth:0.8}),
+        h('line',{x1:7,y1:14,x2:5,y2:17,stroke:color,strokeWidth:0.8,strokeLinecap:'round',opacity:0.5}),
+        h('line',{x1:13,y1:14,x2:15,y2:17,stroke:color,strokeWidth:0.8,strokeLinecap:'round',opacity:0.5}),
+        h('line',{x1:10,y1:14,x2:10,y2:18,stroke:color,strokeWidth:0.8,strokeLinecap:'round',opacity:0.5})
+      ),
+      // Pipe — pipe section with flanges
+      pipe:h('svg',{key:'ic-pipe',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('rect',{x:5,y:7,width:10,height:6,rx:2,stroke:color,strokeWidth:1.2,fill:color,fillOpacity:0.06}),
+        h('line',{x1:4,y1:7,x2:4,y2:13,stroke:color,strokeWidth:1.5,strokeLinecap:'round'}),
+        h('line',{x1:16,y1:7,x2:16,y2:13,stroke:color,strokeWidth:1.5,strokeLinecap:'round'})
+      ),
+      // Unit — multiple stacked component blocks
+      unit:h('svg',{key:'ic-unit',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('rect',{x:3,y:11,width:6,height:6,rx:1,stroke:color,strokeWidth:1,fill:color,fillOpacity:0.1}),
+        h('rect',{x:11,y:11,width:6,height:6,rx:1,stroke:color,strokeWidth:1,fill:color,fillOpacity:0.1}),
+        h('rect',{x:7,y:3,width:6,height:6,rx:1,stroke:color,strokeWidth:1,fill:color,fillOpacity:0.15}),
+        h('line',{x1:10,y1:9,x2:6,y2:11,stroke:color,strokeWidth:0.6,opacity:0.3}),
+        h('line',{x1:10,y1:9,x2:14,y2:11,stroke:color,strokeWidth:0.6,opacity:0.3})
+      ),
+      // Tie — chain links
+      tie:h('svg',{key:'ic-tie',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('ellipse',{cx:7,cy:10,rx:4,ry:3,stroke:color,strokeWidth:1.2}),
+        h('ellipse',{cx:13,cy:10,rx:4,ry:3,stroke:color,strokeWidth:1.2})
+      ),
+      // Landis threader — lathe with threading
+      landis:h('svg',{key:'ic-landis',viewBox:'0 0 20 20',width:s,height:s,fill:'none'},
+        h('rect',{x:3,y:6,width:14,height:4,rx:1.5,stroke:color,strokeWidth:1.2,fill:color,fillOpacity:0.08}),
+        h('line',{x1:6,y1:10,x2:6,y2:15,stroke:color,strokeWidth:1,strokeLinecap:'round'}),
+        h('line',{x1:14,y1:10,x2:14,y2:15,stroke:color,strokeWidth:1,strokeLinecap:'round'}),
+        h('line',{x1:4,y1:15,x2:16,y2:15,stroke:color,strokeWidth:1.2,strokeLinecap:'round'})
+      )
+    };
+    return icons[type]||icons.assembly;
+  }
+
   function iconFor(code){
     if(code.includes('SHEAR'))return 'shear';if(code.includes('PEEL')||code.includes('SWAG'))return 'peel';
     if(code.includes('THREAD')&&!code.includes('LANDIS'))return 'thread';if(code.includes('HEAD'))return 'header';
@@ -2058,13 +2145,8 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     if(code.includes('LANDIS'))return 'landis';return 'assembly';
   }
 
-  // ── Layout (viewBox 960x520) ──
-  // Row 1 (y~100): Main Bolt Line — 5 groups centered vertically
-  // Row 2 left (y~240): Plate Presses stacked vertically
-  // Row 2 right (y~240): Unit Assembly → feeds up to Assembly A3+A4
-  // Row 3 left (y~310): Cable Line Subassemblies stacked vertically
-  // Row 3 right (y~310): Cable Lines stacked vertically
-  var BOLT_Y=105,NODE_W=130;
+  // ── Layout ──
+  var BOLT_Y=115,NODE_W=130;
   var boltGroups=[
     {id:'shears',label:'Shears',color:COLORS.bolt,x:20,codes:['WV-SHEAR-AS1','WV-SHEAR-AS2']},
     {id:'peelers',label:'Peeling',color:COLORS.bolt,x:175,codes:['WV-PEEL-MAN','WV-PEEL-AUTO','WV-PEEL-SWAG']},
@@ -2072,12 +2154,11 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     {id:'headers',label:'Heading',color:COLORS.bolt,x:490,codes:['WV-HEAD-H1','WV-HEAD-H2','WV-HEAD-H3','WV-HEAD-AUTO']},
     {id:'assembly',label:'Assembly',color:COLORS.bolt,x:660,codes:['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4']}
   ];
-  // Plate presses — stacked vertically, left side row 2
-  var pressX=30,pressY=235;
+  var pressX=30,pressY=250;
   var pressCodes=['WV-PRESS-400','WV-PRESS-500A','WV-PRESS-500B'];
-  // Unit Assembly — row 2 right, feeds up into assembly
-  var unitCode='WV-MISC-UNITS',unitX=500,unitY=250;
-  // Cable Line Subassemblies — stacked vertically left
+  // Unit Assembly — positioned closer to Assembly group
+  var unitCode='WV-MISC-UNITS',unitX=580,unitY=250;
+  // Cable Line Subassemblies
   var subCodes=[
     {code:'WV-MISC-BIGSAW',label:'Big Saw'},
     {code:'WV-MISC-OFFWELD',label:'Off. Welding'},
@@ -2085,10 +2166,9 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     {code:'WV-MISC-LANDISASSM',label:'Landis Threader'},
     {code:'WV-MISC-TIELINE',label:'Tie Line'}
   ];
-  var subX=30,subY=345;
-  // Cable Lines — stacked vertically to the RIGHT of subassemblies
-  // Order optimized to minimize crossovers with sub connections
-  var cableX=350,cableY=345;
+  var subX=30,subY=355;
+  // Cable Lines — right of subassemblies
+  var cableX=350,cableY=355;
   var cableCodes=['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C3','WV-CABLE-C4'];
 
   // Node positions
@@ -2136,8 +2216,11 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     if(!g)return 0;
     return g.codes.reduce(function(s,c){var d=flowData[c];return s+(d?d.totalOutput:0);},0);
   }
+  function groupOutputCodes(codes){
+    return codes.reduce(function(s,c){var d=flowData[c];return s+(d?d.totalOutput:0);},0);
+  }
 
-  // Bottleneck
+  // Bottleneck — returns set of codes AND the group IDs for process-level
   var bottleneckCodes=useMemo(function(){
     var result=new Set();
     function findMin(codes){
@@ -2153,6 +2236,14 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     } else if(bnScope==='cable'){findMin(cableCodes);}
     else if(bnScope==='subassembly'){findMin(subCodes.map(function(s){return s.code;}).concat([unitCode]));}
     return result;
+  },[flowData,bnScope]);
+
+  // Which GROUP is bottlenecked (for process-level red box)
+  var bottleneckGroupId=useMemo(function(){
+    if(bnScope!=='process')return null;
+    var worstG=null,worstOut=Infinity;
+    boltGroups.forEach(function(g){var out=groupOutput(g.id);if(out>0&&out<worstOut){worstOut=out;worstG=g.id;}});
+    return worstG;
   },[flowData,bnScope]);
 
   function handleNodeHover(code,evt){
@@ -2175,16 +2266,19 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     var prods=[...(d.products||[])];
     var prodName=prods.length>0?getProductName(prods[0]):'';
     var prodShort=prodName.length>16?prodName.substring(0,14)+'..':prodName;
-    var isActive=d.totalOutput>0;var isBN=bottleneckCodes.has(code);var hCls=nodeOpacity(code);
-    var cls='pfd-node'+(hCls?' '+hCls:'')+(isActive?'':' pfd-node-inactive')+(isBN?' pfd-bottleneck':'');
-    var iconPath=ICONS[iconFor(code)];
+    var isActive=d.totalOutput>0;var isBN=bottleneckCodes.has(code)&&bnScope==='equipment';var hCls=nodeOpacity(code);
+    var cls='pfd-node'+(hCls?' '+hCls:'')+(isActive?'':' pfd-node-inactive');
     var fillCol=isActive?color:COLORS.inactive;
     var bgFill=isActive?color+'15':'#F3F4F6';
+    var iType=iconFor(code);
     return h('g',{key:code,className:cls,transform:'translate('+x+','+y+')',
       onMouseEnter:function(e){handleNodeHover(code,e);},onMouseLeave:function(){handleNodeHover(null);}},
-      h('circle',{cx:ICON_R,cy:ICON_R,r:ICON_R,fill:bgFill,stroke:isBN?'#DC2626':fillCol,strokeWidth:isBN?2:0.7,opacity:isActive?1:0.4}),
-      h('g',{transform:'translate('+(ICON_R-9)+','+(ICON_R-9)+')'},
-        h('path',{d:iconPath,fill:'none',stroke:isActive?(isBN?'#DC2626':color):'#B0B5BD',strokeWidth:1.3,strokeLinecap:'round',strokeLinejoin:'round'})
+      // Equipment bottleneck: red rounded box around the individual node
+      isBN?h('rect',{x:-4,y:-3,width:NODE_W+8,height:ROW_H-2,rx:6,ry:6,fill:'#DC262608',stroke:'#DC2626',strokeWidth:1.5,strokeDasharray:'none',className:'pfd-bottleneck-box'}):null,
+      h('foreignObject',{x:ICON_R-10,y:ICON_R-10,width:20,height:20,style:{overflow:'visible'}},
+        h('div',{xmlns:'http://www.w3.org/1999/xhtml',style:{width:20,height:20,opacity:isActive?1:0.3}},
+          processIcon(iType,isActive?color:'#B0B5BD',20)
+        )
       ),
       h('text',{x:ICON_R*2+6,y:isActive?ICON_R-4:ICON_R,fill:isActive?'#1D1D1F':'#B0B5BD',fontSize:8.5,fontWeight:700,dominantBaseline:'middle'},short),
       isActive&&prodShort?h('text',{x:ICON_R*2+6,y:ICON_R+5,fill:'#94A3B8',fontSize:6,dominantBaseline:'middle',fontStyle:'italic'},prodShort):null,
@@ -2192,37 +2286,43 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     );
   }
 
-  // ── Render vertical group ──
+  // ── Render vertical group with output total below header ──
   function renderVertGroup(label,codes,x,startY,color,groupKey){
+    var out=groupOutputCodes(codes);
+    var isBNGroup=bottleneckGroupId===groupKey&&bnScope==='process';
     return h('g',{key:'grp-'+(groupKey||label)},
-      h('text',{x:x+NODE_W/2,y:startY-10,className:'pfd-group-label',fill:color+'80',textAnchor:'middle'},label.toUpperCase()),
+      // Process-level bottleneck: red fitted rounded box around entire group area
+      isBNGroup?h('rect',{x:x-8,y:startY-28,width:NODE_W+16,height:codes.length*ROW_H+36,rx:10,ry:10,fill:'#DC262606',stroke:'#DC2626',strokeWidth:1.8,className:'pfd-bottleneck-box'}):null,
+      h('text',{x:x+NODE_W/2,y:startY-16,className:'pfd-group-label',fill:color,textAnchor:'middle',opacity:0.7},label.toUpperCase()),
+      out>0?h('text',{x:x+NODE_W/2,y:startY-6,className:'pfd-group-output',fill:color,textAnchor:'middle',opacity:0.55},out.toLocaleString()+' pcs'):null,
       codes.map(function(code,i){return renderEquip(code,x,startY+i*ROW_H,color);})
     );
   }
 
-  // ── Straight-line arrow with optional 90° rounded bend ──
-  function elbowArrow(x1,y1,x2,y2,color,key,dashed,bendR){
-    var r=bendR||6;var col=color||'#CBD5E1';var da=dashed?'4 3':'none';
+  // ── Clean directional arrow with solid styling ──
+  function flowArrow(x1,y1,x2,y2,color,key,dashed,bendR){
+    var r=bendR||8;var col=color||'#94A3B8';var sw=dashed?1:1.5;
+    var da=dashed?'5 4':'none';
     var d;
     if(Math.abs(y1-y2)<2){
       d='M'+x1+' '+y1+'L'+x2+' '+y2;
     } else if(Math.abs(x1-x2)<2){
       d='M'+x1+' '+y1+'L'+x2+' '+y2;
     } else {
-      // Horizontal then vertical with rounded corner
       var mx=x2,my=y1;
       if(y2>y1){d='M'+x1+' '+y1+'L'+(mx-r)+' '+my+'Q'+mx+' '+my+' '+mx+' '+(my+r)+'L'+x2+' '+y2;}
       else{d='M'+x1+' '+y1+'L'+(mx-r)+' '+my+'Q'+mx+' '+my+' '+mx+' '+(my-r)+'L'+x2+' '+y2;}
     }
-    return h('path',{key:key,d:d,fill:'none',stroke:col,strokeWidth:1.2,strokeDasharray:da,markerEnd:'url(#pfd-arrow)',className:dashed?'':'pfd-connection'});
+    return h('path',{key:key,d:d,fill:'none',stroke:col,strokeWidth:sw,strokeDasharray:da,markerEnd:'url(#pfd-arrow)'});
   }
 
-  // WIP diamond with output
+  // ── WIP lean manufacturing inverted triangle (standard WIP buffer symbol) ──
   function renderWip(fromGroupId,x,y,key){
-    var s=4,out=groupOutput(fromGroupId);
+    var s=7;
     return h('g',{key:key},
-      out>0?h('text',{x:x,y:y-9,textAnchor:'middle',fill:'#1B3D6E',fontSize:7.5,fontWeight:800,opacity:0.5,fontVariantNumeric:'tabular-nums'},out.toLocaleString()):null,
-      h('polygon',{points:(x-s)+','+y+' '+x+','+(y-s)+' '+(x+s)+','+y+' '+x+','+(y+s),fill:'#F0A500',stroke:'#C89B20',strokeWidth:0.6})
+      h('polygon',{points:(x-s)+','+(y-s)+' '+(x+s)+','+(y-s)+' '+x+','+(y+s-2),
+        fill:'#FEF3C7',stroke:'#D97706',strokeWidth:0.8,strokeLinejoin:'round'}),
+      h('text',{x:x,y:y-2,textAnchor:'middle',fill:'#92400E',fontSize:5,fontWeight:800,dominantBaseline:'middle'},'WIP')
     );
   }
 
@@ -2277,10 +2377,10 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     h('div',{style:{position:'relative'}},
       renderTooltip(),
       h('div',{className:'pfd-svg-wrap'},
-        h('svg',{ref:svgRef,viewBox:'0 0 960 490',xmlns:'http://www.w3.org/2000/svg',style:{width:'100%',height:'auto'}},
+        h('svg',{ref:svgRef,viewBox:'0 0 960 510',xmlns:'http://www.w3.org/2000/svg',style:{width:'100%',height:'auto'}},
           h('defs',null,
-            h('marker',{id:'pfd-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:5,markerHeight:5,orient:'auto-start-reverse'},
-              h('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'#94A3B8'}))
+            h('marker',{id:'pfd-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'},
+              h('path',{d:'M 0 1 L 8 5 L 0 9 z',fill:'#64748B'}))
           ),
           h('pattern',{id:'pfd-dots',width:20,height:20,patternUnits:'userSpaceOnUse'},
             h('circle',{cx:10,cy:10,r:0.35,fill:'#D1D5DB',opacity:0.35})),
@@ -2289,54 +2389,51 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
           // ── MAIN BOLT LINE ──
           h('text',{x:420,y:16,textAnchor:'middle',fill:'#1B3D6E',fontSize:9,fontWeight:800,letterSpacing:2,opacity:0.18},'MAIN BOLT LINE'),
 
-          // Bolt line horizontal arrows between groups
+          // Bolt line horizontal arrows between groups (solid, firm)
           boltGroups.slice(0,-1).map(function(g,i){
             var nx=boltGroups[i+1].x;
-            return elbowArrow(g.x+NODE_W,BOLT_Y,nx,BOLT_Y,'#CBD5E1','bconn'+i);
+            return flowArrow(g.x+NODE_W+4,BOLT_Y,nx-4,BOLT_Y,'#94A3B8','bconn'+i);
           }),
-          // WIP diamonds
+          // WIP triangles between bolt groups
           wipPositions.map(function(wp,i){return renderWip(wp.fromId,wp.x,wp.y,'wip'+i);}),
-          // Bolt line groups
+          // Bolt line groups with output totals
           boltGroups.map(function(g){
             var totalH=g.codes.length*ROW_H;var startY=BOLT_Y-totalH/2;
             return renderVertGroup(g.label,g.codes,g.x,startY,g.color,g.id);
           }),
 
-          // ── PLATE PRESSES ── stacked vertically, left side
+          // ── PLATE PRESSES ──
           renderVertGroup('Plate Presses',pressCodes,pressX,pressY,COLORS.press,'presses'),
 
-          // ── UNIT ASSEMBLY ── feeds up to Assembly A3 + A4
-          h('text',{x:unitX+NODE_W/2,y:unitY-10,className:'pfd-group-label',fill:COLORS.sub+'80',textAnchor:'middle'},'UNIT ASSEMBLY'),
-          renderEquip(unitCode,unitX,unitY,COLORS.sub),
-          // Arrow from unit assembly UP to A3
-          elbowArrow(unitX+NODE_W,unitY+ICON_R,a3Pos.x,a3Pos.y+ICON_R,'#D9770650','unit-a3',true,8),
-          // Arrow from unit assembly UP to A4
-          elbowArrow(unitX+NODE_W+10,unitY+ICON_R,a4Pos.x,a4Pos.y+ICON_R,'#D9770650','unit-a4',true,8),
-          h('text',{x:unitX+NODE_W+30,y:unitY+ICON_R-6,fill:'#D97706',fontSize:6,fontWeight:700,opacity:0.4,letterSpacing:0.5},'FEEDS A3 + A4'),
+          // ── UNIT ASSEMBLY ── closer to Assembly group, clean arrows
+          h('g',{key:'unit-grp'},
+            h('text',{x:unitX+NODE_W/2,y:unitY-16,className:'pfd-group-label',fill:COLORS.sub,textAnchor:'middle',opacity:0.7},'UNIT ASSEMBLY'),
+            renderEquip(unitCode,unitX,unitY,COLORS.sub),
+            // Clean arrows from unit assembly to A3 and A4
+            flowArrow(unitX+NODE_W/2,unitY,a3Pos.x,a3Pos.y+ICON_R,'#D97706','unit-a3',true,10),
+            flowArrow(unitX+NODE_W/2+15,unitY,a4Pos.x,a4Pos.y+ICON_R,'#D97706','unit-a4',true,10),
+            h('text',{x:unitX+NODE_W/2,y:unitY-6,fill:'#D97706',fontSize:6.5,fontWeight:700,opacity:0.35,textAnchor:'middle',letterSpacing:0.3},'FEEDS A3 + A4')
+          ),
 
-          // ── CABLE LINE SUBASSEMBLIES ── stacked vertically left
+          // ── CABLE LINE SUBASSEMBLIES ──
           renderVertGroup('Cable Line Subassemblies',subCodes.map(function(s){return s.code;}),subX,subY,COLORS.sub,'subs'),
 
-          // ── CABLE LINES ── stacked vertically right of subassemblies
+          // ── CABLE LINES ──
           renderVertGroup('Cable Lines',cableCodes,cableX,cableY,COLORS.cable,'cables'),
 
-          // Subassembly → Cable Line connections (straight horizontal with rounded bends, no overlap)
-          // Big Saw → Cable Line #4, Off. Welding → Cable Line #2, Pipe Assy → Cable Line #3, Landis → Cable Line #1, Tie Line → (standalone)
-          elbowArrow(subX+NODE_W,subY+ICON_R,cableX,cableY+3*ROW_H+ICON_R,'#D9770635','s2c-1',true,8),
-          elbowArrow(subX+NODE_W,subY+ROW_H+ICON_R,cableX,cableY+ROW_H+ICON_R,'#D9770635','s2c-2',true,8),
-          elbowArrow(subX+NODE_W,subY+ROW_H*2+ICON_R,cableX,cableY+ROW_H*2+ICON_R,'#D9770635','s2c-3',true,8),
-          elbowArrow(subX+NODE_W,subY+ROW_H*3+ICON_R,cableX,cableY+ICON_R,'#D9770635','s2c-4',true,8),
+          // Subassembly → Cable Line connections
+          // Big Saw → C4, Off. Welding → C2, Pipe Assy → C3, Landis → C1
+          // Only 4 real connections — no random arrows, no Tie Line arrow
+          flowArrow(subX+NODE_W+4,subY+ICON_R,cableX-4,cableY+3*ROW_H+ICON_R,'#D97706','s2c-saw-c4',true,10),
+          flowArrow(subX+NODE_W+4,subY+ROW_H+ICON_R,cableX-4,cableY+ROW_H+ICON_R,'#D97706','s2c-weld-c2',true,10),
+          flowArrow(subX+NODE_W+4,subY+ROW_H*2+ICON_R,cableX-4,cableY+ROW_H*2+ICON_R,'#D97706','s2c-pipe-c3',true,10),
+          flowArrow(subX+NODE_W+4,subY+ROW_H*3+ICON_R,cableX-4,cableY+ICON_R,'#D97706','s2c-landis-c1',true,10),
 
-          // ── LEGEND ──
-          h('g',{transform:'translate(830,340)'},
-            h('text',{x:0,y:0,fontSize:7,fontWeight:700,fill:'#94A3B8',letterSpacing:1},'LEGEND'),
-            h('circle',{cx:5,cy:12,r:5,fill:COLORS.bolt+'15',stroke:COLORS.bolt,strokeWidth:0.7}),h('text',{x:14,y:15,fontSize:7,fill:'#64748B'},'Bolt Line'),
-            h('circle',{cx:5,cy:26,r:5,fill:COLORS.press+'15',stroke:COLORS.press,strokeWidth:0.7}),h('text',{x:14,y:29,fontSize:7,fill:'#64748B'},'Presses'),
-            h('circle',{cx:5,cy:40,r:5,fill:COLORS.cable+'15',stroke:COLORS.cable,strokeWidth:0.7}),h('text',{x:14,y:43,fontSize:7,fill:'#64748B'},'Cable Lines'),
-            h('circle',{cx:5,cy:54,r:5,fill:COLORS.sub+'15',stroke:COLORS.sub,strokeWidth:0.7}),h('text',{x:14,y:57,fontSize:7,fill:'#64748B'},'Subassemblies'),
-            h('circle',{cx:5,cy:68,r:5,fill:'#F3F4F6',stroke:'#D1D5DB',strokeWidth:0.7}),h('text',{x:14,y:71,fontSize:7,fill:'#64748B'},'Inactive'),
-            h('circle',{cx:5,cy:82,r:5,fill:'none',stroke:'#DC2626',strokeWidth:1.5}),h('text',{x:14,y:85,fontSize:7,fill:'#64748B'},'Bottleneck'),
-            h('polygon',{points:'1,95 5,91 9,95 5,99',fill:'#F0A500',stroke:'#C89B20',strokeWidth:0.5}),h('text',{x:14,y:98,fontSize:7,fill:'#64748B'},'WIP Buffer')
+          // ── LEGEND — WIP Material only ──
+          h('g',{transform:'translate(840,450)'},
+            h('polygon',{points:'1,8 8,8 4.5,16',fill:'#FEF3C7',stroke:'#D97706',strokeWidth:0.7,strokeLinejoin:'round'}),
+            h('text',{x:4.5,y:13,textAnchor:'middle',fill:'#92400E',fontSize:4,fontWeight:800},'WIP'),
+            h('text',{x:14,y:14,fontSize:7,fill:'#64748B',fontWeight:600},'WIP Material Buffer')
           )
         )
       )
