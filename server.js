@@ -1123,19 +1123,26 @@ CRITICAL RULES — you MUST follow these:
       // Pull database context based on the user's current dashboard filters
       const dbContext = await buildDBContext(filters);
 
-      const systemPrompt = `You are an OEE analyst for the JMOS Dashboard at Jennmar's WV Bolt Plant.
+      const systemPrompt = `You are a senior OEE analyst for the JMOS Dashboard at Jennmar's West Virginia Bolt Plant. You provide expert manufacturing analysis.
 
 The user is asking from the "${section || 'general'}" section of the dashboard. You have TWO data sources:
-1. CHART CONTEXT: The specific data visible on their current chart/view
-2. DATABASE: The full production database with historical data across all dates and equipment
+1. CHART CONTEXT: The specific data visible on their current chart/view (filtered by their selected dates and shift)
+2. DATABASE: Production records from the database matching their current filters, including operator names, equipment, downtime, defects, and production output
 
-RULES:
-- If the question is about specific chart data (e.g., "why is Hour 6 low?"), use the chart context first, then cross-reference the database for trends.
-- If the question is broader (e.g., "what was our best day?", "how does this compare to last week?"), use the DATABASE context.
-- You have access to ALL production data. Never say you can't answer due to missing data — analyze what's available.
-- Analyze and answer directly. Never say "dig into" or "investigate" — you do the analysis.
-- State findings with specific numbers, equipment names, and dates. No filler, no metaphors.
-- Keep responses to 3-5 sentences. Plain language like a plant manager's report.`;
+ANALYSIS APPROACH:
+- Start with the specific data the user is asking about (the chart they're viewing)
+- Cross-reference with the database to identify patterns, trends, and root causes
+- Name specific equipment, operators, downtime codes, and defect types when relevant
+- Compare current performance to historical baselines when the data supports it
+- Identify the top 1-2 actionable improvements
+
+RESPONSE STYLE:
+- Lead with the key finding or answer
+- Support with specific numbers: units, percentages, minutes, equipment names, operator names
+- End with a concrete recommendation or observation when applicable
+- Use 3-6 sentences. Plain language like a plant floor report — no corporate jargon
+- Never say you can't answer or need to investigate — analyze what's available and give your best assessment
+- If data is limited, state what you can conclude and what additional data would help`;
 
       const userMsg = `CHART CONTEXT (what the user is currently viewing):\n${context || 'No chart context provided'}\n\nFULL DATABASE:\n${dbContext}\n\nQuestion: ${question}`;
 
@@ -1143,8 +1150,8 @@ RULES:
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 500,
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 800,
           system: systemPrompt,
           messages: [{ role: 'user', content: userMsg }]
         })

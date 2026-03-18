@@ -2191,6 +2191,8 @@ function Dashboard({dataVersion,master}){
 
   // Loss waterfall — all losses as % of entitlement (target), normalized across equipment
   const [lossView,setLossView]=useState('category'); // 'category' or 'code'
+  const [hourlyMode,setHourlyMode]=useState('oee'); // 'oee' or 'production'
+  const [trendMode,setTrendMode]=useState('oee'); // 'oee' or 'production'
   const lossWaterfall=useMemo(()=>{
     let totalTarget=0,totalGood=0,totalDef=0;
     const dtLosses={};const defLosses={};
@@ -2492,8 +2494,14 @@ function Dashboard({dataVersion,master}){
         chartLogo,
         h('div',{className:'oee-hr-header'},
           h('div',{className:'oee-hr-header-left'},
-            h('div',{className:'dash-card-title'},h(Icon.chart),' OEE by Hour'),
-            h('div',{className:'oee-hr-scope-label'},oeeScopeLabel)
+            h('div',{className:'dash-card-title'},h(Icon.chart),' ',hourlyMode==='oee'?'OEE by Hour':'Production by Hour'),
+            h('div',{style:{display:'flex',alignItems:'center',gap:8}},
+              h('div',{className:'oee-hr-scope-label'},oeeScopeLabel),
+              h('div',{className:'dash-shift-toggle',style:{marginLeft:8}},
+                h('button',{className:'dash-shift-btn'+(hourlyMode==='oee'?' active':''),onClick:()=>setHourlyMode('oee'),style:{fontSize:10,padding:'2px 8px'}},'OEE'),
+                h('button',{className:'dash-shift-btn'+(hourlyMode==='production'?' active':''),onClick:()=>setHourlyMode('production'),style:{fontSize:10,padding:'2px 8px'}},'Production')
+              )
+            )
           ),
           h('div',{className:'oee-hr-scope-nav'},
             h('button',{className:'oee-hr-scope-btn'+(oeeScopeType==='plant'?' active':''),onClick:()=>{setOeeScopeType('plant');setOeeScope('plant');}},'Plant'),
@@ -2516,94 +2524,182 @@ function Dashboard({dataVersion,master}){
           )
         ),
         hourlyOEE.length>0?h('div',{className:'oee-hr-chart-wrap'},
+          hourlyMode==='oee'?h(React.Fragment,null,
+            h(ResponsiveContainer,{width:'100%',height:280},
+              h(ComposedChart,{data:hourlyOEE,margin:{top:24,right:10,bottom:4,left:-5}},
+                h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
+                h(XAxis,{dataKey:'hour',tick:{fontSize:11,fill:'#9CA3AF'},axisLine:{stroke:'#E5E7EB'},tickLine:false}),
+                h(YAxis,{domain:[d=>{const floor=Math.floor(d/10)*10;return Math.max(0,Math.min(floor,floor-((d-floor<5)?10:0)));},d=>{return Math.ceil((d+5)/10)*10;}],allowDataOverflow:false,tick:{fontSize:11,fill:'#9CA3AF'},axisLine:false,tickLine:false,tickFormatter:v=>v+'%'}),
+                h(Tooltip,{cursor:{fill:'rgba(27,61,110,0.03)'},
+                  content:function(tp){
+                    if(!tp.active||!tp.payload||!tp.payload.length)return null;
+                    const d=tp.payload[0].payload;
+                    return h('div',{style:{background:'#fff',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.1)',padding:'12px 16px',fontSize:12,lineHeight:'22px',minWidth:160}},
+                      h('div',{style:{fontWeight:700,color:'#1B3D6E',fontSize:13,marginBottom:6}},d.hour),
+                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'OEE'),h('span',{style:{fontWeight:700,color:'#1B3D6E'}},d.oee+'%')),
+                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Availability'),h('span',{style:{fontWeight:600}},d.a+'%')),
+                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Performance'),h('span',{style:{fontWeight:600}},d.p+'%')),
+                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Quality'),h('span',{style:{fontWeight:600}},d.q+'%')),
+                      h('div',{style:{borderTop:'1px solid #F0F0F3',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Output'),h('span',{style:{fontWeight:600}},d.good.toLocaleString()+' / '+d.tgt.toLocaleString()))
+                    );
+                  }
+                }),
+                h(ReferenceLine,{y:90,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'UCL',position:'insideTopLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
+                h(ReferenceLine,{y:80,stroke:'#9CA3AF',strokeDasharray:'6 4',strokeWidth:1.5,label:{value:'80%',position:'insideBottomLeft',fill:'#6B7280',fontSize:9,fontWeight:600,offset:2}}),
+                h(ReferenceLine,{y:70,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'LCL',position:'insideBottomLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
+                h(Bar,{dataKey:'oee',name:'OEE',radius:[4,4,0,0],barSize:window.innerWidth<600?18:30,isAnimationActive:true,animationDuration:600},
+                  ...hourlyOEE.map((d,i)=>h(Cell,{key:'c'+i,fill:d.oee<70?'#DC2626':d.oee<80?'#F59E0B':'#1B3D6E'})),
+                  h(LabelList,{dataKey:'oee',position:'top',content:props=>{
+                    const{x,y,width,value,index}=props;
+                    if(typeof index==='undefined'||!hourlyOEE[index])return null;
+                    const d=hourlyOEE[index];
+                    const cx=(x||0)+(width||0)/2;
+                    const isBad=d.oee<70;
+                    const isMobile=window.innerWidth<600;
+                    const manyBars=hourlyOEE.length>6;
+                    if(isMobile&&manyBars){
+                      return h('g',{key:'l'+index},
+                        h('text',{x:cx,y:y-2,textAnchor:'end',fontSize:7,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280',transform:'rotate(-45 '+cx+' '+(y-2)+')'},value+'%')
+                      );
+                    }
+                    return h('g',{key:'l'+index},
+                      h('text',{x:cx,y:y-(isMobile?4:6),textAnchor:'middle',fontSize:isMobile?9:11,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280'},value+'%')
+                    );
+                  }})
+                )
+              )
+            ),
+            h('div',{className:'oee-hr-legend'},
+              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#1B3D6E'}}),'On Target'),
+              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#F59E0B'}}),'Below Target'),
+              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#DC2626'}}),'Critical'),
+              h('span',{className:'oee-hr-legend-item'},h('span',{style:{width:14,height:0,borderTop:'1.5px dashed #9CA3AF',display:'inline-block',verticalAlign:'middle',marginRight:5}}),'Control')
+            )
+          ):h(React.Fragment,null,
+            h(ResponsiveContainer,{width:'100%',height:280},
+              h(ComposedChart,{data:hourlyOEE,margin:{top:24,right:10,bottom:4,left:5}},
+                h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
+                h(XAxis,{dataKey:'hour',tick:{fontSize:11,fill:'#9CA3AF'},axisLine:{stroke:'#E5E7EB'},tickLine:false}),
+                h(YAxis,{tick:{fontSize:11,fill:'#9CA3AF'},axisLine:false,tickLine:false,tickFormatter:v=>v.toLocaleString()}),
+                h(Tooltip,{cursor:{fill:'rgba(27,61,110,0.03)'},
+                  content:function(tp){
+                    if(!tp.active||!tp.payload||!tp.payload.length)return null;
+                    const d=tp.payload[0].payload;
+                    const pct=d.tgt>0?Math.round(d.good/d.tgt*100):0;
+                    return h('div',{style:{background:'#fff',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.1)',padding:'12px 16px',fontSize:12,lineHeight:'22px',minWidth:160}},
+                      h('div',{style:{fontWeight:700,color:'#1B3D6E',fontSize:13,marginBottom:6}},d.hour),
+                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Good Units'),h('span',{style:{fontWeight:700,color:'#059669'}},d.good.toLocaleString())),
+                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Target'),h('span',{style:{fontWeight:600,color:'#1B3D6E'}},d.tgt.toLocaleString())),
+                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'% of Target'),h('span',{style:{fontWeight:700,color:pct>=100?'#059669':pct>=80?'#F59E0B':'#DC2626'}},pct+'%'))
+                    );
+                  }
+                }),
+                h(Bar,{dataKey:'tgt',name:'Target',radius:[4,4,0,0],barSize:window.innerWidth<600?14:24,fill:'#E5E7EB',isAnimationActive:true,animationDuration:600}),
+                h(Bar,{dataKey:'good',name:'Good Units',radius:[4,4,0,0],barSize:window.innerWidth<600?14:24,isAnimationActive:true,animationDuration:600},
+                  ...hourlyOEE.map((d,i)=>{const pct=d.tgt>0?d.good/d.tgt*100:0;return h(Cell,{key:'c'+i,fill:pct>=100?'#059669':pct>=80?'#F59E0B':'#DC2626'});}),
+                  h(LabelList,{dataKey:'good',position:'top',content:props=>{
+                    const{x,y,width,value,index}=props;
+                    if(typeof index==='undefined'||!hourlyOEE[index])return null;
+                    const cx=(x||0)+(width||0)/2;
+                    const isMobile=window.innerWidth<600;
+                    return h('g',{key:'l'+index},
+                      h('text',{x:cx,y:y-(isMobile?3:5),textAnchor:'middle',fontSize:isMobile?8:10,fontWeight:600,fill:'#374151'},typeof value==='number'?value.toLocaleString():value)
+                    );
+                  }})
+                )
+              )
+            ),
+            h('div',{className:'oee-hr-legend'},
+              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#059669'}}),'At/Above Target'),
+              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#F59E0B'}}),'Below Target'),
+              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#DC2626'}}),'Critical'),
+              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#E5E7EB'}}),'Target')
+            )
+          )
+        ):h('div',{className:'dash-empty'},h(Icon.chart),h('p',{style:{marginTop:8}},hourlyMode==='oee'?'OEE hourly data appears after shift entry':'Production hourly data appears after shift entry')),
+        hasData&&h(AskAI,{section:'OEE by Hour',context:()=>buildFullContext('OEE by Hour'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
+      ),
+
+      // ── OEE/PRODUCTION TREND (multi-day) ──
+      dailyTrend.length>1?h('div',{className:'dash-card has-chart-logo',style:{position:'relative'}},
+        chartLogo,
+        h('div',{className:'dash-card-header'},
+          h('div',{className:'dash-card-title'},h(Icon.chart),' ',trendMode==='oee'?'OEE Trend Over Time':'Production Trend Over Time'),
+          h('div',{style:{display:'flex',alignItems:'center',gap:8}},
+            h('div',{className:'dash-shift-toggle'},
+              h('button',{className:'dash-shift-btn'+(trendMode==='oee'?' active':''),onClick:()=>setTrendMode('oee'),style:{fontSize:10,padding:'2px 8px'}},'OEE'),
+              h('button',{className:'dash-shift-btn'+(trendMode==='production'?' active':''),onClick:()=>setTrendMode('production'),style:{fontSize:10,padding:'2px 8px'}},'Production')
+            ),
+            h('div',{className:'dash-card-badge'},dailyTrend.length+' days')
+          )),
+        trendMode==='oee'?h(React.Fragment,null,
           h(ResponsiveContainer,{width:'100%',height:280},
-            h(ComposedChart,{data:hourlyOEE,margin:{top:24,right:10,bottom:4,left:-5}},
-              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
-              h(XAxis,{dataKey:'hour',tick:{fontSize:11,fill:'#9CA3AF'},axisLine:{stroke:'#E5E7EB'},tickLine:false}),
-              h(YAxis,{domain:[d=>{const floor=Math.floor(d/10)*10;return Math.max(0,Math.min(floor,floor-((d-floor<5)?10:0)));},d=>{return Math.ceil((d+5)/10)*10;}],allowDataOverflow:false,tick:{fontSize:11,fill:'#9CA3AF'},axisLine:false,tickLine:false,tickFormatter:v=>v+'%'}),
-              h(Tooltip,{cursor:{fill:'rgba(27,61,110,0.03)'},
+            h(ComposedChart,{data:dailyTrend,margin:{top:20,right:15,bottom:5,left:0}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E5EA'}),
+              h(XAxis,{dataKey:'label',tick:{fontSize:11}}),
+              h(YAxis,{domain:[d=>{const floor=Math.floor(d/10)*10;return Math.max(0,Math.min(floor,floor-((d-floor<5)?10:0)));},d=>Math.ceil((d+5)/10)*10],allowDataOverflow:false,tick:{fontSize:11},tickFormatter:v=>v+'%'}),
+              h(Tooltip,{contentStyle:{borderRadius:8,border:'1px solid #E5E5EA',fontSize:12},formatter:(val,name)=>[val+'%',name]}),
+              h(ReferenceLine,{y:90,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'UCL',position:'insideTopRight',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
+              h(ReferenceLine,{y:80,stroke:'#9CA3AF',strokeDasharray:'6 4',strokeWidth:1.5,label:{value:'80%',position:'insideBottomRight',fill:'#6B7280',fontSize:9,fontWeight:600,offset:2}}),
+              h(ReferenceLine,{y:70,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'LCL',position:'insideBottomRight',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
+              h(Area,{dataKey:'oee',name:'OEE',fill:'#1B3D6E',fillOpacity:0.08,stroke:'#1B3D6E',strokeWidth:2.5,dot:{r:4,fill:'#1B3D6E',stroke:'#fff',strokeWidth:1.5},type:'monotone',activeDot:{r:6}},
+                h(LabelList,{dataKey:'oee',position:'top',content:props=>{
+                  const{x,y,value}=props;
+                  if(typeof value==='undefined'||value===null)return null;
+                  return h('text',{x,y:y-8,textAnchor:'middle',fontSize:10,fontWeight:600,fill:'#1B3D6E'},value+'%');
+                }})
+              ),
+              h(Line,{dataKey:'a',name:'Availability',stroke:'#34C759',strokeWidth:1.5,dot:false,strokeDasharray:'4 2',type:'monotone'}),
+              h(Line,{dataKey:'p',name:'Performance',stroke:'#FF9500',strokeWidth:1.5,dot:false,strokeDasharray:'4 2',type:'monotone'}),
+              h(Line,{dataKey:'q',name:'Quality',stroke:'#8B5CF6',strokeWidth:1.5,dot:false,strokeDasharray:'4 2',type:'monotone'})
+            )
+          ),
+          h('div',{style:{display:'flex',justifyContent:'center',gap:16,marginTop:4}},
+            h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:12,height:3,background:'#1B3D6E',display:'inline-block'}}),'OEE'),
+            h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:12,height:1,background:'#34C759',display:'inline-block',borderTop:'1px dashed #34C759'}}),'Availability'),
+            h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:12,height:1,background:'#FF9500',display:'inline-block',borderTop:'1px dashed #FF9500'}}),'Performance'),
+            h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:12,height:1,background:'#8B5CF6',display:'inline-block',borderTop:'1px dashed #8B5CF6'}}),'Quality')
+          )
+        ):h(React.Fragment,null,
+          h(ResponsiveContainer,{width:'100%',height:280},
+            h(ComposedChart,{data:dailyTrend,margin:{top:20,right:15,bottom:5,left:5}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E5EA'}),
+              h(XAxis,{dataKey:'label',tick:{fontSize:11}}),
+              h(YAxis,{tick:{fontSize:11},tickFormatter:v=>v.toLocaleString()}),
+              h(Tooltip,{contentStyle:{borderRadius:8,border:'1px solid #E5E5EA',fontSize:12},
                 content:function(tp){
                   if(!tp.active||!tp.payload||!tp.payload.length)return null;
                   const d=tp.payload[0].payload;
+                  const pct=d.tgt>0?Math.round(d.good/d.tgt*100):0;
                   return h('div',{style:{background:'#fff',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.1)',padding:'12px 16px',fontSize:12,lineHeight:'22px',minWidth:160}},
-                    h('div',{style:{fontWeight:700,color:'#1B3D6E',fontSize:13,marginBottom:6}},d.hour),
-                    h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'OEE'),h('span',{style:{fontWeight:700,color:'#1B3D6E'}},d.oee+'%')),
-                    h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Availability'),h('span',{style:{fontWeight:600}},d.a+'%')),
-                    h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Performance'),h('span',{style:{fontWeight:600}},d.p+'%')),
-                    h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Quality'),h('span',{style:{fontWeight:600}},d.q+'%')),
-                    h('div',{style:{borderTop:'1px solid #F0F0F3',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Output'),h('span',{style:{fontWeight:600}},d.good.toLocaleString()+' / '+d.tgt.toLocaleString()))
+                    h('div',{style:{fontWeight:700,color:'#1B3D6E',fontSize:13,marginBottom:6}},d.date),
+                    h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Good Units'),h('span',{style:{fontWeight:700,color:'#059669'}},d.good.toLocaleString())),
+                    h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Target'),h('span',{style:{fontWeight:600,color:'#1B3D6E'}},d.tgt.toLocaleString())),
+                    h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'% of Target'),h('span',{style:{fontWeight:700,color:pct>=100?'#059669':pct>=80?'#F59E0B':'#DC2626'}},pct+'%'))
                   );
                 }
               }),
-              h(ReferenceLine,{y:90,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'UCL',position:'insideTopLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
-              h(ReferenceLine,{y:80,stroke:'#9CA3AF',strokeDasharray:'6 4',strokeWidth:1.5,label:{value:'80%',position:'insideBottomLeft',fill:'#6B7280',fontSize:9,fontWeight:600,offset:2}}),
-              h(ReferenceLine,{y:70,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'LCL',position:'insideBottomLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
-              h(Bar,{dataKey:'oee',name:'OEE',radius:[4,4,0,0],barSize:window.innerWidth<600?18:30,isAnimationActive:true,animationDuration:600},
-                ...hourlyOEE.map((d,i)=>h(Cell,{key:'c'+i,fill:d.oee<70?'#DC2626':d.oee<80?'#F59E0B':'#1B3D6E'})),
-                h(LabelList,{dataKey:'oee',position:'top',content:props=>{
-                  const{x,y,width,value,index}=props;
-                  if(typeof index==='undefined'||!hourlyOEE[index])return null;
-                  const d=hourlyOEE[index];
+              h(Bar,{dataKey:'tgt',name:'Target',radius:[4,4,0,0],barSize:24,fill:'#E5E7EB',isAnimationActive:true}),
+              h(Bar,{dataKey:'good',name:'Good Units',radius:[4,4,0,0],barSize:24,isAnimationActive:true},
+                ...dailyTrend.map((d,i)=>{const pct=d.tgt>0?d.good/d.tgt*100:0;return h(Cell,{key:'c'+i,fill:pct>=100?'#059669':pct>=80?'#F59E0B':'#DC2626'});}),
+                h(LabelList,{dataKey:'good',position:'top',content:props=>{
+                  const{x,y,width,value}=props;
+                  if(typeof value==='undefined'||value===null)return null;
                   const cx=(x||0)+(width||0)/2;
-                  const isBad=d.oee<70;
-                  const isMobile=window.innerWidth<600;
-                  const manyBars=hourlyOEE.length>6;
-                  if(isMobile&&manyBars){
-                    return h('g',{key:'l'+index},
-                      h('text',{x:cx,y:y-2,textAnchor:'end',fontSize:7,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280',transform:'rotate(-45 '+cx+' '+(y-2)+')'},value+'%')
-                    );
-                  }
-                  return h('g',{key:'l'+index},
-                    h('text',{x:cx,y:y-(isMobile?4:6),textAnchor:'middle',fontSize:isMobile?9:11,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280'},value+'%')
-                  );
+                  return h('text',{x:cx,y:y-5,textAnchor:'middle',fontSize:9,fontWeight:600,fill:'#374151'},typeof value==='number'?value.toLocaleString():value);
                 }})
               )
             )
           ),
-          h('div',{className:'oee-hr-legend'},
-            h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#1B3D6E'}}),'On Target'),
-            h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#F59E0B'}}),'Below Target'),
-            h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#DC2626'}}),'Critical'),
-            h('span',{className:'oee-hr-legend-item'},h('span',{style:{width:14,height:0,borderTop:'1.5px dashed #9CA3AF',display:'inline-block',verticalAlign:'middle',marginRight:5}}),'Control')
-          )
-        ):h('div',{className:'dash-empty'},h(Icon.chart),h('p',{style:{marginTop:8}},'OEE hourly data appears after shift entry')),
-        hasData&&h(AskAI,{section:'OEE by Hour',context:()=>buildFullContext('OEE by Hour'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
-      ),
-
-      // ── OEE TREND (multi-day) ──
-      dailyTrend.length>1?h('div',{className:'dash-card has-chart-logo',style:{position:'relative'}},
-        chartLogo,
-        h('div',{className:'dash-card-header'},
-          h('div',{className:'dash-card-title'},h(Icon.chart),' OEE Trend Over Time'),
-          h('div',{className:'dash-card-badge'},dailyTrend.length+' days')),
-        h(ResponsiveContainer,{width:'100%',height:280},
-          h(ComposedChart,{data:dailyTrend,margin:{top:20,right:15,bottom:5,left:0}},
-            h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E5EA'}),
-            h(XAxis,{dataKey:'label',tick:{fontSize:11}}),
-            h(YAxis,{domain:[d=>{const floor=Math.floor(d/10)*10;return Math.max(0,Math.min(floor,floor-((d-floor<5)?10:0)));},d=>Math.ceil((d+5)/10)*10],allowDataOverflow:false,tick:{fontSize:11},tickFormatter:v=>v+'%'}),
-            h(Tooltip,{contentStyle:{borderRadius:8,border:'1px solid #E5E5EA',fontSize:12},formatter:(val,name)=>[val+'%',name]}),
-            h(ReferenceLine,{y:90,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'UCL',position:'insideTopRight',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
-            h(ReferenceLine,{y:80,stroke:'#9CA3AF',strokeDasharray:'6 4',strokeWidth:1.5,label:{value:'80%',position:'insideBottomRight',fill:'#6B7280',fontSize:9,fontWeight:600,offset:2}}),
-            h(ReferenceLine,{y:70,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'LCL',position:'insideBottomRight',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
-            h(Area,{dataKey:'oee',name:'OEE',fill:'#1B3D6E',fillOpacity:0.08,stroke:'#1B3D6E',strokeWidth:2.5,dot:{r:4,fill:'#1B3D6E',stroke:'#fff',strokeWidth:1.5},type:'monotone',activeDot:{r:6}},
-              h(LabelList,{dataKey:'oee',position:'top',content:props=>{
-                const{x,y,value}=props;
-                if(typeof value==='undefined'||value===null)return null;
-                return h('text',{x,y:y-8,textAnchor:'middle',fontSize:10,fontWeight:600,fill:'#1B3D6E'},value+'%');
-              }})
-            ),
-            h(Line,{dataKey:'a',name:'Availability',stroke:'#34C759',strokeWidth:1.5,dot:false,strokeDasharray:'4 2',type:'monotone'}),
-            h(Line,{dataKey:'p',name:'Performance',stroke:'#FF9500',strokeWidth:1.5,dot:false,strokeDasharray:'4 2',type:'monotone'}),
-            h(Line,{dataKey:'q',name:'Quality',stroke:'#8B5CF6',strokeWidth:1.5,dot:false,strokeDasharray:'4 2',type:'monotone'})
+          h('div',{style:{display:'flex',justifyContent:'center',gap:16,marginTop:4}},
+            h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{className:'oee-hr-legend-dot',style:{background:'#059669'}}),'At/Above Target'),
+            h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{className:'oee-hr-legend-dot',style:{background:'#F59E0B'}}),'Below Target'),
+            h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{className:'oee-hr-legend-dot',style:{background:'#DC2626'}}),'Critical'),
+            h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{className:'oee-hr-legend-dot',style:{background:'#E5E7EB'}}),'Target')
           )
         ),
-        h('div',{style:{display:'flex',justifyContent:'center',gap:16,marginTop:4}},
-          h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:12,height:3,background:'#1B3D6E',display:'inline-block'}}),'OEE'),
-          h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:12,height:1,background:'#34C759',display:'inline-block',borderTop:'1px dashed #34C759'}}),'Availability'),
-          h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:12,height:1,background:'#FF9500',display:'inline-block',borderTop:'1px dashed #FF9500'}}),'Performance'),
-          h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:12,height:1,background:'#8B5CF6',display:'inline-block',borderTop:'1px dashed #8B5CF6'}}),'Quality')
-        )
-      ):h('div',{className:'dash-card'},h('div',{className:'dash-empty'},h(Icon.chart),h('p',{style:{marginTop:8}},'OEE trend appears with multiple days of data')))
+        hasData&&h(AskAI,{section:trendMode==='oee'?'OEE Trend Over Time':'Production Trend Over Time',context:()=>buildFullContext(trendMode==='oee'?'OEE Trend':'Production Trend'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
+      ):h('div',{className:'dash-card'},h('div',{className:'dash-empty'},h(Icon.chart),h('p',{style:{marginTop:8}},'Trend appears with multiple days of data')))
     ),
 
     // ── LOSS WATERFALL ──
