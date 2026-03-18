@@ -1164,11 +1164,11 @@ function getSubItems(equipCode,dtCodeId){
 // ─── SHIFT TEMPLATES & HELPERS ───────────────────────────────────────────────
 const SHIFT_TEMPLATES={
   '1-6':{startup:{h:1,mins:15},lunch:{h:4,mins:15},cleanup:{h:6,mins:15}},
-  '2-6':{startup:{h:1,mins:15},lunch:{h:3,mins:30},cleanup:{h:6,mins:15}},
+  '2-6':{startup:{h:1,mins:15},lunch:{h:4,mins:30},cleanup:{h:6,mins:15}},
   '1-8':{startup:{h:1,mins:15},lunch:{h:5,mins:30},cleanup:{h:8,mins:15}},
   '2-8':{startup:{h:1,mins:15},lunch:{h:6,mins:30},cleanup:{h:8,mins:15}},
   '1-9':{startup:{h:1,mins:15},lunch:{h:5,mins:30},cleanup:{h:9,mins:15}},
-  '2-9':{startup:{h:1,mins:15},lunch:{h:6,mins:30},cleanup:{h:9,mins:15}},
+  '2-9':{startup:{h:1,mins:15},lunch:{h:5,mins:30},cleanup:{h:9,mins:15}},
 };
 // Shift 1 always starts at 5 AM; Shift 2 starts right after Shift 1 ends
 // Shift 2 start = 5 + (shift 1 hours, assumed same as shift 2 hours)
@@ -1918,7 +1918,7 @@ function Home({onEnterData,onAdmin,onDashboard,onTV}){
   );
 }
 
-function AskAI({section,context}){
+function AskAI({section,context,filters}){
   const[q,setQ]=useState('');
   const[answer,setAnswer]=useState('');
   const[loading,setLoading]=useState(false);
@@ -1929,7 +1929,8 @@ function AskAI({section,context}){
     if(!q.trim())return;
     setLoading(true);setAnswer('');
     try{
-      const r=await fetch('/api/ai/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,context:typeof context==='function'?context():context,section})});
+      const f=typeof filters==='function'?filters():filters;
+      const r=await fetch('/api/ai/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,context:typeof context==='function'?context():context,section,filters:f})});
       const d=await r.json();
       if(d.error)setAnswer('Error: '+d.error);
       else setAnswer(d.answer||'No response');
@@ -2566,7 +2567,7 @@ function Dashboard({dataVersion,master}){
             h('span',{className:'oee-hr-legend-item'},h('span',{style:{width:14,height:0,borderTop:'1.5px dashed #9CA3AF',display:'inline-block',verticalAlign:'middle',marginRight:5}}),'Control')
           )
         ):h('div',{className:'dash-empty'},h(Icon.chart),h('p',{style:{marginTop:8}},'OEE hourly data appears after shift entry')),
-        hasData&&h(AskAI,{section:'OEE by Hour',context:()=>buildFullContext('OEE by Hour')})
+        hasData&&h(AskAI,{section:'OEE by Hour',context:()=>buildFullContext('OEE by Hour'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
       ),
 
       // ── OEE TREND (multi-day) ──
@@ -2664,7 +2665,7 @@ function Dashboard({dataVersion,master}){
           h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:10,height:10,borderRadius:2,background:'#F59E0B',display:'inline-block'}}),'Performance'),
           h('span',{style:{fontSize:10,color:'var(--jm-text-ter)',display:'flex',alignItems:'center',gap:4}},h('span',{style:{width:10,height:10,borderRadius:2,background:'#8B5CF6',display:'inline-block'}}),'Quality')
         ),
-        h(AskAI,{section:'Loss Waterfall',context:()=>buildFullContext('Loss Waterfall')})
+        h(AskAI,{section:'Loss Waterfall',context:()=>buildFullContext('Loss Waterfall'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
       )
     ),
 
@@ -2704,7 +2705,7 @@ function Dashboard({dataVersion,master}){
             );
           })
         ):h('div',{className:'dash-empty'},h(Icon.settings),h('p',{style:{marginTop:8}},'Equipment data appears after shift entry')),
-        hasData&&h(AskAI,{section:'Equipment Focus',context:()=>buildFullContext('Equipment Focus')})
+        hasData&&h(AskAI,{section:'Equipment Focus',context:()=>buildFullContext('Equipment Focus'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
       ),
 
       h('div',{className:'dash-card'},
@@ -2751,7 +2752,7 @@ function Dashboard({dataVersion,master}){
             )
           );
         })(),
-        hasData&&h(AskAI,{section:'Operator Performance',context:()=>buildFullContext('Operator Performance')})
+        hasData&&h(AskAI,{section:'Operator Performance',context:()=>buildFullContext('Operator Performance'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
       ),
     ),
 
@@ -2834,7 +2835,7 @@ function Dashboard({dataVersion,master}){
             }))
           ))
         ):h('div',{className:'dash-empty'},h(Icon.clock),h('p',{style:{marginTop:8}},'Downtime data appears after shift entry')),
-        hasData&&h(AskAI,{section:'Downtime Pareto',context:()=>buildFullContext('Downtime Pareto')})
+        hasData&&h(AskAI,{section:'Downtime Pareto',context:()=>buildFullContext('Downtime Pareto'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
       ),
 
       h('div',{className:'dash-card has-chart-logo',style:{position:'relative'}},
@@ -2893,7 +2894,7 @@ function Dashboard({dataVersion,master}){
             }))
           ))
         ):h('div',{className:'dash-empty'},h(Icon.alertTri),h('p',{style:{marginTop:8}},'Defect data appears after shift entry')),
-        hasData&&h(AskAI,{section:'Defect Pareto',context:()=>buildFullContext('Defect Pareto')})
+        hasData&&h(AskAI,{section:'Defect Pareto',context:()=>buildFullContext('Defect Pareto'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
       )
     ),
 

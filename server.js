@@ -1037,19 +1037,30 @@ CRITICAL RULES — you MUST follow these:
   });
 
   // ── AI INSIGHTS (Claude API proxy) ──
-  // Build a database-wide summary for AI context
-  async function buildDBContext() {
+  // Build database context for AI — only fetches based on provided filters
+  async function buildDBContext(filters) {
     try {
-      // Get all submissions with dates
-      const { rows } = await pool.query('SELECT shift_date, data FROM submissions ORDER BY shift_date DESC LIMIT 2000');
-      if (rows.length === 0) return 'No production data in database.';
+      const { dateFrom, dateTo, shift } = filters || {};
+      if (!dateFrom && !dateTo) return ''; // No filters = no DB context (user must press Load Data)
+
+      // Query based on filters
+      let query = 'SELECT shift_date, shift_num, data FROM submissions WHERE 1=1';
+      const params = [];
+      if (dateFrom) { params.push(dateFrom); query += ` AND shift_date >= $${params.length}`; }
+      if (dateTo) { params.push(dateTo); query += ` AND shift_date <= $${params.length}`; }
+      if (shift && shift !== 'all') { params.push(shift); query += ` AND shift_num = $${params.length}`; }
+      query += ' ORDER BY shift_date DESC LIMIT 2000';
+
+      const { rows } = await pool.query(query, params);
+      if (rows.length === 0) return 'No production data found for the selected filters.';
 
       // Aggregate by date
       const byDate = {};
+      const allOperators = new Set();
       rows.forEach(r => {
         const d = r.data;
         const date = r.shift_date || d.shiftData?.shiftDate || 'unknown';
-        if (!byDate[date]) byDate[date] = { records: 0, good: 0, target: 0, dt: 0, defects: 0, equip: new Set() };
+        if (!byDate[date]) byDate[date] = { records: 0, good: 0, target: 0, dt: 0, defects: 0, equip: new Set(), operators: new Set() };
         byDate[date].records++;
         if (d.hourData) {
           byDate[date].good += parseInt(d.hourData.goodUnits || 0);
@@ -1057,25 +1068,30 @@ CRITICAL RULES — you MUST follow these:
           byDate[date].dt += (d.hourData.downtime || []).reduce((s, x) => s + parseInt(x.mins || 0), 0);
           byDate[date].defects += (d.hourData.defects || []).reduce((s, x) => s + parseInt(x.qty || 0), 0);
           if (d.equipCode) byDate[date].equip.add(d.equipCode);
+          // Track operators
+          (d.hourData.operators || []).forEach(op => {
+            if (op) { byDate[date].operators.add(op); allOperators.add(op); }
+          });
         }
       });
 
-      // Build summary for last 14 dates
-      const dates = Object.keys(byDate).sort().reverse().slice(0, 14);
+      // Build summary for dates
+      const dates = Object.keys(byDate).sort().reverse();
       const summary = dates.map(dt => {
         const d = byDate[dt];
         const oee = d.target > 0 ? Math.round(d.good / d.target * 100) : 0;
-        return `${dt}: ${d.records} hrs, ${d.good} good/${d.target} target (${oee}% perf), ${d.dt}min DT, ${d.defects} defects, ${d.equip.size} equip`;
+        const ops = d.operators.size > 0 ? `, operators: ${[...d.operators].join(', ')}` : '';
+        return `${dt}: ${d.records} hrs, ${d.good} good/${d.target} target (${oee}% perf), ${d.dt}min DT, ${d.defects} defects, ${d.equip.size} equip${ops}`;
       });
 
-      // Equipment breakdown for most recent date
+      // Equipment + operator breakdown for most recent date in range
       const latestDate = dates[0];
       const latestRows = rows.filter(r => (r.shift_date || r.data.shiftData?.shiftDate) === latestDate);
       const equipSummary = {};
       latestRows.forEach(r => {
         const d = r.data;
         const ec = d.equipCode || 'unknown';
-        if (!equipSummary[ec]) equipSummary[ec] = { good: 0, target: 0, dt: 0, defects: 0, hours: 0, products: new Set() };
+        if (!equipSummary[ec]) equipSummary[ec] = { good: 0, target: 0, dt: 0, defects: 0, hours: 0, products: new Set(), operators: new Set() };
         if (d.hourData) {
           equipSummary[ec].good += parseInt(d.hourData.goodUnits || 0);
           equipSummary[ec].target += parseInt(d.hourData.target || 0);
@@ -1083,13 +1099,14 @@ CRITICAL RULES — you MUST follow these:
           equipSummary[ec].defects += (d.hourData.defects || []).reduce((s, x) => s + parseInt(x.qty || 0), 0);
           equipSummary[ec].hours++;
           if (d.hourData.productCode) equipSummary[ec].products.add(d.hourData.productCode);
+          (d.hourData.operators || []).forEach(op => { if (op) equipSummary[ec].operators.add(op); });
         }
       });
       const equipLines = Object.entries(equipSummary).map(([ec, e]) =>
-        `  ${ec}: ${e.good} good/${e.target} target, ${e.dt}min DT, ${e.defects} def, ${e.hours}hrs, products: ${[...e.products].join(',')}`
+        `  ${ec}: ${e.good} good/${e.target} target, ${e.dt}min DT, ${e.defects} def, ${e.hours}hrs, products: ${[...e.products].join(',')}, operators: ${[...e.operators].join(', ') || 'none'}`
       );
 
-      return `DATABASE OVERVIEW (${rows.length} total hour records across ${Object.keys(byDate).length} dates):\n\nDAILY SUMMARY (last ${dates.length} dates):\n${summary.join('\n')}\n\nLATEST DATE (${latestDate}) EQUIPMENT BREAKDOWN:\n${equipLines.join('\n')}`;
+      return `DATABASE (${rows.length} records, ${dateFrom || 'all'} to ${dateTo || 'all'}, shift: ${shift || 'all'}):\n\nDAILY SUMMARY:\n${summary.join('\n')}\n\nLATEST DATE (${latestDate}) EQUIPMENT+OPERATOR BREAKDOWN:\n${equipLines.join('\n')}\n\nALL OPERATORS IN RANGE: ${[...allOperators].join(', ') || 'none'}`;
     } catch (err) {
       console.error('DB context error:', err);
       return 'Could not load database context.';
@@ -1100,11 +1117,11 @@ CRITICAL RULES — you MUST follow these:
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) return res.status(503).json({ error: 'AI not configured — ANTHROPIC_API_KEY not set' });
-      const { question, context, section } = req.body;
+      const { question, context, section, filters } = req.body;
       if (!question) return res.status(400).json({ error: 'Missing question' });
 
-      // Pull full database context alongside the chart-specific context
-      const dbContext = await buildDBContext();
+      // Pull database context based on the user's current dashboard filters
+      const dbContext = await buildDBContext(filters);
 
       const systemPrompt = `You are an OEE analyst for the JMOS Dashboard at Jennmar's WV Bolt Plant.
 
