@@ -1037,30 +1037,99 @@ CRITICAL RULES — you MUST follow these:
   });
 
   // ── AI INSIGHTS (Claude API proxy) ──
+  // Build a database-wide summary for AI context
+  async function buildDBContext() {
+    try {
+      // Get all submissions with dates
+      const { rows } = await pool.query('SELECT shift_date, data FROM submissions ORDER BY shift_date DESC LIMIT 2000');
+      if (rows.length === 0) return 'No production data in database.';
+
+      // Aggregate by date
+      const byDate = {};
+      rows.forEach(r => {
+        const d = r.data;
+        const date = r.shift_date || d.shiftData?.shiftDate || 'unknown';
+        if (!byDate[date]) byDate[date] = { records: 0, good: 0, target: 0, dt: 0, defects: 0, equip: new Set() };
+        byDate[date].records++;
+        if (d.hourData) {
+          byDate[date].good += parseInt(d.hourData.goodUnits || 0);
+          byDate[date].target += parseInt(d.hourData.target || 0);
+          byDate[date].dt += (d.hourData.downtime || []).reduce((s, x) => s + parseInt(x.mins || 0), 0);
+          byDate[date].defects += (d.hourData.defects || []).reduce((s, x) => s + parseInt(x.qty || 0), 0);
+          if (d.equipCode) byDate[date].equip.add(d.equipCode);
+        }
+      });
+
+      // Build summary for last 14 dates
+      const dates = Object.keys(byDate).sort().reverse().slice(0, 14);
+      const summary = dates.map(dt => {
+        const d = byDate[dt];
+        const oee = d.target > 0 ? Math.round(d.good / d.target * 100) : 0;
+        return `${dt}: ${d.records} hrs, ${d.good} good/${d.target} target (${oee}% perf), ${d.dt}min DT, ${d.defects} defects, ${d.equip.size} equip`;
+      });
+
+      // Equipment breakdown for most recent date
+      const latestDate = dates[0];
+      const latestRows = rows.filter(r => (r.shift_date || r.data.shiftData?.shiftDate) === latestDate);
+      const equipSummary = {};
+      latestRows.forEach(r => {
+        const d = r.data;
+        const ec = d.equipCode || 'unknown';
+        if (!equipSummary[ec]) equipSummary[ec] = { good: 0, target: 0, dt: 0, defects: 0, hours: 0, products: new Set() };
+        if (d.hourData) {
+          equipSummary[ec].good += parseInt(d.hourData.goodUnits || 0);
+          equipSummary[ec].target += parseInt(d.hourData.target || 0);
+          equipSummary[ec].dt += (d.hourData.downtime || []).reduce((s, x) => s + parseInt(x.mins || 0), 0);
+          equipSummary[ec].defects += (d.hourData.defects || []).reduce((s, x) => s + parseInt(x.qty || 0), 0);
+          equipSummary[ec].hours++;
+          if (d.hourData.productCode) equipSummary[ec].products.add(d.hourData.productCode);
+        }
+      });
+      const equipLines = Object.entries(equipSummary).map(([ec, e]) =>
+        `  ${ec}: ${e.good} good/${e.target} target, ${e.dt}min DT, ${e.defects} def, ${e.hours}hrs, products: ${[...e.products].join(',')}`
+      );
+
+      return `DATABASE OVERVIEW (${rows.length} total hour records across ${Object.keys(byDate).length} dates):\n\nDAILY SUMMARY (last ${dates.length} dates):\n${summary.join('\n')}\n\nLATEST DATE (${latestDate}) EQUIPMENT BREAKDOWN:\n${equipLines.join('\n')}`;
+    } catch (err) {
+      console.error('DB context error:', err);
+      return 'Could not load database context.';
+    }
+  }
+
   app.post('/api/ai/ask', requireAuth, async (req, res) => {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) return res.status(503).json({ error: 'AI not configured — ANTHROPIC_API_KEY not set' });
       const { question, context, section } = req.body;
-      if (!question || !context) return res.status(400).json({ error: 'Missing question or context' });
+      if (!question) return res.status(400).json({ error: 'Missing question' });
+
+      // Pull full database context alongside the chart-specific context
+      const dbContext = await buildDBContext();
+
       const systemPrompt = `You are an OEE analyst for the JMOS Dashboard at Jennmar's WV Bolt Plant.
 
-The user is asking about the "${section || 'general'}" chart specifically. Answer about THAT chart's data first, then pull in other dashboard data to explain root causes if relevant.
+The user is asking from the "${section || 'general'}" section of the dashboard. You have TWO data sources:
+1. CHART CONTEXT: The specific data visible on their current chart/view
+2. DATABASE: The full production database with historical data across all dates and equipment
 
 RULES:
-- Answer about the specific chart the user is viewing. If they ask about Hour 6 OEE, talk about Hour 6 — not weekly totals.
-- You can cross-reference other data (equipment, downtime, defects, operators) to explain WHY, but always anchor your answer to what the user is looking at.
+- If the question is about specific chart data (e.g., "why is Hour 6 low?"), use the chart context first, then cross-reference the database for trends.
+- If the question is broader (e.g., "what was our best day?", "how does this compare to last week?"), use the DATABASE context.
+- You have access to ALL production data. Never say you can't answer due to missing data — analyze what's available.
 - Analyze and answer directly. Never say "dig into" or "investigate" — you do the analysis.
-- State findings with specific numbers and names. No filler, no metaphors.
-- Keep responses to 2-3 sentences. Plain language like a plant manager's report.`;
+- State findings with specific numbers, equipment names, and dates. No filler, no metaphors.
+- Keep responses to 3-5 sentences. Plain language like a plant manager's report.`;
+
+      const userMsg = `CHART CONTEXT (what the user is currently viewing):\n${context || 'No chart context provided'}\n\nFULL DATABASE:\n${dbContext}\n\nQuestion: ${question}`;
+
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 350,
+          max_tokens: 500,
           system: systemPrompt,
-          messages: [{ role: 'user', content: `Here is the COMPLETE dashboard data (all charts, all metrics):\n${context}\n\nQuestion: ${question}` }]
+          messages: [{ role: 'user', content: userMsg }]
         })
       });
       if (!resp.ok) { const err = await resp.text(); return res.status(502).json({ error: 'AI API error: ' + resp.status }); }
