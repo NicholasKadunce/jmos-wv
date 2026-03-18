@@ -46,14 +46,16 @@ async function initDB() {
       password_hash VARCHAR(255) NOT NULL,
       display_name VARCHAR(100),
       role VARCHAR(20) DEFAULT 'operator',
-      must_change_password BOOLEAN DEFAULT true,
+      must_change_password BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    -- Add column if table already exists
+    -- Add column if table already exists (default false — existing users keep their passwords)
     DO $$ BEGIN
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT true;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT false;
     EXCEPTION WHEN OTHERS THEN NULL;
     END $$;
+    -- Clear any existing users that were accidentally flagged
+    UPDATE users SET must_change_password = false WHERE must_change_password = true;
     CREATE TABLE IF NOT EXISTS submissions (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id),
@@ -378,7 +380,7 @@ function registerRoutes() {
       if (password.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
       const hash = await bcrypt.hash(password, 10);
       await pool.query(
-        'INSERT INTO users (username, password_hash, display_name, role) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO users (username, password_hash, display_name, role, must_change_password) VALUES ($1, $2, $3, $4, true)',
         [username.toLowerCase(), hash, displayName || username, role || 'operator']
       );
       res.json({ ok: true });
