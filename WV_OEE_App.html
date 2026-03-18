@@ -567,10 +567,13 @@ input[type=number]{-moz-appearance:textfield}
 .bdr-panel-empty-text{font-size:14px;font-weight:600;color:#64748b}
 .bdr-panel-empty-sub{font-size:12px;margin-top:4px}
 /* AI ASSISTANT */
-.ai-fab{position:fixed;bottom:28px;right:28px;z-index:999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--jm-navy),#2a5199);border:none;cursor:pointer;box-shadow:0 6px 24px rgba(27,61,110,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;transition:transform 0.2s,box-shadow 0.2s}
+.ai-fab{position:fixed;bottom:16px;right:16px;z-index:999;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--jm-navy),#2a5199);border:none;cursor:pointer;box-shadow:0 6px 24px rgba(27,61,110,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;transition:transform 0.2s,box-shadow 0.2s}
 .ai-fab:hover{transform:scale(1.08);box-shadow:0 10px 32px rgba(27,61,110,0.55)}
-.ai-modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.55);z-index:1000;display:flex;align-items:flex-end;justify-content:flex-end;padding:24px}
-.ai-modal{width:420px;max-width:96vw;height:600px;max-height:88vh;background:var(--jm-surface);border-radius:20px;box-shadow:0 24px 80px rgba(10,20,50,0.35);display:flex;flex-direction:column;overflow:hidden;animation:aiSlideIn 0.25s ease}
+@media(max-width:768px){.ai-fab{bottom:12px;right:12px;width:46px;height:46px;font-size:18px}}
+.ai-modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:12px}
+@media(max-width:768px){.ai-modal-overlay{padding:0;align-items:stretch;justify-content:stretch}}
+.ai-modal{width:420px;max-width:100%;height:600px;max-height:92vh;background:var(--jm-surface);border-radius:20px;box-shadow:0 24px 80px rgba(10,20,50,0.35);display:flex;flex-direction:column;overflow:hidden;animation:aiSlideIn 0.25s ease}
+@media(max-width:768px){.ai-modal{width:100%;height:100%;max-height:100vh;border-radius:0}}
 @keyframes aiSlideIn{from{opacity:0;transform:translateY(32px) scale(0.97)}to{opacity:1;transform:none}}
 .ai-modal-header{background:linear-gradient(135deg,var(--jm-navy) 0%,#1e4a8a 60%,#2a5199 100%);padding:18px 20px 14px;color:#fff;flex-shrink:0}
 .ai-modal-header-top{display:flex;align-items:center;justify-content:space-between}
@@ -3848,14 +3851,11 @@ function BDRNotificationPanel({open,onClose,pending,onApprove,onDecline}){
 }
 
 // ── AI SETTINGS ASSISTANT ──
-function AISettingsAssistant({master,onUpdate,activeTab}){
+function AISettingsAssistant({master,onUpdate}){
   const [open,setOpen]=useState(false);
-  const [msgs,setMsgs]=useState([{role:'ai',text:"Hello! I'm your JMOS Settings Assistant. I can help you add personnel, operators, equipment, or products. Just tell me what you need — for example:\n\n\"Add John Smith as an operator\" or \"Add a new press called 600 Ton Press to Presses.\"",actions:[]}]);
+  const [msgs,setMsgs]=useState([{role:'ai',text:"Hey there! I can help you get people, equipment, and products set up in the system. Here's the kind of things you can tell me:\n\n\u2022 \"Add Mike Johnson as an operator\"\n\u2022 \"I need to add a new press \u2014 it's called the 600 Ton Press\"\n\u2022 \"Add a product for 3/4 inch bolts\"\n\u2022 \"Add three operators: Smith, Jones, and Davis\"\n\nI'll make sure everything gets formatted the right way and matches what's already in the system. Just type what you need!",actions:[]}]);
   const [input,setInput]=useState('');
   const [loading,setLoading]=useState(false);
-  const [ctx,setCtx]=useState(activeTab||'personnel');
-  useEffect(()=>{if(activeTab)setCtx(activeTab);},[activeTab]);
-  const ctxLabels={personnel:'Personnel',operators:'Operators',equipment:'Equipment',products:'Products'};
   const chatRef=useRef(null);
   useEffect(()=>{if(chatRef.current)chatRef.current.scrollTop=chatRef.current.scrollHeight;},[msgs,loading]);
 
@@ -3867,7 +3867,7 @@ function AISettingsAssistant({master,onUpdate,activeTab}){
     setLoading(true);
     try{
       const currentData={supervisors:master.supervisors||[],operators:master.operators||[],customEquipment:master.customEquipment||[],customProducts:master.customProducts||[]};
-      const r=await fetch('/api/ai/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,context:ctx,currentData})});
+      const r=await fetch('/api/ai/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,currentData})});
       if(!r.ok)throw new Error('Server error '+r.status);
       const d=await r.json();
       setMsgs(m=>[...m,{role:'ai',text:d.reply||'Done.',actions:d.actions||[]}]);
@@ -3899,7 +3899,7 @@ function AISettingsAssistant({master,onUpdate,activeTab}){
 
   return h(React.Fragment,null,
     // FAB button
-    h('button',{className:'ai-fab',onClick:()=>setOpen(true),title:'AI Settings Assistant'},'\u2728'),
+    h('button',{className:'ai-fab',onClick:()=>setOpen(true),title:'AI Settings Assistant'},'AI'),
     // Modal
     open&&h('div',{className:'ai-modal-overlay',onClick:e=>{if(e.target===e.currentTarget)setOpen(false);}},
       h('div',{className:'ai-modal'},
@@ -3907,22 +3907,19 @@ function AISettingsAssistant({master,onUpdate,activeTab}){
         h('div',{className:'ai-modal-header'},
           h('div',{className:'ai-modal-header-top'},
             h('div',{className:'ai-modal-brand'},
-              h('div',{className:'ai-modal-logo'},'\u2728'),
+              h('div',{className:'ai-modal-logo'},'AI'),
               h('div',null,
                 h('div',{className:'ai-modal-title'},'JMOS Settings Assistant'),
-                h('div',{className:'ai-modal-subtitle'},'C-Suite Configuration Interface')
+                h('div',{className:'ai-modal-subtitle'},'Add people, equipment & products')
               )
             ),
             h('button',{className:'ai-modal-close',onClick:()=>setOpen(false)},'\u00D7')
-          ),
-          h('div',{className:'ai-modal-context'},
-            Object.entries(ctxLabels).map(([k,v])=>h('button',{key:k,className:'ai-ctx-pill'+(ctx===k?' active':''),onClick:()=>setCtx(k)},v))
           )
         ),
         // Chat area
         h('div',{className:'ai-chat-area',ref:chatRef},
           msgs.map((msg,i)=>h('div',{key:i,className:'ai-msg '+(msg.role==='user'?'user':'ai')},
-            h('div',{className:'ai-msg-avatar'},msg.role==='user'?'U':'\u2728'),
+            h('div',{className:'ai-msg-avatar'},msg.role==='user'?'You':'AI'),
             h('div',null,
               h('div',{className:'ai-msg-bubble'},msg.text),
               (msg.actions||[]).length>0&&h('div',{style:{marginTop:6}},
@@ -3933,7 +3930,7 @@ function AISettingsAssistant({master,onUpdate,activeTab}){
             )
           )),
           loading&&h('div',{className:'ai-msg ai'},
-            h('div',{className:'ai-msg-avatar'},'\u2728'),
+            h('div',{className:'ai-msg-avatar'},'AI'),
             h('div',{className:'ai-msg-bubble'},h('div',{className:'ai-typing'},h('span'),h('span'),h('span')))
           )
         ),
@@ -4081,7 +4078,7 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   return h('div',{className:'card'},
     h('div',{className:'card-title'},'Settings'),h('div',{className:'card-sub'},'Manage personnel, operators, equipment, products and system configuration.'),
     h('div',{className:'admin-tabs'},tabs.map(t=>h('button',{key:t.id,className:`admin-tab${tab===t.id?' active':''}`,onClick:()=>setTab(t.id)},t.label))),
-    (['personnel','operators','equipment','products'].includes(tab))&&h(AISettingsAssistant,{master,onUpdate,activeTab:tab}),
+    (['personnel','operators','equipment','products'].includes(tab))&&h(AISettingsAssistant,{master,onUpdate}),
     tab==='personnel'&&h('div',null,
       h('p',{style:{fontSize:13,color:'var(--jm-text-sec)',marginBottom:12}},'Data entry personnel appear in the "Entered By" dropdown during Shift Setup.'),
       h('div',{className:'admin-input-row'},h('input',{placeholder:'Enter name (LAST, FIRST)',value:newSup,onChange:e=>setNewSup(e.target.value),onKeyDown:e=>{if(e.key==='Enter')addSup();}}),h('button',{className:'btn btn-primary btn-sm',onClick:addSup},'Add Personnel')),
