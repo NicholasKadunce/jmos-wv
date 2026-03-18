@@ -126,6 +126,14 @@ async function initDB() {
     END $$;
   `);
 
+  // One-time migration: reassign Pipe Assembly records from Landis to new Pipe Assembly equipment
+  await pool.query(`
+    UPDATE submissions
+    SET data = jsonb_set(data, '{equipCode}', '"WV-MISC-PIPEASSY"')
+    WHERE data->>'equipCode' = 'WV-MISC-LANDISASSM'
+      AND data->'hourData'->>'productCode' = 'P-PPA-001'
+  `).catch(() => {});
+
   // Create default admin user if no users exist
   const { rows } = await pool.query('SELECT COUNT(*) as cnt FROM users');
   if (parseInt(rows[0].cnt) === 0) {

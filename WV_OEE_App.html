@@ -573,6 +573,34 @@ input[type=number]{-moz-appearance:textfield}
 .ai-settings-bar-text{display:flex;flex-direction:column;gap:1px}
 .ai-settings-bar-title{font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.2px}
 .ai-settings-bar-sub{font-size:11px;color:rgba(255,255,255,0.55);font-weight:500}
+/* PROCESS FLOW DIAGRAM */
+.pfd-wrap{background:var(--jm-surface);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:16px}
+.pfd-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.pfd-title{font-size:14px;font-weight:700;color:var(--jm-navy);display:flex;align-items:center;gap:6px}
+.pfd-title svg{width:16px;height:16px}
+.pfd-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pfd-svg-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--jm-border);border-radius:var(--radius-sm);background:#FAFCFE}
+.pfd-svg-wrap svg{display:block;min-width:900px}
+.pfd-node rect{transition:all 0.2s ease;cursor:pointer}
+.pfd-node:hover rect{filter:brightness(1.08);stroke-width:2}
+.pfd-node text{pointer-events:none;user-select:none}
+@keyframes pfdPulse{0%,100%{stroke-opacity:1;stroke-width:2.5}50%{stroke-opacity:0.4;stroke-width:1.5}}
+.pfd-rate-limit{animation:pfdPulse 1.8s ease-in-out infinite;stroke:#EF4444!important;stroke-width:2.5}
+.pfd-group-boundary{fill:none;stroke-dasharray:6 4;stroke-width:1.2;rx:8;ry:8;pointer-events:none}
+.pfd-group-label{font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;pointer-events:none}
+.pfd-tooltip{position:absolute;z-index:50;background:#0F172A;color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.5;box-shadow:0 8px 30px rgba(0,0,0,0.25);pointer-events:none;max-width:220px;white-space:nowrap}
+.pfd-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0F172A}
+.pfd-tooltip-title{font-weight:700;font-size:13px;margin-bottom:4px}
+.pfd-tooltip-row{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:rgba(255,255,255,0.75)}
+.pfd-tooltip-row span:last-child{color:#fff;font-weight:600}
+@keyframes pfdFlow{to{stroke-dashoffset:-24}}
+.pfd-connection{stroke-dasharray:8 4;animation:pfdFlow 1.5s linear infinite;stroke-linecap:round}
+.pfd-wip{fill:var(--jm-gold);stroke:#B8941F;stroke-width:1;opacity:0.85}
+.pfd-output-badge{font-size:9px;font-weight:800;font-variant-numeric:tabular-nums}
+.pfd-output-badge-bg{rx:4;ry:4}
+.pfd-highlight-dim{opacity:0.25;transition:opacity 0.3s}
+.pfd-highlight-bright{opacity:1;transition:opacity 0.3s}
+@media(max-width:768px){.pfd-wrap{padding:14px}.pfd-header{gap:6px}.pfd-title{font-size:13px}.pfd-svg-wrap{margin:0 -14px;border-radius:0;border-left:none;border-right:none}}
 .ai-modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:12px}
 @media(max-width:768px){.ai-modal-overlay{padding:0;align-items:stretch;justify-content:stretch}}
 .ai-modal{width:420px;max-width:100%;height:600px;max-height:92vh;background:var(--jm-surface);border-radius:20px;box-shadow:0 24px 80px rgba(10,20,50,0.35);display:flex;flex-direction:column;overflow:hidden;animation:aiSlideIn 0.25s ease}
@@ -1022,7 +1050,8 @@ const INIT_EQUIPMENT=[
   {code:'WV-MISC-TIELINE',name:'Tie Line',process:'Misc Equipment',active:true},
   {code:'WV-MISC-OFFWELD',name:'Offline Welding',process:'Misc Equipment',active:true},
   {code:'WV-MISC-EYEBOLT',name:'Eyebolt',process:'Misc Equipment',active:true},
-  {code:'WV-MISC-LANDISASSM',name:'Landis Threader/ASSM',process:'Misc Equipment',active:true},
+  {code:'WV-MISC-LANDISASSM',name:'Landis Threader',process:'Misc Equipment',active:true},
+  {code:'WV-MISC-PIPEASSY',name:'Pipe Assembly',process:'Misc Equipment',active:true},
   {code:'WV-MISC-UNITS',name:'Unit Assembly',process:'Misc Equipment',active:true},
 ];
 const ASSEMBLY_EQUIP=['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4'];
@@ -1042,7 +1071,7 @@ const INIT_PRODUCTS=[
   {code:'P-ATH-005',name:'Auto Thread - 804 x 24 & 36 TBE'},{code:'P-ATH-006',name:'Auto Thread - 804 x 48 TBE'},
   {code:'P-ATH-007',name:'Auto Thread - 804 x 72'},{code:'P-TR1-001',name:'Threader 1 - 5/8 x 36 & 48'},
   {code:'P-TR2-001',name:'Threader 2 - All Types'},{code:'P-TR2-002',name:'Threader 2 - 174"'},
-  {code:'P-LND-001',name:'Thread Heavy Wall Pipe'},{code:'P-LND-002',name:'Assemble Heavy Wall Pipe'},
+  {code:'P-LND-001',name:'Thread Heavy Wall Pipe'},
   {code:'P-PRS-001',name:'All channel plates'},{code:'P-PRS-002',name:'6x6 donut'},{code:'P-PRS-003',name:'W/ D handle'},
   {code:'P-PRS-004',name:'4x4 plates'},{code:'P-PRS-005',name:'All 8x8 & 6x6 plates flat/volcano'},
   {code:'P-CBL-001',name:".6 & .7 I-CC 10-12' (2 People)"},{code:'P-CBL-002',name:".6 & .7 I-CC 10-12' (3 People)"},
@@ -1068,10 +1097,10 @@ const INIT_PRODUCTS=[
   {code:'P-STW-001',name:'5Rb,6RB Up To 72"',people:4},{code:'P-STW-002',name:'5Rb,6RB Above 72"',people:4},
   {code:'P-STW-003',name:'174" ST',people:5},{code:'P-STW-004',name:'5Rb,6RB Up To 72"',people:3},
   {code:'P-STW-005',name:'5Rb,6RB Above 72"',people:3},{code:'P-STW-006',name:'174" ST',people:4},
-  {code:'P-UNT-001',name:'7/8 Unit Assembly'},{code:'P-UNT-002',name:'5/8 Unit Assembly'},{code:'P-SAW-001',name:'Cutting Heavy Wall Pipe'},{code:'P-SAW-002',name:'Cut Tubing'},
-  {code:'P-TIE-001',name:'Tie Line - Standard'},{code:'P-TIE-002',name:'Tie Line - Countersink'},
+  {code:'P-UNT-001',name:'7/8 Unit Assembly'},{code:'P-UNT-002',name:'5/8 Unit Assembly'},{code:'P-SAW-001',name:'Heavy Wall Pipe'},{code:'P-SAW-002',name:'Tubing'},
+  {code:'P-TIE-001',name:'Standard'},{code:'P-TIE-002',name:'Countersink'},
   {code:'P-EYE-001',name:'Bend Eye Bolt'},{code:'P-EYE-002',name:'Eye Bolt W/Tail'},
-  {code:'P-WLD-001',name:'Offline Welding - All Types'},{code:'P-WLD-002',name:'Offline Welding - Eye bolts w/Tail'},
+  {code:'P-WLD-001',name:'Conduit'},{code:'P-WLD-002',name:'Eye Bolts w/Tail'},
   {code:'P-PPA-001',name:'Pipe Assembly - All Types'},
 ];
 
@@ -1098,7 +1127,7 @@ const EQUIP_PRODUCTS={
   'WV-CABLE-C4':['P-CBL-001','P-CBL-002','P-CBL-003','P-CBL-004','P-CBL-005','P-CBL-006','P-CBL-007','P-CBL-008','P-CBL-009','P-CBL-010','P-CBL-011','P-CBL-012','P-CBL-013','P-CBL-014','P-CBL-015','P-CBL-016','P-CBL-017'],
   'WV-MISC-BIGSAW':['P-SAW-001','P-SAW-002'],'WV-MISC-TIELINE':['P-TIE-001','P-TIE-002'],
   'WV-MISC-OFFWELD':['P-WLD-001','P-WLD-002'],'WV-MISC-EYEBOLT':['P-EYE-001','P-EYE-002'],
-  'WV-MISC-LANDISASSM':['P-LND-001','P-LND-002','P-PPA-001'],'WV-MISC-UNITS':['P-UNT-001','P-UNT-002'],
+  'WV-MISC-LANDISASSM':['P-LND-001'],'WV-MISC-PIPEASSY':['P-PPA-001'],'WV-MISC-UNITS':['P-UNT-001','P-UNT-002'],
 };
 
 // Target rates
@@ -1137,13 +1166,13 @@ Object.assign(TARGET_RATES,{
   'WV-CABLE-C3_P-CBL-012':24,'WV-CABLE-C3_P-CBL-013':36,'WV-CABLE-C3_P-CBL-014':36,
   'WV-CABLE-C3_P-CBL-015':42,'WV-CABLE-C3_P-CBL-016':36,'WV-CABLE-C3_P-CBL-017':30
 });
-Object.assign(TARGET_RATES,{'WV-MISC-BIGSAW_P-SAW-001':250,'WV-MISC-BIGSAW_P-SAW-002':700,'WV-MISC-TIELINE_P-TIE-001':60,'WV-MISC-TIELINE_P-TIE-002':30,'WV-MISC-OFFWELD_P-WLD-001':50,'WV-MISC-OFFWELD_P-WLD-002':35,'WV-MISC-EYEBOLT_P-EYE-001':100,'WV-MISC-EYEBOLT_P-EYE-002':65,'WV-MISC-LANDISASSM_P-LND-001':75,'WV-MISC-LANDISASSM_P-LND-002':125,'WV-MISC-LANDISASSM_P-PPA-001':85,'WV-MISC-UNITS_P-UNT-001':400,'WV-MISC-UNITS_P-UNT-002':400});
+Object.assign(TARGET_RATES,{'WV-MISC-BIGSAW_P-SAW-001':250,'WV-MISC-BIGSAW_P-SAW-002':700,'WV-MISC-TIELINE_P-TIE-001':60,'WV-MISC-TIELINE_P-TIE-002':30,'WV-MISC-OFFWELD_P-WLD-001':50,'WV-MISC-OFFWELD_P-WLD-002':35,'WV-MISC-EYEBOLT_P-EYE-001':100,'WV-MISC-EYEBOLT_P-EYE-002':65,'WV-MISC-LANDISASSM_P-LND-001':75,'WV-MISC-PIPEASSY_P-PPA-001':85,'WV-MISC-UNITS_P-UNT-001':400,'WV-MISC-UNITS_P-UNT-002':400});
 
 const DT_CODES={1:'Tooling',2:'Hydraulic Issues',3:'Air Issues',4:'Water Issues',5:'Electrical Issues',6:'Sensor Issues',7:'Encoder Issues',8:'Mechanical Issues',9:'Lubrication Issues',10:'Changeover',11:'Loading Material',12:'Unloading Material',13:'Material Issues',14:'QC',15:'Assisting Operator',16:'Scheduled Downtime',17:'Programming Issues',18:'Vibration Issues',19:'Robot Issues',20:'Welder Issues',21:'Vision Issues'};
 const DEF_CODES={1:'Bent Bar',2:'Burr',3:'Bad Ribs',4:'Failing Bar Length',5:'Failing Peel Length',6:'Failing Diameter',7:'Cross Thread',8:'Incomplete Starter Thread',9:'Cracked Threads',10:'Failing Thread Length',11:'Failing Stamp',12:'Head Off-Center',13:'Failing Washer',14:'Failing Tensile',15:'Failing Yield',16:'Bad Break',17:'Rounded Head',18:'Improper Assembly',19:'Failing Width',20:'Failing Length',21:'Cracked Steel',22:'Bend Cable',23:'Broken Strand',24:'Broken Housing',25:'Failing Cable Length',26:'Failing Bird Cage',27:'Failing Crimp',28:'Failing Teeth Depth',29:'Failing Weld',30:'Hole Alignment',31:'Missing Component',32:'Miss Hit'};
-const EQUIP_DT_CODES={'WV-SHEAR-AS1':[1,2,3,5,6,8,10,11,12,14,15,16,17,18],'WV-SHEAR-AS2':[1,2,3,5,6,8,10,11,12,14,15,16,17,18],'WV-PRESS-400':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-PRESS-500A':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-PRESS-500B':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-HEAD-H1':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-H2':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-H3':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-AUTO':[1,3,4,5,6,8,9,10,11,12,14,15,16,17,19,21],'WV-THREAD-T1':[1,3,5,8,9,10,11,12,14,15,16],'WV-THREAD-T2':[1,3,5,8,9,10,11,12,14,15,16],'WV-THREAD-AT':[1,3,5,6,8,9,10,11,12,14,15,16],'WV-PEEL-MAN':[1,3,4,5,6,8,9,10,11,12,14,15,16,17],'WV-PEEL-AUTO':[1,3,4,5,6,8,9,10,11,12,14,15,16,17,19],'WV-PEEL-SWAG':[1,3,4,5,6,8,9,10,11,12,14,15,16,17],'WV-ASSY-A1':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A2':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A3':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A4':[1,5,6,8,10,11,12,14,15,16],'WV-CABLE-C1':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-CABLE-C2':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-CABLE-C3':[1,2,3,5,6,7,8,10,11,13,14,15,16,17,20],'WV-CABLE-C4':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-MISC-BIGSAW':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-TIELINE':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-OFFWELD':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-EYEBOLT':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-LANDISASSM':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-UNITS':[1,2,3,5,6,8,9,10,11,12,14,15,16]};
-const EQUIP_DEF_CODES={'WV-SHEAR-AS1':[1,2,3,4],'WV-SHEAR-AS2':[1,2,3,4],'WV-PRESS-400':[2,11,19,20,21,14],'WV-PRESS-500A':[2,11,19,20,21,14],'WV-PRESS-500B':[2,11,19,20,21,14],'WV-HEAD-H1':[1,2,11,12,13,4,14,15,16,17,32],'WV-HEAD-H2':[1,2,11,12,13,4,14,15,16,17,32],'WV-HEAD-H3':[1,2,11,12,13,4,14,15,16,17,32],'WV-HEAD-AUTO':[1,2,11,12,13,4,14,15,16,17,32],'WV-THREAD-T1':[1,2,7,8,9,6,10],'WV-THREAD-T2':[1,2,7,8,9,6,10],'WV-THREAD-AT':[1,2,7,8,9,6,10],'WV-PEEL-MAN':[1,2,5,6,21],'WV-PEEL-AUTO':[1,2,5,6,21],'WV-PEEL-SWAG':[1,2,5,6,21],'WV-ASSY-A1':[1,18,31],'WV-ASSY-A2':[1,18,31],'WV-ASSY-A3':[1,18,31],'WV-ASSY-A4':[1,18,31],'WV-CABLE-C1':[22,23,24,25,26,27],'WV-CABLE-C2':[22,23,24,25,26,27],'WV-CABLE-C3':[22,23,24,25,26,27,29],'WV-CABLE-C4':[22,23,24,25,26,27],'WV-MISC-BIGSAW':[20,21],'WV-MISC-TIELINE':[28,30],'WV-MISC-OFFWELD':[29],'WV-MISC-EYEBOLT':[1],'WV-MISC-LANDISASSM':[1,7,8,9],'WV-MISC-UNITS':[1,18,31]};
-const EQUIP_DEFAULTS={'WV-SHEAR-AS1':'P-SHR-016','WV-SHEAR-AS2':'P-SHR-012','WV-PRESS-400':'P-PRS-001','WV-PRESS-500A':'P-PRS-005','WV-PRESS-500B':'P-PRS-002','WV-HEAD-H1':'P-HDG-007','WV-HEAD-H2':'P-HDG-002','WV-HEAD-H3':'P-HDG-004','WV-THREAD-T1':'P-TR1-001','WV-THREAD-T2':'P-TR2-001','WV-THREAD-AT':'P-ATH-006','WV-PEEL-MAN':'P-MPL-001','WV-PEEL-AUTO':'P-APL-001','WV-PEEL-SWAG':'P-SWG-001','WV-ASSY-A1':'P-ASY-007','WV-ASSY-A2':'P-ASY-007','WV-ASSY-A3':'P-ASY-003','WV-ASSY-A4':'P-ASY-017','WV-CABLE-C1':'P-CBL-001','WV-CABLE-C2':'P-CBL-003','WV-CABLE-C3':'P-CBL-007','WV-CABLE-C4':'P-CBL-004','WV-MISC-BIGSAW':'P-SAW-002','WV-MISC-TIELINE':'P-TIE-001','WV-MISC-OFFWELD':'P-WLD-001','WV-MISC-UNITS':'P-UNT-001','WV-MISC-EYEBOLT':'P-EYE-001','WV-MISC-LANDISASSM':'P-LND-001'};
+const EQUIP_DT_CODES={'WV-SHEAR-AS1':[1,2,3,5,6,8,10,11,12,14,15,16,17,18],'WV-SHEAR-AS2':[1,2,3,5,6,8,10,11,12,14,15,16,17,18],'WV-PRESS-400':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-PRESS-500A':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-PRESS-500B':[1,2,3,5,8,9,10,11,12,13,14,15,16],'WV-HEAD-H1':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-H2':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-H3':[1,3,4,5,6,8,9,10,11,12,14,15,16],'WV-HEAD-AUTO':[1,3,4,5,6,8,9,10,11,12,14,15,16,17,19,21],'WV-THREAD-T1':[1,3,5,8,9,10,11,12,14,15,16],'WV-THREAD-T2':[1,3,5,8,9,10,11,12,14,15,16],'WV-THREAD-AT':[1,3,5,6,8,9,10,11,12,14,15,16],'WV-PEEL-MAN':[1,3,4,5,6,8,9,10,11,12,14,15,16,17],'WV-PEEL-AUTO':[1,3,4,5,6,8,9,10,11,12,14,15,16,17,19],'WV-PEEL-SWAG':[1,3,4,5,6,8,9,10,11,12,14,15,16,17],'WV-ASSY-A1':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A2':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A3':[1,5,6,8,10,11,12,14,15,16],'WV-ASSY-A4':[1,5,6,8,10,11,12,14,15,16],'WV-CABLE-C1':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-CABLE-C2':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-CABLE-C3':[1,2,3,5,6,7,8,10,11,13,14,15,16,17,20],'WV-CABLE-C4':[1,2,3,5,6,7,8,10,11,13,14,15,16,17],'WV-MISC-BIGSAW':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-TIELINE':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-OFFWELD':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-EYEBOLT':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-LANDISASSM':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-PIPEASSY':[1,2,3,5,6,8,9,10,11,12,14,15,16],'WV-MISC-UNITS':[1,2,3,5,6,8,9,10,11,12,14,15,16]};
+const EQUIP_DEF_CODES={'WV-SHEAR-AS1':[1,2,3,4],'WV-SHEAR-AS2':[1,2,3,4],'WV-PRESS-400':[2,11,19,20,21,14],'WV-PRESS-500A':[2,11,19,20,21,14],'WV-PRESS-500B':[2,11,19,20,21,14],'WV-HEAD-H1':[1,2,11,12,13,4,14,15,16,17,32],'WV-HEAD-H2':[1,2,11,12,13,4,14,15,16,17,32],'WV-HEAD-H3':[1,2,11,12,13,4,14,15,16,17,32],'WV-HEAD-AUTO':[1,2,11,12,13,4,14,15,16,17,32],'WV-THREAD-T1':[1,2,7,8,9,6,10],'WV-THREAD-T2':[1,2,7,8,9,6,10],'WV-THREAD-AT':[1,2,7,8,9,6,10],'WV-PEEL-MAN':[1,2,5,6,21],'WV-PEEL-AUTO':[1,2,5,6,21],'WV-PEEL-SWAG':[1,2,5,6,21],'WV-ASSY-A1':[1,18,31],'WV-ASSY-A2':[1,18,31],'WV-ASSY-A3':[1,18,31],'WV-ASSY-A4':[1,18,31],'WV-CABLE-C1':[22,23,24,25,26,27],'WV-CABLE-C2':[22,23,24,25,26,27],'WV-CABLE-C3':[22,23,24,25,26,27,29],'WV-CABLE-C4':[22,23,24,25,26,27],'WV-MISC-BIGSAW':[20,21],'WV-MISC-TIELINE':[28,30],'WV-MISC-OFFWELD':[29],'WV-MISC-EYEBOLT':[1],'WV-MISC-LANDISASSM':[1,7,8,9],'WV-MISC-PIPEASSY':[1,18,29,31],'WV-MISC-UNITS':[1,18,31]};
+const EQUIP_DEFAULTS={'WV-SHEAR-AS1':'P-SHR-016','WV-SHEAR-AS2':'P-SHR-012','WV-PRESS-400':'P-PRS-001','WV-PRESS-500A':'P-PRS-005','WV-PRESS-500B':'P-PRS-002','WV-HEAD-H1':'P-HDG-007','WV-HEAD-H2':'P-HDG-002','WV-HEAD-H3':'P-HDG-004','WV-THREAD-T1':'P-TR1-001','WV-THREAD-T2':'P-TR2-001','WV-THREAD-AT':'P-ATH-006','WV-PEEL-MAN':'P-MPL-001','WV-PEEL-AUTO':'P-APL-001','WV-PEEL-SWAG':'P-SWG-001','WV-ASSY-A1':'P-ASY-007','WV-ASSY-A2':'P-ASY-007','WV-ASSY-A3':'P-ASY-003','WV-ASSY-A4':'P-ASY-017','WV-CABLE-C1':'P-CBL-001','WV-CABLE-C2':'P-CBL-003','WV-CABLE-C3':'P-CBL-007','WV-CABLE-C4':'P-CBL-004','WV-MISC-BIGSAW':'P-SAW-002','WV-MISC-TIELINE':'P-TIE-001','WV-MISC-OFFWELD':'P-WLD-001','WV-MISC-UNITS':'P-UNT-001','WV-MISC-EYEBOLT':'P-EYE-001','WV-MISC-LANDISASSM':'P-LND-001','WV-MISC-PIPEASSY':'P-PPA-001'};
 
 // ─── DOWNTIME SUB-ITEMS ──────────────────────────────────────────────────────
 const DT_SUBITEMS={
@@ -1988,6 +2017,220 @@ function AskAI({section,context,filters}){
   );
 }
 
+// ── PROCESS FLOW DIAGRAM ─────────────────────────────────────────────────────
+function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
+  const [flowShift,setFlowShift]=useState(shiftFilter||'all');
+  const [highlightGroup,setHighlightGroup]=useState('none');
+  const [hoveredNode,setHoveredNode]=useState(null);
+  const [tooltipPos,setTooltipPos]=useState({x:0,y:0});
+  const svgRef=useRef(null);
+  useEffect(()=>{setFlowShift(shiftFilter||'all');},[shiftFilter]);
+
+  const NODE_W=145,NODE_H=28,NODE_GAP=4;
+  const processGroups=[
+    {id:'shears',label:'Shears',color:'#1B3D6E',x:20,y:40,codes:['WV-SHEAR-AS1','WV-SHEAR-AS2']},
+    {id:'peelers',label:'Peeling',color:'#1B3D6E',x:210,y:40,codes:['WV-PEEL-MAN','WV-PEEL-AUTO','WV-PEEL-SWAG']},
+    {id:'threaders',label:'Threaders',color:'#1B3D6E',x:400,y:40,codes:['WV-THREAD-T1','WV-THREAD-T2','WV-THREAD-AT']},
+    {id:'headers',label:'Headers',color:'#1B3D6E',x:590,y:40,codes:['WV-HEAD-H1','WV-HEAD-H2','WV-HEAD-H3','WV-HEAD-AUTO']},
+    {id:'assembly',label:'Assembly',color:'#1B3D6E',x:800,y:40,codes:['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4']},
+    {id:'presses',label:'Plate Presses',color:'#7C3AED',x:330,y:215,codes:['WV-PRESS-400','WV-PRESS-500A','WV-PRESS-500B'],horizontal:true},
+    {id:'cables',label:'Cable Lines',color:'#059669',x:210,y:480,codes:['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C3','WV-CABLE-C4'],horizontal:true}
+  ];
+  const miscNodes=[
+    {code:'WV-MISC-BIGSAW',x:30,y:310,color:'#D97706'},
+    {code:'WV-MISC-OFFWELD',x:230,y:300,color:'#D97706'},
+    {code:'WV-MISC-LANDISASSM',x:230,y:380,color:'#D97706'},
+    {code:'WV-MISC-PIPEASSY',x:430,y:300,color:'#D97706'},
+    {code:'WV-MISC-EYEBOLT',x:430,y:380,color:'#D97706'},
+    {code:'WV-MISC-TIELINE',x:630,y:300,color:'#D97706'},
+    {code:'WV-MISC-UNITS',x:630,y:380,color:'#D97706'}
+  ];
+  const nodePositions=useMemo(()=>{
+    const map={};
+    processGroups.forEach(g=>{g.codes.forEach((c,i)=>{
+      map[c]=g.horizontal?{x:g.x+i*(NODE_W+12),y:g.y,color:g.color,group:g.id,process:g.label}
+        :{x:g.x,y:g.y+i*(NODE_H+NODE_GAP),color:g.color,group:g.id,process:g.label};
+    });});
+    miscNodes.forEach(n=>{map[n.code]={x:n.x,y:n.y,color:n.color,group:'misc',process:'Misc Equipment'};});
+    return map;
+  },[]);
+
+  // Data aggregation
+  const flowData=useMemo(()=>{
+    const fr=(records||[]).filter(r=>{
+      if(r.date<dateFrom||r.date>dateTo)return false;
+      if(flowShift!=='all'&&r.shiftNum!==flowShift)return false;
+      return true;
+    });
+    const map={};
+    fr.forEach(r=>{
+      if(!map[r.equipCode])map[r.equipCode]={totalOutput:0,operators:new Set(),products:new Set(),sm:0,dtm:0,tgt:0,good:0,def:0};
+      const e=map[r.equipCode];
+      e.totalOutput+=parseInt(r.goodUnits)||0;e.good+=parseInt(r.goodUnits)||0;
+      const avail=60-(parseInt(r.scheduledMins)||0);e.sm+=avail;
+      e.dtm+=totalDTMins(r.downtime||[]);e.tgt+=parseInt(r.target)||0;
+      e.def+=(r.defects||[]).reduce((s,d)=>s+parseInt(d.qty||0),0);
+      (r.operators||[]).forEach(op=>{if(op)e.operators.add(op);});
+      if(r.productCode)e.products.add(r.productCode);
+    });
+    Object.keys(map).forEach(k=>{
+      const e=map[k],run=e.sm-e.dtm,tp=e.good+e.def;
+      const a=e.sm>0?(run/e.sm):0,p=run>0&&e.tgt>0?((tp*e.sm)/(run*e.tgt)):0,q=tp>0?(e.good/tp):1;
+      e.oee=a*p*q*100;e.availability=a*100;e.performance=p*100;e.quality=q*100;
+    });
+    return map;
+  },[records,dateFrom,dateTo,flowShift]);
+
+  // Bottleneck detection
+  const bottlenecks=useMemo(()=>{
+    const allBoltCodes=['shears','peelers','threaders','headers','assembly'].flatMap(gId=>(processGroups.find(pg=>pg.id===gId)||{codes:[]}).codes);
+    let globalMin=Infinity,globalMinCode=null;
+    allBoltCodes.forEach(c=>{const d=flowData[c];if(d&&d.totalOutput>0&&d.totalOutput<globalMin){globalMin=d.totalOutput;globalMinCode=c;}});
+    const result=new Set();if(globalMinCode)result.add(globalMinCode);
+    return result;
+  },[flowData]);
+
+  // Connection definitions
+  const connections=[
+    {from:'shears',to:'peelers'},{from:'peelers',to:'threaders'},{from:'threaders',to:'headers'},{from:'headers',to:'assembly'},
+    {fromCode:'WV-MISC-BIGSAW',toCode:'WV-MISC-OFFWELD'},{fromCode:'WV-MISC-OFFWELD',toCode:'WV-MISC-PIPEASSY'},
+    {fromCode:'WV-MISC-PIPEASSY',toCode:'WV-CABLE-C3'},{fromCode:'WV-MISC-BIGSAW',toCode:'WV-MISC-LANDISASSM'},
+    {fromCode:'WV-MISC-LANDISASSM',toCode:'WV-CABLE-C1'},{fromCode:'WV-MISC-OFFWELD',toCode:'WV-CABLE-C2'},
+    {fromCode:'WV-MISC-OFFWELD',toCode:'WV-CABLE-C4'}
+  ];
+  function getGroupCenter(gId){const g=processGroups.find(pg=>pg.id===gId);if(!g)return{x:0,y:0};if(g.horizontal){const tw=g.codes.length*(NODE_W+12)-12;return{x:g.x+tw/2,y:g.y+NODE_H/2};}const th=g.codes.length*(NODE_H+NODE_GAP)-NODE_GAP;return{x:g.x+NODE_W/2,y:g.y+th/2};}
+  function getGroupRight(gId){const c=getGroupCenter(gId);const g=processGroups.find(pg=>pg.id===gId);return{x:(g.horizontal?g.x+g.codes.length*(NODE_W+12)-12:g.x)+NODE_W+6,y:c.y};}
+  function getGroupLeft(gId){const g=processGroups.find(pg=>pg.id===gId);return{x:g.x-6,y:getGroupCenter(gId).y};}
+  function getNodeRight(code){const p=nodePositions[code];return p?{x:p.x+NODE_W+4,y:p.y+NODE_H/2}:{x:0,y:0};}
+  function getNodeLeft(code){const p=nodePositions[code];return p?{x:p.x-4,y:p.y+NODE_H/2}:{x:0,y:0};}
+  function getNodeTop(code){const p=nodePositions[code];return p?{x:p.x+NODE_W/2,y:p.y-4}:{x:0,y:0};}
+  function getNodeBottom(code){const p=nodePositions[code];return p?{x:p.x+NODE_W/2,y:p.y+NODE_H+4}:{x:0,y:0};}
+  function oeeColor(val){return val>=80?'#059669':val>=60?'#D97706':'#DC2626';}
+
+  function handleNodeHover(code,evt){
+    if(!code){setHoveredNode(null);return;}
+    setHoveredNode(code);
+    if(svgRef.current&&evt){const rect=svgRef.current.getBoundingClientRect();setTooltipPos({x:evt.clientX-rect.left,y:evt.clientY-rect.top-10});}
+  }
+  function nodeOpacity(code){
+    if(highlightGroup==='none')return '';
+    const pos=nodePositions[code];if(!pos)return 'pfd-highlight-dim';
+    if(pos.process===highlightGroup)return 'pfd-highlight-bright';
+    return 'pfd-highlight-dim';
+  }
+
+  function renderNode(code,x,y,baseColor){
+    const d=flowData[code]||{totalOutput:0,operators:new Set(),products:new Set(),oee:0};
+    const name=getEquipName(code);const shortName=name.length>18?name.substring(0,16)+'..':name;
+    const ops=[...(d.operators||[])];const prods=[...(d.products||[])];
+    const isBottleneck=bottlenecks.has(code);const hCls=nodeOpacity(code);
+    const fillColor=d.totalOutput>0?baseColor:(baseColor+'40');
+    return h('g',{key:code,className:'pfd-node'+(hCls?' '+hCls:''),transform:'translate('+x+','+y+')',
+      onMouseEnter:function(e){handleNodeHover(code,e);},onMouseLeave:function(){handleNodeHover(null);}},
+      h('rect',{width:NODE_W,height:NODE_H,rx:6,ry:6,fill:fillColor,stroke:isBottleneck?'#EF4444':baseColor,strokeWidth:isBottleneck?2.5:1,className:isBottleneck?'pfd-rate-limit':''}),
+      h('text',{x:6,y:12,fill:'#fff',fontSize:9,fontWeight:700,dominantBaseline:'middle'},shortName),
+      h('text',{x:6,y:22,fill:'rgba(255,255,255,0.65)',fontSize:7.5,dominantBaseline:'middle'},
+        ops.length>0?ops.slice(0,2).map(o=>o.split(' ').map(w=>w[0]||'').join('')).join(', '):'—'),
+      d.totalOutput>0?h('g',null,
+        h('rect',{className:'pfd-output-badge-bg',x:NODE_W-38,y:3,width:34,height:14,fill:'rgba(255,255,255,0.2)'}),
+        h('text',{className:'pfd-output-badge',x:NODE_W-21,y:12,fill:'#fff',fontSize:8.5,fontWeight:800,textAnchor:'middle',dominantBaseline:'middle'},d.totalOutput.toLocaleString())
+      ):null,
+      prods.length>0?h('title',null,getProductName(prods[0])+' | OEE: '+(d.oee||0).toFixed(1)+'%'):null
+    );
+  }
+  function renderGroupBoundary(g){
+    const pad=10;let bx,by,bw,bh;
+    if(g.horizontal){const tw=g.codes.length*(NODE_W+12)-12;bx=g.x-pad;by=g.y-pad;bw=tw+NODE_W+pad*2;bh=NODE_H+pad*2;}
+    else{const th=g.codes.length*(NODE_H+NODE_GAP)-NODE_GAP;bx=g.x-pad;by=g.y-pad;bw=NODE_W+pad*2;bh=th+pad*2;}
+    return h('g',{key:'grp-'+g.id},h('rect',{x:bx,y:by,width:bw,height:bh,className:'pfd-group-boundary',stroke:g.color+'66'}),
+      h('text',{x:bx+bw/2,y:by-4,className:'pfd-group-label',fill:g.color+'99',textAnchor:'middle'},g.label));
+  }
+  function renderConnections(){
+    return connections.map(function(conn,i){
+      var x1,y1,x2,y2;
+      if(conn.from&&conn.to){var r=getGroupRight(conn.from),l=getGroupLeft(conn.to);x1=r.x;y1=r.y;x2=l.x;y2=l.y;}
+      else{var fr=getNodeRight(conn.fromCode),tl=getNodeLeft(conn.toCode);
+        var fp=nodePositions[conn.fromCode],tp=nodePositions[conn.toCode];
+        if(fp&&tp&&Math.abs(tp.y-fp.y)>60){fr=getNodeBottom(conn.fromCode);tl=getNodeTop(conn.toCode);}
+        x1=fr.x;y1=fr.y;x2=tl.x;y2=tl.y;}
+      var mx=(x1+x2)/2;
+      return h('path',{key:'conn-'+i,d:'M'+x1+' '+y1+' C'+mx+' '+y1+' '+mx+' '+y2+' '+x2+' '+y2,className:'pfd-connection',fill:'none',stroke:'#94A3B8',strokeWidth:1.5,markerEnd:'url(#pfd-arrow)'});
+    });
+  }
+  function renderTooltip(){
+    if(!hoveredNode)return null;
+    var d=flowData[hoveredNode]||{totalOutput:0,operators:new Set(),products:new Set(),oee:0,availability:0,performance:0,quality:0};
+    var name=getEquipName(hoveredNode);var ops=[...(d.operators||[])];var prods=[...(d.products||[])];
+    return h('div',{className:'pfd-tooltip',style:{left:tooltipPos.x-80,top:tooltipPos.y-130}},
+      h('div',{className:'pfd-tooltip-title'},name),
+      h('div',{className:'pfd-tooltip-row'},h('span',null,'Output:'),h('span',null,(d.totalOutput||0).toLocaleString()+' pcs')),
+      h('div',{className:'pfd-tooltip-row'},h('span',null,'OEE:'),h('span',{style:{color:oeeColor(d.oee||0)}},(d.oee||0).toFixed(1)+'%')),
+      h('div',{className:'pfd-tooltip-row'},h('span',null,'A / P / Q:'),h('span',null,(d.availability||0).toFixed(0)+' / '+(d.performance||0).toFixed(0)+' / '+(d.quality||0).toFixed(0)+'%')),
+      h('div',{className:'pfd-tooltip-row'},h('span',null,'Operators:'),h('span',null,ops.length>0?ops.slice(0,3).join(', '):'—')),
+      h('div',{className:'pfd-tooltip-row'},h('span',null,'Product:'),h('span',null,prods.length>0?prods.slice(0,2).map(p=>{var n=getProductName(p);return n.length>15?n.substring(0,13)+'..':n;}).join(', '):'—'))
+    );
+  }
+
+  var flowIcon=h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M4 6h4m-4 6h4m-4 6h4m4-12h8m-8 6h8m-8 6h8',strokeLinecap:'round'}));
+  var highlightOptions=['none','Shears','Peeling','Threaders','Headers','Assembly','Plate Presses','Cable Lines','Misc Equipment'];
+
+  return h('div',{className:'pfd-wrap'},
+    h('div',{className:'pfd-header'},
+      h('div',{className:'pfd-title'},flowIcon,' Process Flow'),
+      h('div',{className:'pfd-controls'},
+        h('div',{className:'dash-shift-toggle'},
+          h('button',{className:'dash-shift-btn'+(flowShift==='all'?' active':''),onClick:function(){setFlowShift('all');}},'All'),
+          h('button',{className:'dash-shift-btn'+(flowShift==='1'?' active':''),onClick:function(){setFlowShift('1');}},'Shift 1'),
+          h('button',{className:'dash-shift-btn'+(flowShift==='2'?' active':''),onClick:function(){setFlowShift('2');}},'Shift 2')
+        ),
+        h('select',{className:'dash-filter-select',value:highlightGroup,onChange:function(e){setHighlightGroup(e.target.value);}},
+          h('option',{value:'none'},'No Highlight'),
+          highlightOptions.slice(1).map(o=>h('option',{key:o,value:o},o)))
+      )
+    ),
+    h('div',{style:{position:'relative'}},
+      renderTooltip(),
+      h('div',{className:'pfd-svg-wrap'},
+        h('svg',{ref:svgRef,viewBox:'0 0 1000 540',xmlns:'http://www.w3.org/2000/svg',style:{width:'100%',height:'auto'}},
+          h('defs',null,
+            h('marker',{id:'pfd-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'},
+              h('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'#94A3B8'})),
+            h('linearGradient',{id:'pfd-grad-navy',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},h('stop',{offset:'0%',stopColor:'#1B3D6E'}),h('stop',{offset:'100%',stopColor:'#2A5199'})),
+            h('linearGradient',{id:'pfd-grad-purple',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},h('stop',{offset:'0%',stopColor:'#7C3AED'}),h('stop',{offset:'100%',stopColor:'#9F67FF'})),
+            h('linearGradient',{id:'pfd-grad-green',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},h('stop',{offset:'0%',stopColor:'#059669'}),h('stop',{offset:'100%',stopColor:'#34D399'})),
+            h('linearGradient',{id:'pfd-grad-amber',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},h('stop',{offset:'0%',stopColor:'#D97706'}),h('stop',{offset:'100%',stopColor:'#FBBF24'}))
+          ),
+          h('pattern',{id:'pfd-grid',width:40,height:40,patternUnits:'userSpaceOnUse'},
+            h('path',{d:'M 40 0 L 0 0 0 40',fill:'none',stroke:'#E5E7EB',strokeWidth:0.4})),
+          h('rect',{width:'100%',height:'100%',fill:'url(#pfd-grid)'}),
+          h('text',{x:500,y:18,textAnchor:'middle',fill:'#1B3D6E',fontSize:11,fontWeight:800,letterSpacing:1},'MAIN BOLT LINE'),
+          h('line',{x1:80,y1:22,x2:420,y2:22,stroke:'#1B3D6E22',strokeWidth:1}),
+          h('line',{x1:580,y1:22,x2:960,y2:22,stroke:'#1B3D6E22',strokeWidth:1}),
+          h('g',{opacity:0.7},renderConnections()),
+          h('polygon',{points:'195,85 200,78 205,85 200,92',className:'pfd-wip'}),
+          h('polygon',{points:'385,85 390,78 395,85 390,92',className:'pfd-wip'}),
+          h('polygon',{points:'575,95 580,88 585,95 580,102',className:'pfd-wip'}),
+          h('polygon',{points:'785,95 790,88 795,95 790,102',className:'pfd-wip'}),
+          processGroups.map(g=>renderGroupBoundary(g)),
+          h('g',{key:'grp-misc'},h('rect',{x:16,y:278,width:780,height:126,className:'pfd-group-boundary',stroke:'#D9770666'}),
+            h('text',{x:406,y:274,className:'pfd-group-label',fill:'#D9770699',textAnchor:'middle'},'MISC ROUTING')),
+          processGroups.map(g=>g.codes.map((code,i)=>{var pos=nodePositions[code];return renderNode(code,pos.x,pos.y,pos.color);})),
+          miscNodes.map(n=>{var pos=nodePositions[n.code];return renderNode(n.code,pos.x,pos.y,pos.color);}),
+          h('g',{transform:'translate(830,470)'},
+            h('text',{x:0,y:0,fontSize:8,fontWeight:700,fill:'#64748B',letterSpacing:0.5},'LEGEND'),
+            h('rect',{x:0,y:6,width:12,height:8,rx:2,fill:'#1B3D6E'}),h('text',{x:16,y:13,fontSize:7.5,fill:'#64748B'},'Bolt Line'),
+            h('rect',{x:0,y:20,width:12,height:8,rx:2,fill:'#7C3AED'}),h('text',{x:16,y:27,fontSize:7.5,fill:'#64748B'},'Presses'),
+            h('rect',{x:0,y:34,width:12,height:8,rx:2,fill:'#059669'}),h('text',{x:16,y:41,fontSize:7.5,fill:'#64748B'},'Cable Lines'),
+            h('rect',{x:0,y:48,width:12,height:8,rx:2,fill:'#D97706'}),h('text',{x:16,y:55,fontSize:7.5,fill:'#64748B'},'Misc Routing'),
+            h('line',{x1:80,y1:9,x2:100,y2:9,stroke:'#EF4444',strokeWidth:2,strokeDasharray:'4 2'}),h('text',{x:104,y:13,fontSize:7.5,fill:'#64748B'},'Bottleneck'),
+            h('polygon',{points:'86,27 90,21 94,27 90,33',fill:'#C8A951',stroke:'#B8941F',strokeWidth:0.5}),h('text',{x:104,y:27,fontSize:7.5,fill:'#64748B'},'WIP Buffer')
+          )
+        )
+      )
+    )
+  );
+}
+
 function Dashboard({dataVersion,master}){
   const {ResponsiveContainer,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,Cell,ComposedChart,Line,ReferenceLine,Area,Legend,LabelList}=Recharts;
   const [dateFrom,setDateFrom]=useState(()=>{const d=toET(new Date());d.setDate(d.getDate()-1);return fmtDate(d);});
@@ -2487,6 +2730,9 @@ function Dashboard({dataVersion,master}){
         ))
       )
     ),
+
+    // ── PROCESS FLOW DIAGRAM ──
+    hasData&&h(ProcessFlowDiagram,{records:filtered,shiftFilter,dateFrom,dateTo}),
 
     // ── ROW: OEE / Hour + OEE Trend ──
     h('div',{className:'dash-grid'},
