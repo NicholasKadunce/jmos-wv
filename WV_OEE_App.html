@@ -606,10 +606,17 @@ input[type=number]{-moz-appearance:textfield}
 .ai-input:focus{border-color:var(--jm-navy)}
 .ai-send-btn{width:38px;height:38px;border-radius:50%;background:var(--jm-navy);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:background 0.15s}
 .ai-send-btn:hover{background:#2a5199}.ai-send-btn:disabled{opacity:0.45;cursor:not-allowed}
+/* SETTINGS NAV */
+.settings-nav{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:20px}
+.settings-nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--jm-border-light);border-radius:10px;background:#fff;cursor:pointer;transition:all 0.15s;font-family:inherit;text-align:left}
+.settings-nav-item:hover{border-color:var(--jm-navy);background:var(--jm-blue-tint)}
+.settings-nav-item.active{border-color:var(--jm-navy);background:linear-gradient(135deg,rgba(27,61,110,0.06),rgba(27,61,110,0.02));box-shadow:0 2px 8px rgba(27,61,110,0.08)}
+.settings-nav-icon{font-size:20px;flex-shrink:0;line-height:1}
+.settings-nav-text{display:flex;flex-direction:column;min-width:0}
+.settings-nav-label{font-size:13px;font-weight:700;color:var(--jm-navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.settings-nav-desc{font-size:10px;color:var(--jm-text-ter);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:768px){.settings-nav{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}.settings-nav-item{padding:8px 10px;gap:6px}.settings-nav-icon{font-size:16px}.settings-nav-label{font-size:11px}.settings-nav-desc{display:none}}
 /* ADMIN */
-.admin-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--jm-border-light);padding-bottom:0}
-.admin-tab{padding:10px 16px;font-size:14px;font-weight:500;color:var(--jm-text-sec);cursor:pointer;border:none;background:transparent;border-radius:var(--radius-sm) var(--radius-sm) 0 0;transition:var(--trans);border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit}
-.admin-tab:hover{color:var(--jm-navy)}.admin-tab.active{color:var(--jm-navy);font-weight:700;border-bottom-color:var(--jm-navy)}
 .admin-table{width:100%;border-collapse:collapse;font-size:14px}
 .admin-table th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--jm-text-sec);border-bottom:2px solid var(--jm-border);background:#FAFAFA}
 .admin-table td{padding:10px 12px;border-bottom:1px solid var(--jm-border-light);vertical-align:middle}
@@ -3801,6 +3808,42 @@ function TVView({dataVersion,master}){
   );
 }
 
+// ── INLINE PASSWORD CHANGE (for Settings > Account tab) ──
+function ChangePasswordInline(){
+  const [curPw,setCurPw]=useState('');const [newPw,setNewPw]=useState('');const [confirmPw,setConfirmPw]=useState('');
+  const [error,setError]=useState('');const [success,setSuccess]=useState(false);const [saving,setSaving]=useState(false);
+  async function handleSubmit(e){
+    e.preventDefault();setError('');setSuccess(false);
+    if(newPw.length<6){setError('Password must be at least 6 characters');return;}
+    if(newPw!==confirmPw){setError('New passwords do not match');return;}
+    setSaving(true);
+    try{
+      const r=await fetch('/api/users/me/password',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({currentPassword:curPw,newPassword:newPw})});
+      const d=await r.json();
+      if(!r.ok){setError(d.error||'Failed');setSaving(false);return;}
+      setSuccess(true);setCurPw('');setNewPw('');setConfirmPw('');showToast('Password updated');
+    }catch(err){setError('Network error');}
+    setSaving(false);
+  }
+  return h('form',{onSubmit:handleSubmit,style:{maxWidth:360}},
+    h('div',{style:{marginBottom:12}},
+      h('label',{style:{display:'block',fontSize:12,fontWeight:600,color:'var(--jm-text-sec)',marginBottom:4}},'Current Password'),
+      h('input',{type:'password',className:'form-input',value:curPw,onChange:e=>setCurPw(e.target.value),style:{width:'100%',height:38,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 12px',fontSize:14,fontFamily:'inherit'}})
+    ),
+    h('div',{style:{marginBottom:12}},
+      h('label',{style:{display:'block',fontSize:12,fontWeight:600,color:'var(--jm-text-sec)',marginBottom:4}},'New Password'),
+      h('input',{type:'password',className:'form-input',value:newPw,onChange:e=>setNewPw(e.target.value),style:{width:'100%',height:38,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 12px',fontSize:14,fontFamily:'inherit'}})
+    ),
+    h('div',{style:{marginBottom:16}},
+      h('label',{style:{display:'block',fontSize:12,fontWeight:600,color:'var(--jm-text-sec)',marginBottom:4}},'Confirm New Password'),
+      h('input',{type:'password',className:'form-input',value:confirmPw,onChange:e=>setConfirmPw(e.target.value),style:{width:'100%',height:38,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 12px',fontSize:14,fontFamily:'inherit'}})
+    ),
+    error&&h('div',{style:{background:'#fef2f2',color:'#dc2626',padding:'8px 12px',borderRadius:8,fontSize:12,fontWeight:600,marginBottom:12}},error),
+    success&&h('div',{style:{background:'#f0fdf4',color:'#16a34a',padding:'8px 12px',borderRadius:8,fontSize:12,fontWeight:600,marginBottom:12}},'Password changed successfully!'),
+    h('button',{type:'submit',className:'btn btn-primary',disabled:saving||!curPw||!newPw||!confirmPw},saving?'Saving...':'Update Password')
+  );
+}
+
 // ── BDR NOTIFICATION PANEL (Japanese Executive Design) ──
 function BDRNotificationPanel({open,onClose,pending,onApprove,onDecline}){
   if(!open)return null;
@@ -3997,7 +4040,16 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   const [newProdCode,setNewProdCode]=useState('');const [newProdName,setNewProdName]=useState('');
   const [prodSearch,setProdSearch]=useState('');
   const isAdmin=authUser&&authUser.role==='admin';
-  const tabs=[{id:'personnel',label:'Data Entry Personnel'},{id:'operators',label:'Operators'},{id:'equipment',label:'Equipment'},{id:'products',label:'Products'},{id:'rates',label:'Rate Management',adminOnly:true},{id:'users',label:'Users',adminOnly:true},{id:'data',label:'Database'}].filter(t=>!t.adminOnly||isAdmin);
+  const tabs=[
+    {id:'personnel',label:'Personnel',icon:'\uD83D\uDCCB',desc:'Data entry staff'},
+    {id:'operators',label:'Operators',icon:'\uD83D\uDC77',desc:'Shop floor workers'},
+    {id:'equipment',label:'Equipment',icon:'\u2699\uFE0F',desc:'Machines & stations'},
+    {id:'products',label:'Products',icon:'\uD83D\uDCE6',desc:'Part types & rates'},
+    {id:'rates',label:'Rates',icon:'\uD83D\uDCC8',desc:'Target rate management',adminOnly:true},
+    {id:'users',label:'Users',icon:'\uD83D\uDD11',desc:'Accounts & access',adminOnly:true},
+    {id:'account',label:'Account',icon:'\uD83D\uDC64',desc:'Your password & profile'},
+    {id:'data',label:'Database',icon:'\uD83D\uDCBE',desc:'Data & reports'}
+  ].filter(t=>!t.adminOnly||isAdmin);
   // BDR state
   const [bdrPending,setBdrPending]=useState(BDR.getPending());
   const [bdrApproved,setBdrApproved]=useState(BDR.getApproved());
@@ -4077,7 +4129,13 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   function rmOp(n){onUpdate({operators:master.operators.filter(e=>e!==n)});showToast('Operator removed');}
   return h('div',{className:'card'},
     h('div',{className:'card-title'},'Settings'),h('div',{className:'card-sub'},'Manage personnel, operators, equipment, products and system configuration.'),
-    h('div',{className:'admin-tabs'},tabs.map(t=>h('button',{key:t.id,className:`admin-tab${tab===t.id?' active':''}`,onClick:()=>setTab(t.id)},t.label))),
+    h('div',{className:'settings-nav'},tabs.map(t=>h('button',{key:t.id,className:'settings-nav-item'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},
+      h('span',{className:'settings-nav-icon'},t.icon),
+      h('span',{className:'settings-nav-text'},
+        h('span',{className:'settings-nav-label'},t.label),
+        h('span',{className:'settings-nav-desc'},t.desc)
+      )
+    ))),
     (['personnel','operators','equipment','products'].includes(tab))&&h(AISettingsAssistant,{master,onUpdate}),
     tab==='personnel'&&h('div',null,
       h('p',{style:{fontSize:13,color:'var(--jm-text-sec)',marginBottom:12}},'Data entry personnel appear in the "Entered By" dropdown during Shift Setup.'),
@@ -4339,6 +4397,32 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
             ))
           )))
         )
+      )
+    ),
+
+    // ═══ ACCOUNT TAB ═══
+    tab==='account'&&h('div',{className:'admin-storage'},
+      h('div',{className:'admin-storage-section'},
+        h('div',{className:'admin-storage-title'},'Your Account'),
+        h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}},
+          h('div',{style:{background:'var(--jm-bg)',borderRadius:10,padding:'14px 16px'}},
+            h('div',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)',marginBottom:2}},'Username'),
+            h('div',{style:{fontSize:15,fontWeight:700,color:'var(--jm-navy)'}},authUser.username)
+          ),
+          h('div',{style:{background:'var(--jm-bg)',borderRadius:10,padding:'14px 16px'}},
+            h('div',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)',marginBottom:2}},'Display Name'),
+            h('div',{style:{fontSize:15,fontWeight:700,color:'var(--jm-navy)'}},authUser.displayName||'\u2014')
+          ),
+          h('div',{style:{background:'var(--jm-bg)',borderRadius:10,padding:'14px 16px'}},
+            h('div',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)',marginBottom:2}},'Role'),
+            h('div',{style:{fontSize:15,fontWeight:700,color:'var(--jm-navy)',textTransform:'capitalize'}},authUser.role)
+          )
+        )
+      ),
+      h('div',{className:'admin-storage-section'},
+        h('div',{className:'admin-storage-title'},'Change Password'),
+        h('p',{style:{fontSize:13,color:'var(--jm-text-sec)',marginBottom:14}},'Update your password. You\'ll need your current password to make a change.'),
+        h(ChangePasswordInline,null)
       )
     ),
 
@@ -4963,7 +5047,47 @@ function AppWrapper(){
       h('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'rgba(255,255,255,.5)',strokeWidth:2.5,style:{animation:'spin 1s linear infinite'}},h('path',{d:'M12 2a10 10 0 0 1 10 10',strokeLinecap:'round'}))
     ));
   if(!authUser)return h(LoginScreen,{onLogin:handleLogin});
+  if(authUser.mustChangePassword)return h(FirstPasswordScreen,{authUser,onComplete:()=>setAuthUser(u=>({...u,mustChangePassword:false}))});
   return h(App,{authUser,onLogout:handleLogout});
+}
+
+function FirstPasswordScreen({authUser,onComplete}){
+  const [newPw,setNewPw]=useState('');
+  const [confirmPw,setConfirmPw]=useState('');
+  const [error,setError]=useState('');
+  const [saving,setSaving]=useState(false);
+  async function handleSubmit(e){
+    e.preventDefault();setError('');
+    if(newPw.length<6){setError('Password must be at least 6 characters');return;}
+    if(newPw!==confirmPw){setError('Passwords do not match');return;}
+    setSaving(true);
+    try{
+      // Use a special first-password endpoint that doesn't require current password
+      const r=await fetch('/api/users/me/first-password',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newPassword:newPw})});
+      const d=await r.json();
+      if(!r.ok){setError(d.error||'Failed to set password');setSaving(false);return;}
+      showToast('Password set successfully!');onComplete();
+    }catch(err){setError('Network error');setSaving(false);}
+  }
+  return h('div',{className:'login-bg'},
+    h('form',{className:'login-card',onSubmit:handleSubmit,style:{maxWidth:400}},
+      h('img',{src:LOGO_SRC,className:'login-logo',alt:'Jennmar'}),
+      h('div',{className:'login-title',style:{fontSize:20}},'Welcome, '+(authUser.displayName||authUser.username)),
+      h('div',{className:'login-sub',style:{marginBottom:8}},'Choose Your Password'),
+      h('div',{style:{fontSize:13,color:'var(--jm-text-sec)',textAlign:'center',marginBottom:16,lineHeight:1.5}},"Since this is your first time signing in, please choose a password you'll remember. You can change it anytime in Settings."),
+      h('div',{className:'login-divider'}),
+      h('div',{className:'login-field-wrap'},
+        h('svg',{className:'login-field-icon',viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('rect',{x:3,y:11,width:18,height:11,rx:2}),h('path',{d:'M7 11V7a5 5 0 0110 0v4'})),
+        h('input',{className:'login-field',type:'password',placeholder:'New Password (min 6 characters)',value:newPw,onChange:e=>setNewPw(e.target.value),autoFocus:true})
+      ),
+      h('div',{className:'login-field-wrap'},
+        h('svg',{className:'login-field-icon',viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M20 6L9 17l-5-5'})),
+        h('input',{className:'login-field',type:'password',placeholder:'Confirm Password',value:confirmPw,onChange:e=>setConfirmPw(e.target.value)})
+      ),
+      error&&h('div',{className:'login-error'},error),
+      h('button',{className:'login-btn',type:'submit',disabled:saving||!newPw||!confirmPw},saving?'Setting password...':'Set Password & Continue')
+    )
+  );
 }
 
 // ─── SESSION PERSISTENCE (survive page refresh) ──────────────────────────────
@@ -5209,12 +5333,6 @@ function App({authUser,onLogout}){
           onClick:()=>{if(isOnline)syncPendingData(c=>setPendingCount(c)).then(n=>{if(n>0){showToast(n+' synced');setDataVersion(v=>v+1);}});},
           title:pendingCount+' pending sync',style:{marginBottom:4}},
           pendingCount+' pending'),
-        h('button',{className:'sidebar-btn',onClick:()=>setShowChangePw(true),title:'Change Password',style:{color:'rgba(255,255,255,.45)'}},
-          h('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
-            h('rect',{x:3,y:11,width:18,height:11,rx:2,ry:2}),
-            h('path',{d:'M7 11V7a5 5 0 0 1 10 0v4'})
-          )
-        ),
         h('button',{className:'sidebar-btn',onClick:onLogout,title:'Sign Out',style:{color:'rgba(255,255,255,.45)'}},
           h('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
             h('path',{d:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'}),
@@ -5243,10 +5361,7 @@ function App({authUser,onLogout}){
       ),
       // BDR Notification Panel
       h(BDRNotificationPanel,{open:showBdrPanel,onClose:()=>setShowBdrPanel(false),pending:bdrPendingGlobal,onApprove:handleBdrApprove,onDecline:handleBdrDecline}),
-      // Change Password Modal
-      showChangePw&&h('div',{style:{position:'fixed',inset:0,background:'rgba(0,0,0,.45)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'},onClick:()=>setShowChangePw(false)},
-        h(ChangePasswordModal,{onClose:()=>setShowChangePw(false)})
-      )
+      // (Change password moved to Settings > Account tab)
     )
   ));
 }

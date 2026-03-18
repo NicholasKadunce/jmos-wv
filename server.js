@@ -46,8 +46,14 @@ async function initDB() {
       password_hash VARCHAR(255) NOT NULL,
       display_name VARCHAR(100),
       role VARCHAR(20) DEFAULT 'operator',
+      must_change_password BOOLEAN DEFAULT true,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    -- Add column if table already exists
+    DO $$ BEGIN
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT true;
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END $$;
     CREATE TABLE IF NOT EXISTS submissions (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id),
@@ -172,7 +178,8 @@ function registerRoutes() {
           id: user.id,
           username: user.username,
           displayName: user.display_name,
-          role: user.role
+          role: user.role,
+          mustChangePassword: user.must_change_password === true
         }
       });
     } catch (err) {
@@ -193,7 +200,7 @@ function registerRoutes() {
     if (!req.session || !req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
     try {
       const { rows } = await pool.query(
-        'SELECT id, username, display_name, role FROM users WHERE id = $1',
+        'SELECT id, username, display_name, role, must_change_password FROM users WHERE id = $1',
         [req.session.userId]
       );
       if (rows.length === 0) return res.status(401).json({ error: 'User not found' });
@@ -202,7 +209,8 @@ function registerRoutes() {
           id: rows[0].id,
           username: rows[0].username,
           displayName: rows[0].display_name,
-          role: rows[0].role
+          role: rows[0].role,
+          mustChangePassword: rows[0].must_change_password === true
         }
       });
     } catch (err) {
@@ -381,6 +389,24 @@ function registerRoutes() {
     }
   });
 
+  // First-login password set (no current password needed, only when must_change_password is true)
+  app.put('/api/users/me/first-password', requireAuth, async (req, res) => {
+    try {
+      const { newPassword } = req.body;
+      if (!newPassword) return res.status(400).json({ error: 'New password required' });
+      if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+      const { rows } = await pool.query('SELECT must_change_password FROM users WHERE id = $1', [req.session.userId]);
+      if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+      if (!rows[0].must_change_password) return res.status(403).json({ error: 'Password already set — use regular change' });
+      const hash = await bcrypt.hash(newPassword, 10);
+      await pool.query('UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2', [hash, req.session.userId]);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('First password set error:', err);
+      res.status(500).json({ error: 'Failed to set password' });
+    }
+  });
+
   // Self-service password change (any authenticated user) — MUST be before /:id route
   app.put('/api/users/me/password', requireAuth, async (req, res) => {
     try {
@@ -392,7 +418,7 @@ function registerRoutes() {
       const valid = await bcrypt.compare(currentPassword, rows[0].password_hash);
       if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
       const hash = await bcrypt.hash(newPassword, 10);
-      await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, req.session.userId]);
+      await pool.query('UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2', [hash, req.session.userId]);
       res.json({ ok: true });
     } catch (err) {
       console.error('Self password change error:', err);
