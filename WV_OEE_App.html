@@ -4019,7 +4019,16 @@ function AISettingsAssistant({master,onUpdate}){
   const [input,setInput]=useState('');
   const [loading,setLoading]=useState(false);
   const chatRef=useRef(null);
+  const wrapRef=useRef(null);
   useEffect(()=>{if(chatRef.current)chatRef.current.scrollTop=chatRef.current.scrollHeight;},[msgs,loading]);
+  // Click-away to close
+  useEffect(function(){
+    if(!open)return;
+    function handleClick(e){if(wrapRef.current&&!wrapRef.current.contains(e.target)){closeChat();}}
+    document.addEventListener('mousedown',handleClick);
+    return function(){document.removeEventListener('mousedown',handleClick);};
+  },[open]);
+  function closeChat(){setOpen(false);setMsgs([{role:'ai',text:"Hey \u2014 just tell me what you need. A new operator, product, equipment... I\u2019ll handle the details and you just confirm.",actions:[]}]);setInput('');}
 
   async function send(){
     const q=input.trim();if(!q||loading)return;
@@ -4066,7 +4075,7 @@ function AISettingsAssistant({master,onUpdate}){
     h('path',{d:'M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z'}),
     h('path',{d:'M20 3L21 6L24 7L21 8L20 11L19 8L16 7L19 6L20 3Z',opacity:0.6})
   );
-  return h('div',{className:'ai-settings-inline'},
+  return h('div',{className:'ai-settings-inline',ref:wrapRef},
     // Collapsed bar — tap to expand
     !open&&h('div',{className:'ai-settings-inline-bar',onClick:()=>setOpen(true)},
       h('div',{className:'ai-settings-inline-icon'},aiStarIcon),
@@ -4089,7 +4098,7 @@ function AISettingsAssistant({master,onUpdate}){
           onChange:function(e){setInput(e.target.value);},
           onKeyDown:function(e){if(e.key==='Enter'){e.preventDefault();send();}}}),
         h('button',{className:'ai-settings-send',disabled:loading||!input.trim(),onClick:send},'\u2192'),
-        h('button',{className:'ai-settings-send',style:{background:'transparent',color:'var(--jm-text-sec)',fontSize:11},onClick:function(){setOpen(false);setMsgs([{role:'ai',text:"Hey \u2014 just tell me what you need. A new operator, product, equipment... I\u2019ll handle the details and you just confirm.",actions:[]}]);setInput('');}},'\u2715')
+        h('button',{className:'ai-settings-send',style:{background:'transparent',color:'var(--jm-text-sec)',fontSize:11},onClick:closeChat},'\u2715')
       )
     )
   );
