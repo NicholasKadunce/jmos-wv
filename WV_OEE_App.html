@@ -4187,26 +4187,16 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
     (['personnel','operators','equipment','products'].includes(tab))&&h(AISettingsAssistant,{master,onUpdate}),
     tab==='personnel'&&h('div',null,
       h('p',{style:{fontSize:13,color:'var(--jm-text-sec)',marginBottom:12}},'Data entry personnel appear in the "Entered By" dropdown during Shift Setup.'),
-      h('div',{className:'admin-input-row'},h('input',{placeholder:'Enter name (LAST, FIRST)',value:newSup,onChange:e=>setNewSup(e.target.value),onKeyDown:e=>{if(e.key==='Enter')addSup();}}),h('button',{className:'btn btn-primary btn-sm',onClick:addSup},'Add Personnel')),
-      master.supervisors.length===0?h('p',{style:{color:'var(--jm-text-sec)',textAlign:'center',padding:20}},'No personnel yet. Add personnel above.'):
+      master.supervisors.length===0?h('p',{style:{color:'var(--jm-text-sec)',textAlign:'center',padding:20}},'No personnel yet. Use the AI assistant to add personnel.'):
       h('table',{className:'admin-table'},h('thead',null,h('tr',null,h('th',null,'Name'),h('th',{style:{width:60}}))),h('tbody',null,master.supervisors.map(e=>h('tr',{key:e},h('td',null,e),h('td',null,h('button',{className:'btn-icon danger',onClick:()=>rmSup(e)},h(Icon.x)))))))
     ),
     tab==='operators'&&h('div',null,
       h('p',{style:{fontSize:13,color:'var(--jm-text-sec)',marginBottom:12}},'Operators are assigned to equipment each hour in the Production Data section.'),
-      h('div',{className:'admin-input-row'},h('input',{placeholder:'Enter operator name (LAST, FIRST)',value:newOp,onChange:e=>setNewOp(e.target.value),onKeyDown:e=>{if(e.key==='Enter')addOp();}}),h('button',{className:'btn btn-primary btn-sm',onClick:addOp},'Add Operator')),
-      master.operators.length===0?h('p',{style:{color:'var(--jm-text-sec)',textAlign:'center',padding:20}},'No operators yet. Add operators above.'):
+      master.operators.length===0?h('p',{style:{color:'var(--jm-text-sec)',textAlign:'center',padding:20}},'No operators yet. Use the AI assistant to add operators.'):
       h('table',{className:'admin-table'},h('thead',null,h('tr',null,h('th',null,'Name'),h('th',{style:{width:60}}))),h('tbody',null,master.operators.map(e=>h('tr',{key:e},h('td',null,e),h('td',null,h('button',{className:'btn-icon danger',onClick:()=>rmOp(e)},h(Icon.x)))))))
     ),
     tab==='equipment'&&h('div',null,
-      h('p',{style:{fontSize:13,color:'var(--jm-text-sec)',marginBottom:12}},'Manage equipment available for production data entry. Toggle active status or add new equipment.'),
-      h('div',{className:'admin-input-row',style:{flexWrap:'wrap'}},
-        h('input',{placeholder:'Equipment Code (e.g. WV-NEW-01)',value:newEquipCode,onChange:e=>setNewEquipCode(e.target.value),style:{flex:'1 1 160px',minWidth:140}}),
-        h('input',{placeholder:'Equipment Name',value:newEquipName,onChange:e=>setNewEquipName(e.target.value),style:{flex:'2 1 200px',minWidth:160}}),
-        h('select',{value:newEquipProcess,onChange:e=>setNewEquipProcess(e.target.value),style:{flex:'1 1 140px',minWidth:120,height:40,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:14,fontFamily:'inherit'}},
-          h('option',{value:''},'Select Process'),equipProcesses.map(p=>h('option',{key:p,value:p},p)),h('option',{value:'__new__'},'+ New Process')),
-        newEquipProcess==='__new__'&&h('input',{placeholder:'New process name',onChange:e=>setNewEquipProcess(e.target.value),style:{flex:'1 1 140px',minWidth:120,height:40,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 12px',fontSize:14}}),
-        h('button',{className:'btn btn-primary btn-sm',onClick:addEquipment,style:{whiteSpace:'nowrap'}},'Add Equipment')
-      ),
+      h('p',{style:{fontSize:13,color:'var(--jm-text-sec)',marginBottom:12}},'Manage equipment available for production data entry. Toggle active status or use the AI assistant to add new equipment.'),
       h('div',{style:{marginBottom:12}},h('input',{placeholder:'Search equipment...',value:equipSearch,onChange:e=>setEquipSearch(e.target.value),style:{width:'100%',maxWidth:300,height:34,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 10px',fontSize:13,fontFamily:'inherit'}})),
       h('table',{className:'admin-table'},
         h('thead',null,h('tr',null,h('th',null,'Code'),h('th',null,'Name'),h('th',null,'Process'),h('th',{style:{width:70,textAlign:'center'}},'Active'),h('th',{style:{width:50}}))),
@@ -4224,12 +4214,7 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
       )
     ),
     tab==='products'&&h('div',null,
-      h('p',{style:{fontSize:13,color:'var(--jm-text-sec)',marginBottom:12}},'Manage products available for production data entry.'),
-      h('div',{className:'admin-input-row'},
-        h('input',{placeholder:'Product Code (e.g. P-NEW-001)',value:newProdCode,onChange:e=>setNewProdCode(e.target.value),style:{flex:'1 1 160px'}}),
-        h('input',{placeholder:'Product Name / Description',value:newProdName,onChange:e=>setNewProdName(e.target.value),style:{flex:'2 1 250px'}}),
-        h('button',{className:'btn btn-primary btn-sm',onClick:addProduct,style:{whiteSpace:'nowrap'}},'Add Product')
-      ),
+      h('p',{style:{fontSize:13,color:'var(--jm-text-sec)',marginBottom:12}},'Manage products available for production data entry. Use the AI assistant to add new products.'),
       h('div',{style:{marginBottom:12}},h('input',{placeholder:'Search products...',value:prodSearch,onChange:e=>setProdSearch(e.target.value),style:{width:'100%',maxWidth:300,height:34,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 10px',fontSize:13,fontFamily:'inherit'}})),
       h('table',{className:'admin-table'},
         h('thead',null,h('tr',null,h('th',null,'Code'),h('th',null,'Name'),h('th',{style:{width:50}}))),
