@@ -567,77 +567,56 @@ input[type=number]{-moz-appearance:textfield}
 .bdr-panel-empty-text{font-size:14px;font-weight:600;color:#64748b}
 .bdr-panel-empty-sub{font-size:12px;margin-top:4px}
 /* AI ASSISTANT */
-.ai-settings-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:16px;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-radius:12px;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 12px rgba(15,23,42,0.2);border:1px solid rgba(255,255,255,0.06)}
-.ai-settings-bar:hover{box-shadow:0 4px 20px rgba(15,23,42,0.35);transform:translateY(-1px)}
-.ai-settings-bar-icon{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.9);flex-shrink:0}
-.ai-settings-bar-text{display:flex;flex-direction:column;gap:1px}
-.ai-settings-bar-title{font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.2px}
-.ai-settings-bar-sub{font-size:11px;color:rgba(255,255,255,0.55);font-weight:500}
-/* PROCESS FLOW DIAGRAM v3 — light, airy, icon-driven */
-.pfd-wrap{background:var(--jm-surface);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:16px}
-.pfd-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
-.pfd-title{font-size:14px;font-weight:700;color:var(--jm-navy);display:flex;align-items:center;gap:6px}
-.pfd-title svg{width:16px;height:16px}
-.pfd-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.pfd-svg-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--jm-border-light);border-radius:var(--radius-md);background:#FAFCFE}
-.pfd-svg-wrap svg{display:block;min-width:1000px}
-.pfd-node{cursor:pointer;transition:opacity 0.2s}
-.pfd-node:hover{opacity:0.85}
-.pfd-node text{pointer-events:none;user-select:none}
-@keyframes pfdGlow{0%,100%{box-shadow:0 0 8px rgba(220,38,38,0.2)}50%{box-shadow:0 0 18px rgba(220,38,38,0.5)}}
-@keyframes pfdGlowSvg{0%,100%{filter:drop-shadow(0 0 3px rgba(220,38,38,0.15))}50%{filter:drop-shadow(0 0 10px rgba(220,38,38,0.45))}}
-.pfd-bottleneck-box{animation:pfdGlowSvg 2.5s ease-in-out infinite}
-.pfd-node-inactive{opacity:0.3}
-.pfd-group-label{font-size:8px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;pointer-events:none}
-.pfd-group-output{font-size:8px;font-weight:700;font-variant-numeric:tabular-nums}
-.pfd-tooltip{position:absolute;z-index:50;background:#0F172A;color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.6;box-shadow:0 8px 30px rgba(0,0,0,0.25);pointer-events:none;max-width:240px;white-space:nowrap}
-.pfd-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0F172A}
-.pfd-tooltip-title{font-weight:700;font-size:13px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:4px}
-.pfd-tooltip-row{display:flex;justify-content:space-between;gap:14px;font-size:11px;color:rgba(255,255,255,0.6)}
-.pfd-tooltip-row span:last-child{color:#fff;font-weight:600}
-@keyframes pfdFlow{to{stroke-dashoffset:-16}}
-.pfd-connection{stroke-dasharray:4 4;animation:pfdFlow 2.5s linear infinite;stroke-linecap:round}
-.pfd-highlight-dim{opacity:0.1;transition:opacity 0.3s}
-.pfd-highlight-bright{opacity:1;transition:opacity 0.3s}
-.pfd-bn-select{height:28px;padding:0 24px 0 8px;font-size:11px;font-weight:600;border:1.5px solid var(--jm-border);border-radius:6px;background:var(--jm-surface);color:var(--jm-text);cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%236E6E73' stroke-width='1.2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;font-family:inherit}
-.pfd-bn-select:focus{border-color:var(--jm-navy);outline:none}
-@media(max-width:768px){.pfd-wrap{padding:14px}.pfd-header{gap:6px}.pfd-title{font-size:13px}.pfd-svg-wrap{margin:0 -14px;border-radius:0;border-left:none;border-right:none}}
-.ai-modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:12px}
-@media(max-width:768px){.ai-modal-overlay{padding:0;align-items:stretch;justify-content:stretch}}
-.ai-modal{width:420px;max-width:100%;height:600px;max-height:92vh;background:var(--jm-surface);border-radius:20px;box-shadow:0 24px 80px rgba(10,20,50,0.35);display:flex;flex-direction:column;overflow:hidden;animation:aiSlideIn 0.25s ease}
-@media(max-width:768px){.ai-modal{width:100%;height:100%;max-height:100vh;border-radius:0}}
-@keyframes aiSlideIn{from{opacity:0;transform:translateY(32px) scale(0.97)}to{opacity:1;transform:none}}
-.ai-modal-header{background:linear-gradient(135deg,var(--jm-navy) 0%,#1e4a8a 60%,#2a5199 100%);padding:18px 20px 14px;color:#fff;flex-shrink:0}
-.ai-modal-header-top{display:flex;align-items:center;justify-content:space-between}
-.ai-modal-brand{display:flex;align-items:center;gap:10px}
-.ai-modal-logo{width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
-.ai-modal-title{font-size:15px;font-weight:800;letter-spacing:-0.3px}
-.ai-modal-subtitle{font-size:10px;opacity:0.7;font-weight:500;margin-top:1px}
-.ai-modal-close{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
-.ai-modal-close:hover{background:rgba(255,255,255,0.22)}
-.ai-modal-context{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
-.ai-ctx-pill{padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);cursor:pointer;transition:background 0.15s;border:1px solid transparent}
-.ai-ctx-pill:hover,.ai-ctx-pill.active{background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.3)}
-.ai-chat-area{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#f8fafc}
-.ai-msg{display:flex;gap:8px;align-items:flex-start;max-width:100%}
-.ai-msg.user{flex-direction:row-reverse}
-.ai-msg-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;max-width:82%;word-break:break-word}
-.ai-msg.ai .ai-msg-bubble{background:#fff;color:var(--jm-navy);box-shadow:0 1px 4px rgba(0,0,0,0.08);border-radius:4px 14px 14px 14px}
-.ai-msg.user .ai-msg-bubble{background:var(--jm-navy);color:#fff;border-radius:14px 4px 14px 14px}
-.ai-msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
-.ai-msg.ai .ai-msg-avatar{background:linear-gradient(135deg,var(--jm-navy),#2a5199);color:#fff}
-.ai-msg.user .ai-msg-avatar{background:var(--jm-gold);color:var(--jm-navy)}
-.ai-action-chip{display:inline-flex;align-items:center;gap:4px;margin:3px 3px 0 0;padding:4px 10px;background:#ecf3ff;color:var(--jm-navy);border-radius:8px;font-size:11px;font-weight:700;border:1.5px solid #c7d9f8;cursor:pointer;transition:background 0.15s}
-.ai-action-chip:hover{background:#dbeafe}
-.ai-typing{display:flex;gap:4px;align-items:center;padding:10px 14px}
-.ai-typing span{width:7px;height:7px;background:#94a3b8;border-radius:50%;animation:aiDot 1.2s infinite}
+/* ── Settings AI inline chat ── */
+.ai-settings-inline{margin-bottom:16px;border-radius:14px;overflow:hidden;border:1px solid rgba(27,61,110,0.08);background:#FAFCFF}
+.ai-settings-inline-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.15s}
+.ai-settings-inline-bar:hover{background:rgba(27,61,110,0.03)}
+.ai-settings-inline-icon{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0f172a,#1e3a5f);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.ai-settings-inline-text{font-size:12px;color:var(--jm-text-sec);font-weight:500}
+.ai-settings-inline-text strong{color:var(--jm-navy);font-weight:700}
+.ai-settings-chat{max-height:300px;display:flex;flex-direction:column}
+.ai-settings-msgs{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:8px;max-height:200px}
+.ai-settings-msg{font-size:12px;line-height:1.5;padding:8px 12px;border-radius:10px;max-width:88%;word-break:break-word}
+.ai-settings-msg.ai{background:#fff;color:#1E293B;box-shadow:0 1px 3px rgba(0,0,0,0.06);align-self:flex-start;border-radius:4px 10px 10px 10px}
+.ai-settings-msg.user{background:var(--jm-navy);color:#fff;align-self:flex-end;border-radius:10px 4px 10px 10px}
+.ai-settings-input-row{display:flex;gap:6px;padding:8px 12px;border-top:1px solid rgba(0,0,0,0.04)}
+.ai-settings-input{flex:1;border:1px solid var(--jm-border);border-radius:10px;padding:7px 12px;font-size:12px;font-family:inherit;outline:none}
+.ai-settings-input:focus{border-color:var(--jm-navy)}
+.ai-settings-send{width:32px;height:32px;border-radius:50%;background:var(--jm-navy);border:none;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-settings-send:disabled{opacity:0.4;cursor:not-allowed}
+.ai-action-chip{display:inline-flex;align-items:center;gap:4px;margin:3px 3px 0 0;padding:5px 12px;background:linear-gradient(135deg,#f0f7ff,#eef2ff);color:var(--jm-navy);border-radius:8px;font-size:11px;font-weight:700;border:1.5px solid #c7d9f8;cursor:pointer;transition:all 0.15s}
+.ai-action-chip:hover{background:#dbeafe;border-color:#93b4f0;transform:translateY(-1px)}
+.ai-typing{display:flex;gap:4px;align-items:center;padding:6px 0}
+.ai-typing span{width:5px;height:5px;background:#94a3b8;border-radius:50%;animation:aiDot 1.2s infinite}
 .ai-typing span:nth-child(2){animation-delay:0.2s}.ai-typing span:nth-child(3){animation-delay:0.4s}
 @keyframes aiDot{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
-.ai-input-area{padding:12px 14px;background:#fff;border-top:1px solid var(--jm-border-light);display:flex;gap:8px;flex-shrink:0}
-.ai-input{flex:1;border:1.5px solid var(--jm-border);border-radius:12px;padding:8px 14px;font-size:13px;font-family:inherit;outline:none;resize:none;max-height:88px;min-height:38px;transition:border-color 0.15s}
-.ai-input:focus{border-color:var(--jm-navy)}
-.ai-send-btn{width:38px;height:38px;border-radius:50%;background:var(--jm-navy);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:background 0.15s}
-.ai-send-btn:hover{background:#2a5199}.ai-send-btn:disabled{opacity:0.45;cursor:not-allowed}
+/* ── AskAI morphing panel ── */
+@keyframes aiMorphIn{from{opacity:0;max-height:0;transform:scaleY(0.95)}to{opacity:1;max-height:400px;transform:scaleY(1)}}
+.ai-ask-panel{margin:0 16px 14px;margin-top:auto;padding:0;border-radius:20px;border:1px solid rgba(27,61,110,0.1);overflow:hidden;animation:aiMorphIn 0.35s ease;background:#0F172A;box-shadow:0 8px 32px rgba(15,23,42,0.18)}
+.ai-ask-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;background:transparent}
+.ai-ask-header-left{display:flex;align-items:center;gap:8px}
+.ai-ask-title{font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:0.5px}
+.ai-ask-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.4);font-size:16px;padding:2px 6px;line-height:1;border-radius:6px;transition:all .15s}
+.ai-ask-close:hover{color:#fff;background:rgba(255,255,255,0.1)}
+.ai-ask-input-row{display:flex;gap:6px;padding:0 14px 12px;align-items:center}
+.ai-ask-input{flex:1;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:9px 14px;font-size:12px;font-family:inherit;outline:none;background:rgba(255,255,255,0.06);color:#fff;transition:border-color 0.15s}
+.ai-ask-input:focus{border-color:rgba(255,255,255,0.3)}
+.ai-ask-input::placeholder{color:rgba(255,255,255,0.3)}
+.ai-ask-mic{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.4);padding:4px;border-radius:6px;display:flex;align-items:center;transition:color 0.15s}
+.ai-ask-mic:hover{color:rgba(255,255,255,0.8)}.ai-ask-mic.listening{color:#EF4444;animation:aiPulse 1.5s infinite}
+@keyframes aiPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.ai-ask-send{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.12);border:none;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s}
+.ai-ask-send:hover{background:rgba(255,255,255,0.2)}.ai-ask-send:disabled{opacity:0.3;cursor:not-allowed}
+.ai-ask-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-ask-loading{display:flex;align-items:center;padding:4px 16px 10px}
+.ai-ask-loading-dots{display:flex;gap:3px}
+.ai-ask-loading-dots span{width:5px;height:5px;background:rgba(255,255,255,0.3);border-radius:50%;animation:aiDot 1.2s infinite}
+.ai-ask-loading-dots span:nth-child(2){animation-delay:0.2s}
+.ai-ask-loading-dots span:nth-child(3){animation-delay:0.4s}
+.ai-ask-answer{padding:0 14px 14px}
+.ai-ask-answer-header{font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.ai-ask-answer-body{font-size:12px;line-height:1.6;color:rgba(255,255,255,0.85);white-space:pre-wrap}
 /* SETTINGS LAYOUT — Cloudflare-inspired sidebar + content */
 .settings-layout{display:grid;grid-template-columns:200px 1fr;gap:0;min-height:400px}
 .settings-sidebar{border-right:1px solid var(--jm-border-light);padding:4px 0;display:flex;flex-direction:column;gap:1px}
@@ -2018,424 +1997,6 @@ function AskAI({section,context,filters}){
   );
 }
 
-// ── PROCESS FLOW DIAGRAM ─────────────────────────────────────────────────────
-function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
-  const [flowShift,setFlowShift]=useState(shiftFilter||'all');
-  const [highlightGroup,setHighlightGroup]=useState('none');
-  const [bnScope,setBnScope]=useState('equipment');
-  const [hoveredNode,setHoveredNode]=useState(null);
-  const [tooltipPos,setTooltipPos]=useState({x:0,y:0});
-  const svgRef=useRef(null);
-  useEffect(()=>{setFlowShift(shiftFilter||'all');},[shiftFilter]);
-
-  var ICON_R=16,ROW_H=34;
-  var COLORS={bolt:'#1B3D6E',press:'#7C3AED',cable:'#059669',sub:'#D97706',inactive:'#D1D5DB'};
-
-  // ── SVG icon paths for each process (24x24 viewBox, pure SVG) ──
-  var PROC_ICONS={
-    // Scissors/shear blades
-    shear:function(c){return[
-      h('circle',{cx:8,cy:6,r:3,stroke:c,strokeWidth:1.5,fill:'none',key:'s1'}),
-      h('circle',{cx:8,cy:18,r:3,stroke:c,strokeWidth:1.5,fill:'none',key:'s2'}),
-      h('line',{x1:10.5,y1:7.5,x2:20,y2:17,stroke:c,strokeWidth:1.8,strokeLinecap:'round',key:'s3'}),
-      h('line',{x1:10.5,y1:16.5,x2:20,y2:7,stroke:c,strokeWidth:1.8,strokeLinecap:'round',key:'s4'})
-    ];},
-    // Curly wood shaving
-    peel:function(c){return[
-      h('path',{d:'M5 20 C5 12 10 4 18 3',stroke:c,strokeWidth:1.6,strokeLinecap:'round',fill:'none',key:'p1'}),
-      h('path',{d:'M18 3 C15 7 17 10 14 14 C12 17 14 19 13 21',stroke:c,strokeWidth:1.6,strokeLinecap:'round',fill:'none',key:'p2'}),
-      h('path',{d:'M10 10 C11 7 14 9 12 12 C11 15 13 16 12 18',stroke:c,strokeWidth:1,strokeLinecap:'round',fill:'none',opacity:0.4,key:'p3'})
-    ];},
-    // Screw with thread ridges
-    thread:function(c){return[
-      h('line',{x1:12,y1:2,x2:12,y2:22,stroke:c,strokeWidth:2.2,strokeLinecap:'round',key:'t0'}),
-      h('line',{x1:8,y1:6,x2:16,y2:6,stroke:c,strokeWidth:1.3,strokeLinecap:'round',key:'t1'}),
-      h('line',{x1:7.5,y1:9,x2:16.5,y2:9,stroke:c,strokeWidth:1.3,strokeLinecap:'round',key:'t2'}),
-      h('line',{x1:8,y1:12,x2:16,y2:12,stroke:c,strokeWidth:1.3,strokeLinecap:'round',key:'t3'}),
-      h('line',{x1:7.5,y1:15,x2:16.5,y2:15,stroke:c,strokeWidth:1.3,strokeLinecap:'round',key:'t4'}),
-      h('line',{x1:8,y1:18,x2:16,y2:18,stroke:c,strokeWidth:1.3,strokeLinecap:'round',key:'t5'})
-    ];},
-    // Bolt head being stamped
-    header:function(c){return[
-      h('rect',{x:6,y:2,width:12,height:5,rx:2,stroke:c,strokeWidth:1.4,fill:c,fillOpacity:0.12,key:'h1'}),
-      h('line',{x1:12,y1:7,x2:12,y2:22,stroke:c,strokeWidth:2.5,strokeLinecap:'round',key:'h2'}),
-      h('path',{d:'M4 3 L6.5 5.5',stroke:c,strokeWidth:1,strokeLinecap:'round',opacity:0.35,key:'h3'}),
-      h('path',{d:'M20 3 L17.5 5.5',stroke:c,strokeWidth:1,strokeLinecap:'round',opacity:0.35,key:'h4'})
-    ];},
-    // Bolt with nut + washer
-    assembly:function(c){return[
-      h('line',{x1:12,y1:2,x2:12,y2:22,stroke:c,strokeWidth:1.8,strokeLinecap:'round',key:'a1'}),
-      h('rect',{x:7,y:1,width:10,height:4,rx:1.5,stroke:c,strokeWidth:1.2,fill:c,fillOpacity:0.1,key:'a2'}),
-      h('ellipse',{cx:12,cy:11,rx:6,ry:2,stroke:c,strokeWidth:1.2,fill:c,fillOpacity:0.08,key:'a3'}),
-      h('polygon',{points:'12,15 17,17.5 17,20 12,22.5 7,20 7,17.5',stroke:c,strokeWidth:1.2,fill:c,fillOpacity:0.12,strokeLinejoin:'round',key:'a4'})
-    ];},
-    // Hydraulic press
-    press:function(c){return[
-      h('rect',{x:4,y:2,width:16,height:4,rx:1.5,stroke:c,strokeWidth:1.3,fill:c,fillOpacity:0.1,key:'pr1'}),
-      h('rect',{x:9,y:6,width:6,height:7,stroke:c,strokeWidth:1.3,fill:c,fillOpacity:0.05,key:'pr2'}),
-      h('path',{d:'M7 13 L7 16 Q7 18 9 18 L15 18 Q17 18 17 16 L17 13',stroke:c,strokeWidth:1.3,fill:'none',key:'pr3'}),
-      h('line',{x1:3,y1:21,x2:21,y2:21,stroke:c,strokeWidth:1.8,strokeLinecap:'round',key:'pr4'})
-    ];},
-    // Twisted wire cable
-    cable:function(c){return[
-      h('path',{d:'M2 12 Q7 4 12 12 Q17 20 22 12',stroke:c,strokeWidth:1.6,strokeLinecap:'round',fill:'none',key:'c1'}),
-      h('path',{d:'M2 12 Q7 20 12 12 Q17 4 22 12',stroke:c,strokeWidth:1.6,strokeLinecap:'round',fill:'none',opacity:0.45,key:'c2'}),
-      h('circle',{cx:2,cy:12,r:2,fill:c,fillOpacity:0.15,stroke:c,strokeWidth:0.8,key:'c3'}),
-      h('circle',{cx:22,cy:12,r:2,fill:c,fillOpacity:0.15,stroke:c,strokeWidth:0.8,key:'c4'})
-    ];},
-    // Circular saw
-    saw:function(c){return[
-      h('circle',{cx:12,cy:12,r:8,stroke:c,strokeWidth:1.3,fill:'none',key:'sw1'}),
-      h('circle',{cx:12,cy:12,r:2,fill:c,fillOpacity:0.25,key:'sw2'}),
-      h('line',{x1:12,y1:4,x2:12,y2:1,stroke:c,strokeWidth:1.2,strokeLinecap:'round',key:'sw3'}),
-      h('line',{x1:12,y1:20,x2:12,y2:23,stroke:c,strokeWidth:1.2,strokeLinecap:'round',key:'sw4'}),
-      h('line',{x1:4,y1:12,x2:1,y2:12,stroke:c,strokeWidth:1.2,strokeLinecap:'round',key:'sw5'}),
-      h('line',{x1:20,y1:12,x2:23,y2:12,stroke:c,strokeWidth:1.2,strokeLinecap:'round',key:'sw6'})
-    ];},
-    // Welding sparks
-    weld:function(c){return[
-      h('path',{d:'M12 3 L12 12',stroke:c,strokeWidth:1.8,strokeLinecap:'round',key:'w1'}),
-      h('circle',{cx:12,cy:14,r:3,fill:c,fillOpacity:0.15,stroke:c,strokeWidth:1,key:'w2'}),
-      h('line',{x1:8,y1:17,x2:5,y2:21,stroke:c,strokeWidth:1,strokeLinecap:'round',opacity:0.5,key:'w3'}),
-      h('line',{x1:16,y1:17,x2:19,y2:21,stroke:c,strokeWidth:1,strokeLinecap:'round',opacity:0.5,key:'w4'}),
-      h('line',{x1:12,y1:17,x2:12,y2:22,stroke:c,strokeWidth:1,strokeLinecap:'round',opacity:0.5,key:'w5'})
-    ];},
-    // Pipe with flanges
-    pipe:function(c){return[
-      h('rect',{x:5,y:8,width:14,height:8,rx:2.5,stroke:c,strokeWidth:1.3,fill:c,fillOpacity:0.06,key:'pi1'}),
-      h('line',{x1:4,y1:8,x2:4,y2:16,stroke:c,strokeWidth:1.8,strokeLinecap:'round',key:'pi2'}),
-      h('line',{x1:20,y1:8,x2:20,y2:16,stroke:c,strokeWidth:1.8,strokeLinecap:'round',key:'pi3'})
-    ];},
-    // Component blocks
-    unit:function(c){return[
-      h('rect',{x:2,y:13,width:8,height:8,rx:1.5,stroke:c,strokeWidth:1.2,fill:c,fillOpacity:0.1,key:'u1'}),
-      h('rect',{x:14,y:13,width:8,height:8,rx:1.5,stroke:c,strokeWidth:1.2,fill:c,fillOpacity:0.1,key:'u2'}),
-      h('rect',{x:8,y:2,width:8,height:8,rx:1.5,stroke:c,strokeWidth:1.2,fill:c,fillOpacity:0.15,key:'u3'}),
-      h('line',{x1:12,y1:10,x2:6,y2:13,stroke:c,strokeWidth:0.7,opacity:0.3,key:'u4'}),
-      h('line',{x1:12,y1:10,x2:18,y2:13,stroke:c,strokeWidth:0.7,opacity:0.3,key:'u5'})
-    ];},
-    // Chain links
-    tie:function(c){return[
-      h('ellipse',{cx:8,cy:12,r:5,ry:4,stroke:c,strokeWidth:1.4,fill:'none',key:'tl1'}),
-      h('ellipse',{cx:16,cy:12,r:5,ry:4,stroke:c,strokeWidth:1.4,fill:'none',key:'tl2'})
-    ];},
-    // Lathe/threader
-    landis:function(c){return[
-      h('rect',{x:3,y:7,width:18,height:5,rx:2,stroke:c,strokeWidth:1.3,fill:c,fillOpacity:0.08,key:'l1'}),
-      h('line',{x1:7,y1:12,x2:7,y2:19,stroke:c,strokeWidth:1.2,strokeLinecap:'round',key:'l2'}),
-      h('line',{x1:17,y1:12,x2:17,y2:19,stroke:c,strokeWidth:1.2,strokeLinecap:'round',key:'l3'}),
-      h('line',{x1:4,y1:19,x2:20,y2:19,stroke:c,strokeWidth:1.5,strokeLinecap:'round',key:'l4'})
-    ];}
-  };
-
-  function iconFor(code){
-    if(code.includes('SHEAR'))return 'shear';if(code.includes('PEEL')||code.includes('SWAG'))return 'peel';
-    if(code.includes('THREAD')&&!code.includes('LANDIS'))return 'thread';if(code.includes('HEAD'))return 'header';
-    if(code.includes('ASSY'))return 'assembly';if(code.includes('PRESS'))return 'press';
-    if(code.includes('CABLE'))return 'cable';if(code.includes('BIGSAW'))return 'saw';
-    if(code.includes('OFFWELD'))return 'weld';if(code.includes('PIPE'))return 'pipe';
-    if(code.includes('UNITS'))return 'unit';if(code.includes('TIE'))return 'tie';
-    if(code.includes('LANDIS'))return 'landis';return 'assembly';
-  }
-
-  // ── Layout — generous spacing, Japanese-inspired clean aesthetic ──
-  var BOLT_Y=120,NODE_W=140;
-  var boltGroups=[
-    {id:'shears',label:'Shears',color:COLORS.bolt,x:20,codes:['WV-SHEAR-AS1','WV-SHEAR-AS2']},
-    {id:'peelers',label:'Peeling',color:COLORS.bolt,x:185,codes:['WV-PEEL-MAN','WV-PEEL-AUTO','WV-PEEL-SWAG']},
-    {id:'threaders',label:'Threading',color:COLORS.bolt,x:350,codes:['WV-THREAD-T1','WV-THREAD-T2','WV-THREAD-AT']},
-    {id:'headers',label:'Heading',color:COLORS.bolt,x:520,codes:['WV-HEAD-H1','WV-HEAD-H2','WV-HEAD-H3','WV-HEAD-AUTO']},
-    {id:'assembly',label:'Assembly',color:COLORS.bolt,x:700,codes:['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4']}
-  ];
-  var pressX=30,pressY=265;
-  var pressCodes=['WV-PRESS-400','WV-PRESS-500A','WV-PRESS-500B'];
-  // Unit Assembly — positioned closer to Assembly group
-  var unitCode='WV-MISC-UNITS',unitX=620,unitY=265;
-  // Cable Line Subassemblies
-  var subCodes=[
-    {code:'WV-MISC-BIGSAW',label:'Big Saw'},
-    {code:'WV-MISC-OFFWELD',label:'Off. Welding'},
-    {code:'WV-MISC-PIPEASSY',label:'Pipe Assembly'},
-    {code:'WV-MISC-LANDISASSM',label:'Landis Threader'},
-    {code:'WV-MISC-TIELINE',label:'Tie Line'}
-  ];
-  var subX=30,subY=380;
-  // Cable Lines — right of subassemblies
-  var cableX=380,cableY=380;
-  var cableCodes=['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C3','WV-CABLE-C4'];
-
-  // Node positions
-  var nodePositions=useMemo(function(){
-    var map={};
-    boltGroups.forEach(function(g){
-      var totalH=g.codes.length*ROW_H;var startY=BOLT_Y-totalH/2;
-      g.codes.forEach(function(c,i){map[c]={x:g.x,y:startY+i*ROW_H,color:g.color,group:g.id,process:g.label};});
-    });
-    pressCodes.forEach(function(c,i){map[c]={x:pressX,y:pressY+i*ROW_H,color:COLORS.press,group:'presses',process:'Plate Presses'};});
-    map[unitCode]={x:unitX,y:unitY,color:COLORS.sub,group:'unit',process:'Unit Assembly'};
-    subCodes.forEach(function(sc,i){map[sc.code]={x:subX,y:subY+i*ROW_H,color:COLORS.sub,group:'subassembly',process:'Cable Line Subassemblies'};});
-    cableCodes.forEach(function(c,i){map[c]={x:cableX,y:cableY+i*ROW_H,color:COLORS.cable,group:'cables',process:'Cable Lines'};});
-    return map;
-  },[]);
-
-  // Data aggregation
-  var flowData=useMemo(function(){
-    var fr=(records||[]).filter(function(r){
-      if(r.date<dateFrom||r.date>dateTo)return false;
-      if(flowShift!=='all'&&r.shiftNum!==flowShift)return false;
-      return true;
-    });
-    var map={};
-    fr.forEach(function(r){
-      if(!map[r.equipCode])map[r.equipCode]={totalOutput:0,operators:new Set(),products:new Set(),sm:0,dtm:0,tgt:0,good:0,def:0};
-      var e=map[r.equipCode];
-      e.totalOutput+=parseInt(r.goodUnits)||0;e.good+=parseInt(r.goodUnits)||0;
-      var avail=60-(parseInt(r.scheduledMins)||0);e.sm+=avail;
-      e.dtm+=totalDTMins(r.downtime||[]);e.tgt+=parseInt(r.target)||0;
-      e.def+=(r.defects||[]).reduce(function(s,d){return s+parseInt(d.qty||0);},0);
-      (r.operators||[]).forEach(function(op){if(op)e.operators.add(op);});
-      if(r.productCode)e.products.add(r.productCode);
-    });
-    Object.keys(map).forEach(function(k){
-      var e=map[k],run=e.sm-e.dtm,tp=e.good+e.def;
-      var a=e.sm>0?(run/e.sm):0,p=run>0&&e.tgt>0?((tp*e.sm)/(run*e.tgt)):0,q=tp>0?(e.good/tp):1;
-      e.oee=a*p*q*100;e.availability=a*100;e.performance=p*100;e.quality=q*100;
-    });
-    return map;
-  },[records,dateFrom,dateTo,flowShift]);
-
-  function groupOutput(gId){
-    var g=boltGroups.find(function(pg){return pg.id===gId;});
-    if(!g)return 0;
-    return g.codes.reduce(function(s,c){var d=flowData[c];return s+(d?d.totalOutput:0);},0);
-  }
-  function groupOutputCodes(codes){
-    return codes.reduce(function(s,c){var d=flowData[c];return s+(d?d.totalOutput:0);},0);
-  }
-
-  // Bottleneck — returns set of codes AND the group IDs for process-level
-  var bottleneckCodes=useMemo(function(){
-    var result=new Set();
-    function findMin(codes){
-      var min=Infinity,minC=null;
-      codes.forEach(function(c){var d=flowData[c];if(d&&d.totalOutput>0&&d.totalOutput<min){min=d.totalOutput;minC=c;}});
-      if(minC)result.add(minC);
-    }
-    if(bnScope==='equipment'){findMin(boltGroups.flatMap(function(g){return g.codes;}));}
-    else if(bnScope==='process'){
-      var worstG=null,worstOut=Infinity;
-      boltGroups.forEach(function(g){var out=groupOutput(g.id);if(out>0&&out<worstOut){worstOut=out;worstG=g.id;}});
-      if(worstG){var wg=boltGroups.find(function(pg){return pg.id===worstG;});if(wg)wg.codes.forEach(function(c){result.add(c);});}
-    } else if(bnScope==='cable'){findMin(cableCodes);}
-    else if(bnScope==='subassembly'){findMin(subCodes.map(function(s){return s.code;}).concat([unitCode]));}
-    return result;
-  },[flowData,bnScope]);
-
-  // Which GROUP is bottlenecked (for process-level red box)
-  var bottleneckGroupId=useMemo(function(){
-    if(bnScope!=='process')return null;
-    var worstG=null,worstOut=Infinity;
-    boltGroups.forEach(function(g){var out=groupOutput(g.id);if(out>0&&out<worstOut){worstOut=out;worstG=g.id;}});
-    return worstG;
-  },[flowData,bnScope]);
-
-  function handleNodeHover(code,evt){
-    if(!code){setHoveredNode(null);return;}
-    setHoveredNode(code);
-    if(svgRef.current&&evt){var rect=svgRef.current.getBoundingClientRect();setTooltipPos({x:evt.clientX-rect.left,y:evt.clientY-rect.top-10});}
-  }
-  function nodeOpacity(code){
-    if(highlightGroup==='none')return '';
-    var pos=nodePositions[code];if(!pos)return 'pfd-highlight-dim';
-    if(pos.process===highlightGroup)return 'pfd-highlight-bright';
-    return 'pfd-highlight-dim';
-  }
-  function oeeColor(val){return val>=80?'#059669':val>=60?'#D97706':'#DC2626';}
-
-  // ── Render equipment node: rounded card with icon, name, output ──
-  function renderEquip(code,x,y,color){
-    var d=flowData[code]||{totalOutput:0,operators:new Set(),products:new Set(),oee:0};
-    var name=getEquipName(code);var short=name.length>15?name.substring(0,13)+'..':name;
-    var prods=[...(d.products||[])];
-    var prodName=prods.length>0?getProductName(prods[0]):'';
-    var prodShort=prodName.length>16?prodName.substring(0,14)+'..':prodName;
-    var isActive=d.totalOutput>0;var isBN=bottleneckCodes.has(code)&&bnScope==='equipment';var hCls=nodeOpacity(code);
-    var cls='pfd-node'+(hCls?' '+hCls:'')+(isActive?'':' pfd-node-inactive');
-    var fillCol=isActive?color:COLORS.inactive;
-    var iType=iconFor(code);
-    var iconFn=PROC_ICONS[iType]||PROC_ICONS.assembly;
-    var iconColor=isActive?color:'#B0B5BD';
-    // Icon circle size
-    var ir=ICON_R,is=ir*2*0.55; // icon scaled to fit inside circle
-    return h('g',{key:code,className:cls,transform:'translate('+x+','+y+')',
-      onMouseEnter:function(e){handleNodeHover(code,e);},onMouseLeave:function(){handleNodeHover(null);}},
-      // Equipment bottleneck: red rounded box
-      isBN?h('rect',{x:-5,y:-4,width:NODE_W+10,height:ROW_H,rx:8,ry:8,fill:'#DC262606',stroke:'#DC2626',strokeWidth:1.8,className:'pfd-bottleneck-box'}):null,
-      // Soft circle background
-      h('circle',{cx:ir,cy:ir,r:ir,fill:isActive?color+'18':'#F1F5F9',stroke:isActive?color+'40':'#E2E8F0',strokeWidth:1}),
-      // Icon — pure SVG, scaled and centered inside the circle
-      h('g',{transform:'translate('+(ir-is)+','+(ir-is)+') scale('+(is*2/24)+')','opacity':isActive?1:0.3},
-        iconFn(iconColor)
-      ),
-      h('text',{x:ir*2+8,y:isActive?ir-4:ir,fill:isActive?'#1E293B':'#B0B5BD',fontSize:9,fontWeight:700,dominantBaseline:'middle'},short),
-      isActive&&prodShort?h('text',{x:ir*2+8,y:ir+6,fill:'#94A3B8',fontSize:6.5,dominantBaseline:'middle',fontStyle:'italic'},prodShort):null,
-      isActive?h('text',{x:NODE_W,y:ir,fill:color,fontSize:10,fontWeight:800,textAnchor:'end',dominantBaseline:'middle',fontVariantNumeric:'tabular-nums'},d.totalOutput.toLocaleString()):null
-    );
-  }
-
-  // ── Render vertical group with output total below header ──
-  function renderVertGroup(label,codes,x,startY,color,groupKey){
-    var out=groupOutputCodes(codes);
-    var isBNGroup=bottleneckGroupId===groupKey&&bnScope==='process';
-    return h('g',{key:'grp-'+(groupKey||label)},
-      // Process-level bottleneck: red fitted rounded box around entire group area
-      isBNGroup?h('rect',{x:x-8,y:startY-28,width:NODE_W+16,height:codes.length*ROW_H+36,rx:10,ry:10,fill:'#DC262606',stroke:'#DC2626',strokeWidth:1.8,className:'pfd-bottleneck-box'}):null,
-      h('text',{x:x+NODE_W/2,y:startY-16,className:'pfd-group-label',fill:color,textAnchor:'middle',opacity:0.7},label.toUpperCase()),
-      out>0?h('text',{x:x+NODE_W/2,y:startY-6,className:'pfd-group-output',fill:color,textAnchor:'middle',opacity:0.55},out.toLocaleString()+' pcs'):null,
-      codes.map(function(code,i){return renderEquip(code,x,startY+i*ROW_H,color);})
-    );
-  }
-
-  // ── Clean directional arrow with solid styling ──
-  function flowArrow(x1,y1,x2,y2,color,key,dashed,bendR){
-    var r=bendR||8;var col=color||'#94A3B8';var sw=dashed?1:1.5;
-    var da=dashed?'5 4':'none';
-    var d;
-    if(Math.abs(y1-y2)<2){
-      d='M'+x1+' '+y1+'L'+x2+' '+y2;
-    } else if(Math.abs(x1-x2)<2){
-      d='M'+x1+' '+y1+'L'+x2+' '+y2;
-    } else {
-      var mx=x2,my=y1;
-      if(y2>y1){d='M'+x1+' '+y1+'L'+(mx-r)+' '+my+'Q'+mx+' '+my+' '+mx+' '+(my+r)+'L'+x2+' '+y2;}
-      else{d='M'+x1+' '+y1+'L'+(mx-r)+' '+my+'Q'+mx+' '+my+' '+mx+' '+(my-r)+'L'+x2+' '+y2;}
-    }
-    return h('path',{key:key,d:d,fill:'none',stroke:col,strokeWidth:sw,strokeDasharray:da,markerEnd:'url(#pfd-arrow)'});
-  }
-
-  // ── WIP inverted triangle — clean, soft, no text ──
-  function renderWip(fromGroupId,x,y,key){
-    var s=6;
-    return h('g',{key:key},
-      h('polygon',{points:(x-s)+','+(y-s)+' '+(x+s)+','+(y-s)+' '+x+','+(y+s-1),
-        fill:'#E0E7FF',stroke:'#818CF8',strokeWidth:0.8,strokeLinejoin:'round',opacity:0.7})
-    );
-  }
-
-  // Tooltip
-  function renderTooltip(){
-    if(!hoveredNode)return null;
-    var d=flowData[hoveredNode]||{totalOutput:0,operators:new Set(),products:new Set(),oee:0,availability:0,performance:0,quality:0};
-    var name=getEquipName(hoveredNode);var ops=[...(d.operators||[])];var prods=[...(d.products||[])];
-    return h('div',{className:'pfd-tooltip',style:{left:tooltipPos.x-80,top:tooltipPos.y-150}},
-      h('div',{className:'pfd-tooltip-title'},name),
-      h('div',{className:'pfd-tooltip-row'},h('span',null,'Output:'),h('span',null,(d.totalOutput||0).toLocaleString()+' pcs')),
-      h('div',{className:'pfd-tooltip-row'},h('span',null,'OEE:'),h('span',{style:{color:oeeColor(d.oee||0)}},(d.oee||0).toFixed(1)+'%')),
-      h('div',{className:'pfd-tooltip-row'},h('span',null,'A / P / Q:'),h('span',null,(d.availability||0).toFixed(0)+' / '+(d.performance||0).toFixed(0)+' / '+(d.quality||0).toFixed(0)+'%')),
-      h('div',{className:'pfd-tooltip-row'},h('span',null,'Operators:'),h('span',null,ops.length>0?ops.slice(0,3).join(', '):'—')),
-      prods.length>0?h('div',{className:'pfd-tooltip-row'},h('span',null,'Product:'),h('span',null,prods.slice(0,2).map(function(p){var n=getProductName(p);return n.length>18?n.substring(0,16)+'..':n;}).join(', '))):null
-    );
-  }
-
-  var flowIcon=h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M4 6h4m-4 6h4m-4 6h4m4-12h8m-8 6h8m-8 6h8',strokeLinecap:'round'}));
-  var highlightOptions=['none','Shears','Peeling','Threading','Heading','Assembly','Plate Presses','Cable Lines','Cable Line Subassemblies','Unit Assembly'];
-
-  // WIP positions between bolt groups
-  var wipPositions=[];
-  for(var wi=0;wi<boltGroups.length-1;wi++){
-    wipPositions.push({x:(boltGroups[wi].x+NODE_W+boltGroups[wi+1].x)/2,y:BOLT_Y,fromId:boltGroups[wi].id});
-  }
-
-  // Assembly A3 and A4 positions for unit assembly arrows
-  var a3Pos=nodePositions['WV-ASSY-A3']||{x:660,y:BOLT_Y+ROW_H};
-  var a4Pos=nodePositions['WV-ASSY-A4']||{x:660,y:BOLT_Y+ROW_H*1.5};
-
-  return h('div',{className:'pfd-wrap'},
-    h('div',{className:'pfd-header'},
-      h('div',{className:'pfd-title'},flowIcon,' Process Flow'),
-      h('div',{className:'pfd-controls'},
-        h('div',{className:'dash-shift-toggle'},
-          h('button',{className:'dash-shift-btn'+(flowShift==='all'?' active':''),onClick:function(){setFlowShift('all');}},'All'),
-          h('button',{className:'dash-shift-btn'+(flowShift==='1'?' active':''),onClick:function(){setFlowShift('1');}},'Shift 1'),
-          h('button',{className:'dash-shift-btn'+(flowShift==='2'?' active':''),onClick:function(){setFlowShift('2');}},'Shift 2')
-        ),
-        h('select',{className:'pfd-bn-select',value:bnScope,onChange:function(e){setBnScope(e.target.value);}},
-          h('option',{value:'equipment'},'Bottleneck: Equipment'),
-          h('option',{value:'process'},'Bottleneck: Process'),
-          h('option',{value:'cable'},'Bottleneck: Cable Lines'),
-          h('option',{value:'subassembly'},'Bottleneck: Subassemblies')
-        ),
-        h('select',{className:'dash-filter-select',value:highlightGroup,onChange:function(e){setHighlightGroup(e.target.value);}},
-          h('option',{value:'none'},'No Highlight'),
-          highlightOptions.slice(1).map(function(o){return h('option',{key:o,value:o},o);}))
-      )
-    ),
-    h('div',{style:{position:'relative'}},
-      renderTooltip(),
-      h('div',{className:'pfd-svg-wrap'},
-        h('svg',{ref:svgRef,viewBox:'0 0 1000 560',xmlns:'http://www.w3.org/2000/svg',style:{width:'100%',height:'auto'}},
-          h('defs',null,
-            h('marker',{id:'pfd-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'},
-              h('path',{d:'M 0 1 L 8 5 L 0 9 z',fill:'#94A3B8'})),
-            h('filter',{id:'pfd-soft-shadow'},h('feDropShadow',{dx:0,dy:1,stdDeviation:2,floodOpacity:0.06}))
-          ),
-          h('pattern',{id:'pfd-dots',width:24,height:24,patternUnits:'userSpaceOnUse'},
-            h('circle',{cx:12,cy:12,r:0.4,fill:'#CBD5E1',opacity:0.25})),
-          h('rect',{width:'100%',height:'100%',fill:'url(#pfd-dots)'}),
-
-          // ── MAIN BOLT LINE ──
-          h('text',{x:420,y:16,textAnchor:'middle',fill:'#1B3D6E',fontSize:9,fontWeight:800,letterSpacing:2,opacity:0.18},'MAIN BOLT LINE'),
-
-          // Bolt line horizontal arrows between groups (solid, firm)
-          boltGroups.slice(0,-1).map(function(g,i){
-            var nx=boltGroups[i+1].x;
-            return flowArrow(g.x+NODE_W+4,BOLT_Y,nx-4,BOLT_Y,'#94A3B8','bconn'+i);
-          }),
-          // WIP triangles between bolt groups
-          wipPositions.map(function(wp,i){return renderWip(wp.fromId,wp.x,wp.y,'wip'+i);}),
-          // Bolt line groups with output totals
-          boltGroups.map(function(g){
-            var totalH=g.codes.length*ROW_H;var startY=BOLT_Y-totalH/2;
-            return renderVertGroup(g.label,g.codes,g.x,startY,g.color,g.id);
-          }),
-
-          // ── PLATE PRESSES ──
-          renderVertGroup('Plate Presses',pressCodes,pressX,pressY,COLORS.press,'presses'),
-
-          // ── UNIT ASSEMBLY ── positioned near Assembly group
-          h('g',{key:'unit-grp'},
-            h('text',{x:unitX+NODE_W/2,y:unitY-18,className:'pfd-group-label',fill:COLORS.sub,textAnchor:'middle',opacity:0.7},'UNIT ASSEMBLY'),
-            renderEquip(unitCode,unitX,unitY,COLORS.sub),
-            // Clean dashed arrows up to A3 and A4
-            flowArrow(unitX+NODE_W/2,unitY-2,a3Pos.x,a3Pos.y+ICON_R,'#D97706','unit-a3',true,12),
-            flowArrow(unitX+NODE_W/2+20,unitY-2,a4Pos.x,a4Pos.y+ICON_R,'#D97706','unit-a4',true,12),
-            h('text',{x:unitX+NODE_W/2,y:unitY-8,fill:'#D97706',fontSize:7,fontWeight:700,opacity:0.3,textAnchor:'middle',letterSpacing:0.5},'FEEDS A3 + A4')
-          ),
-
-          // ── CABLE LINE SUBASSEMBLIES ──
-          renderVertGroup('Cable Line Subassemblies',subCodes.map(function(s){return s.code;}),subX,subY,COLORS.sub,'subs'),
-
-          // ── CABLE LINES ──
-          renderVertGroup('Cable Lines',cableCodes,cableX,cableY,COLORS.cable,'cables'),
-
-          // Subassembly → Cable Line connections (clean routed, no crossing)
-          // Big Saw → C4, Off. Welding → C2, Pipe Assy → C3, Landis → C1
-          flowArrow(subX+NODE_W+6,subY+ICON_R,cableX-6,cableY+3*ROW_H+ICON_R,'#B4A0D9','s2c-saw-c4',true,12),
-          flowArrow(subX+NODE_W+6,subY+ROW_H+ICON_R,cableX-6,cableY+ROW_H+ICON_R,'#B4A0D9','s2c-weld-c2',true,12),
-          flowArrow(subX+NODE_W+6,subY+ROW_H*2+ICON_R,cableX-6,cableY+ROW_H*2+ICON_R,'#B4A0D9','s2c-pipe-c3',true,12),
-          flowArrow(subX+NODE_W+6,subY+ROW_H*3+ICON_R,cableX-6,cableY+ICON_R,'#B4A0D9','s2c-landis-c1',true,12),
-
-          // ── LEGEND — WIP Material only ──
-          h('g',{transform:'translate(870,510)'},
-            h('polygon',{points:'0,4 8,4 4,12',fill:'#E0E7FF',stroke:'#818CF8',strokeWidth:0.7,strokeLinejoin:'round'}),
-            h('text',{x:13,y:10,fontSize:7.5,fill:'#64748B',fontWeight:600},'WIP Material')
-          )
-        )
-      )
-    )
-  );
-}
-
 function Dashboard({dataVersion,master}){
   const {ResponsiveContainer,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,Cell,ComposedChart,Line,ReferenceLine,Area,Legend,LabelList}=Recharts;
   const [dateFrom,setDateFrom]=useState(()=>{const d=toET(new Date());d.setDate(d.getDate()-1);return fmtDate(d);});
@@ -2935,9 +2496,6 @@ function Dashboard({dataVersion,master}){
         ))
       )
     ),
-
-    // ── PROCESS FLOW DIAGRAM ──
-    hasData&&h(ProcessFlowDiagram,{records:filtered,shiftFilter,dateFrom,dateTo}),
 
     // ── ROW: OEE / Hour + OEE Trend ──
     h('div',{className:'dash-grid'},
@@ -4457,7 +4015,7 @@ function BDRNotificationPanel({open,onClose,pending,onApprove,onDecline}){
 // ── AI SETTINGS ASSISTANT ──
 function AISettingsAssistant({master,onUpdate}){
   const [open,setOpen]=useState(false);
-  const [msgs,setMsgs]=useState([{role:'ai',text:"What would you like to add or update?",actions:[]}]);
+  const [msgs,setMsgs]=useState([{role:'ai',text:"Hey \u2014 just tell me what you need. A new operator, product, equipment... I\u2019ll handle the details and you just confirm.",actions:[]}]);
   const [input,setInput]=useState('');
   const [loading,setLoading]=useState(false);
   const chatRef=useRef(null);
@@ -4505,61 +4063,30 @@ function AISettingsAssistant({master,onUpdate}){
     h('path',{d:'M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z'}),
     h('path',{d:'M20 3L21 6L24 7L21 8L20 11L19 8L16 7L19 6L20 3Z',opacity:0.6})
   );
-  return h(React.Fragment,null,
-    // Inline AI bar at top of settings content
-    h('div',{className:'ai-settings-bar',onClick:()=>setOpen(true)},
-      h('div',{className:'ai-settings-bar-icon'},aiStarIcon),
-      h('div',{className:'ai-settings-bar-text'},
-        h('span',{className:'ai-settings-bar-title'},'AI Assistant'),
-        h('span',{className:'ai-settings-bar-sub'},'Tap to add, edit, or remove entries')
-      )
+  return h('div',{className:'ai-settings-inline'},
+    // Collapsed bar — tap to expand
+    !open&&h('div',{className:'ai-settings-inline-bar',onClick:()=>setOpen(true)},
+      h('div',{className:'ai-settings-inline-icon'},aiStarIcon),
+      h('div',{className:'ai-settings-inline-text'},h('strong',null,'Assistant'),' \u2014 tell me what to add or change')
     ),
-    // Modal
-    open&&h('div',{className:'ai-modal-overlay',onClick:e=>{if(e.target===e.currentTarget)setOpen(false);}},
-      h('div',{className:'ai-modal'},
-        // Header
-        h('div',{className:'ai-modal-header'},
-          h('div',{className:'ai-modal-header-top'},
-            h('div',{className:'ai-modal-brand'},
-              h('div',{className:'ai-modal-logo'},
-                h('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'currentColor',stroke:'none'},
-                  h('path',{d:'M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z'}),
-                  h('path',{d:'M20 3L21 6L24 7L21 8L20 11L19 8L16 7L19 6L20 3Z',opacity:0.6})
-                )
-              ),
-              h('div',null,
-                h('div',{className:'ai-modal-title'},'Settings Assistant'),
-                h('div',{className:'ai-modal-subtitle'},'JMOS Configuration')
-              )
-            ),
-            h('button',{className:'ai-modal-close',onClick:()=>setOpen(false)},'\u00D7')
+    // Expanded inline chat
+    open&&h('div',{className:'ai-settings-chat'},
+      h('div',{className:'ai-settings-msgs',ref:chatRef},
+        msgs.map(function(msg,i){return h('div',{key:i},
+          h('div',{className:'ai-settings-msg '+(msg.role==='user'?'user':'ai')},msg.text),
+          (msg.actions||[]).length>0&&h('div',{style:{padding:'2px 0 4px',display:'flex',flexWrap:'wrap',gap:4}},
+            (msg.actions||[]).map(function(a,ai){return h('button',{key:ai,className:'ai-action-chip',style:a.applied?{opacity:0.5,cursor:'default'}:{},onClick:function(){if(!a.applied)applyAction(a);}},
+              a.applied?'\u2713 Done':('+ '+(a.name||'')));})
           )
-        ),
-        // Chat area
-        h('div',{className:'ai-chat-area',ref:chatRef},
-          msgs.map((msg,i)=>h('div',{key:i,className:'ai-msg '+(msg.role==='user'?'user':'ai')},
-            h('div',{className:'ai-msg-avatar'},msg.role==='user'?h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5},h('circle',{cx:12,cy:8,r:4}),h('path',{d:'M5 20c0-4 3.5-6 7-6s7 2 7 6'})):h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M12 2L2 7l10 5 10-5-10-5z'}),h('path',{d:'M2 17l10 5 10-5'}),h('path',{d:'M2 12l10 5 10-5'}))),
-            h('div',null,
-              h('div',{className:'ai-msg-bubble'},msg.text),
-              (msg.actions||[]).length>0&&h('div',{style:{marginTop:6}},
-                (msg.actions||[]).map((a,ai)=>h('button',{key:ai,className:'ai-action-chip',style:a.applied?{opacity:0.5,cursor:'default'}:{},onClick:()=>{if(!a.applied)applyAction(a);}},
-                  a.applied?'\u2713 Applied':('\u2795 '+(a.type==='add_personnel'?'Add Personnel':a.type==='add_operator'?'Add Operator':a.type==='add_equipment'?'Add Equipment':'Add Product')+': '+(a.name||''))
-                ))
-              )
-            )
-          )),
-          loading&&h('div',{className:'ai-msg ai'},
-            h('div',{className:'ai-msg-avatar'},h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M12 2L2 7l10 5 10-5-10-5z'}),h('path',{d:'M2 17l10 5 10-5'}),h('path',{d:'M2 12l10 5 10-5'}))),
-            h('div',{className:'ai-msg-bubble'},h('div',{className:'ai-typing'},h('span'),h('span'),h('span')))
-          )
-        ),
-        // Input area
-        h('div',{className:'ai-input-area'},
-          h('textarea',{className:'ai-input',placeholder:'Tell me what to add or change...',value:input,rows:1,
-            onChange:e=>setInput(e.target.value),
-            onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}),
-          h('button',{className:'ai-send-btn',disabled:loading||!input.trim(),onClick:send},'\u2192')
-        )
+        );})
+        ,loading&&h('div',{className:'ai-settings-msg ai'},h('div',{className:'ai-typing'},h('span'),h('span'),h('span')))
+      ),
+      h('div',{className:'ai-settings-input-row'},
+        h('input',{className:'ai-settings-input',placeholder:'e.g. "Add John Smith as an operator"',value:input,
+          onChange:function(e){setInput(e.target.value);},
+          onKeyDown:function(e){if(e.key==='Enter'){e.preventDefault();send();}}}),
+        h('button',{className:'ai-settings-send',disabled:loading||!input.trim(),onClick:send},'\u2192'),
+        h('button',{className:'ai-settings-send',style:{background:'transparent',color:'var(--jm-text-sec)',fontSize:11},onClick:function(){setOpen(false);}},'\u2715')
       )
     )
   );
