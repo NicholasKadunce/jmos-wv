@@ -573,33 +573,32 @@ input[type=number]{-moz-appearance:textfield}
 .ai-settings-bar-text{display:flex;flex-direction:column;gap:1px}
 .ai-settings-bar-title{font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.2px}
 .ai-settings-bar-sub{font-size:11px;color:rgba(255,255,255,0.55);font-weight:500}
-/* PROCESS FLOW DIAGRAM */
+/* PROCESS FLOW DIAGRAM v3 — light, airy, icon-driven */
 .pfd-wrap{background:var(--jm-surface);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:16px}
 .pfd-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
 .pfd-title{font-size:14px;font-weight:700;color:var(--jm-navy);display:flex;align-items:center;gap:6px}
 .pfd-title svg{width:16px;height:16px}
 .pfd-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.pfd-svg-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--jm-border);border-radius:var(--radius-sm);background:#FAFCFE}
-.pfd-svg-wrap svg{display:block;min-width:900px}
-.pfd-node rect{transition:all 0.2s ease;cursor:pointer}
-.pfd-node:hover rect{filter:brightness(1.08);stroke-width:2}
+.pfd-svg-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--jm-border-light);border-radius:var(--radius-md);background:#FAFCFE}
+.pfd-svg-wrap svg{display:block;min-width:960px}
+.pfd-node{cursor:pointer;transition:opacity 0.2s}
+.pfd-node:hover{opacity:0.85}
 .pfd-node text{pointer-events:none;user-select:none}
-@keyframes pfdPulse{0%,100%{stroke-opacity:1;stroke-width:2.5}50%{stroke-opacity:0.4;stroke-width:1.5}}
-.pfd-rate-limit{animation:pfdPulse 1.8s ease-in-out infinite;stroke:#EF4444!important;stroke-width:2.5}
-.pfd-group-boundary{fill:none;stroke-dasharray:6 4;stroke-width:1.2;rx:8;ry:8;pointer-events:none}
-.pfd-group-label{font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;pointer-events:none}
-.pfd-tooltip{position:absolute;z-index:50;background:#0F172A;color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.5;box-shadow:0 8px 30px rgba(0,0,0,0.25);pointer-events:none;max-width:220px;white-space:nowrap}
+@keyframes pfdGlow{0%,100%{filter:drop-shadow(0 0 2px rgba(220,38,38,0.25))}50%{filter:drop-shadow(0 0 6px rgba(220,38,38,0.55))}}
+.pfd-bottleneck{animation:pfdGlow 2.5s ease-in-out infinite}
+.pfd-node-inactive{opacity:0.3}
+.pfd-group-label{font-size:8px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;pointer-events:none}
+.pfd-tooltip{position:absolute;z-index:50;background:#0F172A;color:#fff;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.6;box-shadow:0 8px 30px rgba(0,0,0,0.25);pointer-events:none;max-width:240px;white-space:nowrap}
 .pfd-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0F172A}
-.pfd-tooltip-title{font-weight:700;font-size:13px;margin-bottom:4px}
-.pfd-tooltip-row{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:rgba(255,255,255,0.75)}
+.pfd-tooltip-title{font-weight:700;font-size:13px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:4px}
+.pfd-tooltip-row{display:flex;justify-content:space-between;gap:14px;font-size:11px;color:rgba(255,255,255,0.6)}
 .pfd-tooltip-row span:last-child{color:#fff;font-weight:600}
-@keyframes pfdFlow{to{stroke-dashoffset:-24}}
-.pfd-connection{stroke-dasharray:8 4;animation:pfdFlow 1.5s linear infinite;stroke-linecap:round}
-.pfd-wip{fill:var(--jm-gold);stroke:#B8941F;stroke-width:1;opacity:0.85}
-.pfd-output-badge{font-size:9px;font-weight:800;font-variant-numeric:tabular-nums}
-.pfd-output-badge-bg{rx:4;ry:4}
-.pfd-highlight-dim{opacity:0.25;transition:opacity 0.3s}
+@keyframes pfdFlow{to{stroke-dashoffset:-16}}
+.pfd-connection{stroke-dasharray:4 4;animation:pfdFlow 2.5s linear infinite;stroke-linecap:round}
+.pfd-highlight-dim{opacity:0.1;transition:opacity 0.3s}
 .pfd-highlight-bright{opacity:1;transition:opacity 0.3s}
+.pfd-bn-select{height:28px;padding:0 24px 0 8px;font-size:11px;font-weight:600;border:1.5px solid var(--jm-border);border-radius:6px;background:var(--jm-surface);color:var(--jm-text);cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%236E6E73' stroke-width='1.2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;font-family:inherit}
+.pfd-bn-select:focus{border-color:var(--jm-navy);outline:none}
 @media(max-width:768px){.pfd-wrap{padding:14px}.pfd-header{gap:6px}.pfd-title{font-size:13px}.pfd-svg-wrap{margin:0 -14px;border-radius:0;border-left:none;border-right:none}}
 .ai-modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:12px}
 @media(max-width:768px){.ai-modal-overlay{padding:0;align-items:stretch;justify-content:stretch}}
@@ -2021,158 +2020,252 @@ function AskAI({section,context,filters}){
 function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
   const [flowShift,setFlowShift]=useState(shiftFilter||'all');
   const [highlightGroup,setHighlightGroup]=useState('none');
+  const [bnScope,setBnScope]=useState('equipment');
   const [hoveredNode,setHoveredNode]=useState(null);
   const [tooltipPos,setTooltipPos]=useState({x:0,y:0});
   const svgRef=useRef(null);
   useEffect(()=>{setFlowShift(shiftFilter||'all');},[shiftFilter]);
 
-  const NODE_W=145,NODE_H=28,NODE_GAP=4;
-  const processGroups=[
-    {id:'shears',label:'Shears',color:'#1B3D6E',x:20,y:40,codes:['WV-SHEAR-AS1','WV-SHEAR-AS2']},
-    {id:'peelers',label:'Peeling',color:'#1B3D6E',x:210,y:40,codes:['WV-PEEL-MAN','WV-PEEL-AUTO','WV-PEEL-SWAG']},
-    {id:'threaders',label:'Threaders',color:'#1B3D6E',x:400,y:40,codes:['WV-THREAD-T1','WV-THREAD-T2','WV-THREAD-AT']},
-    {id:'headers',label:'Headers',color:'#1B3D6E',x:590,y:40,codes:['WV-HEAD-H1','WV-HEAD-H2','WV-HEAD-H3','WV-HEAD-AUTO']},
-    {id:'assembly',label:'Assembly',color:'#1B3D6E',x:800,y:40,codes:['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4']},
-    {id:'presses',label:'Plate Presses',color:'#7C3AED',x:330,y:215,codes:['WV-PRESS-400','WV-PRESS-500A','WV-PRESS-500B'],horizontal:true},
-    {id:'cables',label:'Cable Lines',color:'#059669',x:210,y:480,codes:['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C3','WV-CABLE-C4'],horizontal:true}
+  // ── Icon-driven process flow v3 ──
+  // Equipment rendered as icon + label, light airy premium feel
+  var ICON_R=14,ROW_H=28,COL_GAP=10;
+  // Layout: 5 bolt-line groups across top, plate presses below-center,
+  // unit assembly below headers flowing up to assembly,
+  // cable line subassemblies on left, cable lines across bottom
+  var COLORS={bolt:'#1B3D6E',press:'#7C3AED',cable:'#059669',sub:'#D97706',inactive:'#D1D5DB'};
+
+  // SVG icon paths for each process type (18x18 viewBox)
+  var ICONS={
+    shear:'M3 3l6 6m0-6L3 9M11 3l6 6m0-6l-6 6',
+    peel:'M4 14c2-4 5-7 10-10M4 16c3-4 6-8 12-11',
+    thread:'M6 2v14M10 2v14M6 5h4M6 9h4M6 13h4',
+    header:'M4 12h10M9 4v4l-3 4h6l-3-4V4',
+    assembly:'M9 2L4 7h4v4h2V7h4L9 2zM3 13h12v2H3z',
+    press:'M5 3h8v2H5zM7 5v4M11 5v4M4 9h10v2H4zM6 11v3h6v-3',
+    cable:'M3 9a6 6 0 0112 0M5 9a4 4 0 018 0M7 9a2 2 0 014 0',
+    saw:'M9 3v4M5 5l2.5 2.5M13 5l-2.5 2.5M3 9h12M5 13l2.5-2.5M13 13l-2.5-2.5M9 11v4',
+    weld:'M5 13L9 3l4 10M7 9h4',
+    pipe:'M3 6h12v6H3zM6 6V4M12 6V4M6 12v2M12 12v2',
+    unit:'M4 10h4v4H4zM10 10h4v4h-4zM7 4h4v4H7z',
+    tie:'M3 8h3v2H3zM8 8h3v2H8zM13 8h3v2h-3zM6 9h2M11 9h2',
+    landis:'M4 6h10l-2 3H6L4 6zM6 9v4M12 9v4'
+  };
+  // Map equipment code prefix to icon key
+  function iconFor(code){
+    if(code.includes('SHEAR'))return 'shear';if(code.includes('PEEL')||code.includes('SWAG'))return 'peel';
+    if(code.includes('THREAD'))return 'thread';if(code.includes('HEAD'))return 'header';
+    if(code.includes('ASSY'))return 'assembly';if(code.includes('PRESS'))return 'press';
+    if(code.includes('CABLE'))return 'cable';if(code.includes('BIGSAW'))return 'saw';
+    if(code.includes('OFFWELD'))return 'weld';if(code.includes('PIPE'))return 'pipe';
+    if(code.includes('UNITS'))return 'unit';if(code.includes('TIE'))return 'tie';
+    if(code.includes('LANDIS'))return 'landis';return 'assembly';
+  }
+
+  // Process groups with positions (viewBox 960x520)
+  // Main bolt line centered vertically around y=100
+  var BOLT_Y=100;
+  var boltGroups=[
+    {id:'shears',label:'Shears',color:COLORS.bolt,x:30,codes:['WV-SHEAR-AS1','WV-SHEAR-AS2']},
+    {id:'peelers',label:'Peeling',color:COLORS.bolt,x:190,codes:['WV-PEEL-MAN','WV-PEEL-AUTO','WV-PEEL-SWAG']},
+    {id:'threaders',label:'Threading',color:COLORS.bolt,x:350,codes:['WV-THREAD-T1','WV-THREAD-T2','WV-THREAD-AT']},
+    {id:'headers',label:'Heading',color:COLORS.bolt,x:510,codes:['WV-HEAD-H1','WV-HEAD-H2','WV-HEAD-H3','WV-HEAD-AUTO']},
+    {id:'assembly',label:'Assembly',color:COLORS.bolt,x:680,codes:['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4']}
   ];
-  const miscNodes=[
-    {code:'WV-MISC-BIGSAW',x:30,y:310,color:'#D97706'},
-    {code:'WV-MISC-OFFWELD',x:230,y:300,color:'#D97706'},
-    {code:'WV-MISC-LANDISASSM',x:230,y:380,color:'#D97706'},
-    {code:'WV-MISC-PIPEASSY',x:430,y:300,color:'#D97706'},
-    {code:'WV-MISC-EYEBOLT',x:430,y:380,color:'#D97706'},
-    {code:'WV-MISC-TIELINE',x:630,y:300,color:'#D97706'},
-    {code:'WV-MISC-UNITS',x:630,y:380,color:'#D97706'}
+  // Plate presses — centered below bolt line
+  var pressGroup={id:'presses',label:'Plate Presses',color:COLORS.press,x:300,y:240,codes:['WV-PRESS-400','WV-PRESS-500A','WV-PRESS-500B'],horizontal:true};
+  // Unit Assembly — below headers, feeds UP into assembly
+  var unitCode='WV-MISC-UNITS',unitX=560,unitY=240;
+  // Cable Line Subassemblies — left side below
+  var subCodes=[
+    {code:'WV-MISC-BIGSAW',label:'Big Saw'},
+    {code:'WV-MISC-OFFWELD',label:'Off. Welding'},
+    {code:'WV-MISC-PIPEASSY',label:'Pipe Assy'},
+    {code:'WV-MISC-LANDISASSM',label:'Landis Thrd'},
+    {code:'WV-MISC-TIELINE',label:'Tie Line'}
   ];
-  const nodePositions=useMemo(()=>{
-    const map={};
-    processGroups.forEach(g=>{g.codes.forEach((c,i)=>{
-      map[c]=g.horizontal?{x:g.x+i*(NODE_W+12),y:g.y,color:g.color,group:g.id,process:g.label}
-        :{x:g.x,y:g.y+i*(NODE_H+NODE_GAP),color:g.color,group:g.id,process:g.label};
-    });});
-    miscNodes.forEach(n=>{map[n.code]={x:n.x,y:n.y,color:n.color,group:'misc',process:'Misc Equipment'};});
+  var subStartX=30,subY=340;
+  // Cable lines — across bottom
+  var cableGroup={id:'cables',label:'Cable Lines',color:COLORS.cable,x:300,y:430,codes:['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C3','WV-CABLE-C4'],horizontal:true};
+
+  // Build node positions
+  var nodePositions=useMemo(function(){
+    var map={};
+    // Bolt line groups: vertically centered
+    boltGroups.forEach(function(g){
+      var totalH=g.codes.length*ROW_H;
+      var startY=BOLT_Y-totalH/2;
+      g.codes.forEach(function(c,i){map[c]={x:g.x,y:startY+i*ROW_H,color:g.color,group:g.id,process:g.label};});
+    });
+    // Presses: horizontal
+    pressGroup.codes.forEach(function(c,i){map[c]={x:pressGroup.x+i*140,y:pressGroup.y,color:pressGroup.color,group:'presses',process:'Plate Presses'};});
+    // Unit Assembly
+    map[unitCode]={x:unitX,y:unitY,color:COLORS.sub,group:'unit',process:'Unit Assembly'};
+    // Cable subassemblies: 2 columns
+    subCodes.forEach(function(sc,i){
+      var col=i%2,row=Math.floor(i/2);
+      map[sc.code]={x:subStartX+col*140,y:subY+row*ROW_H,color:COLORS.sub,group:'subassembly',process:'Cable Line Subassemblies'};
+    });
+    // Cable lines: horizontal
+    cableGroup.codes.forEach(function(c,i){map[c]={x:cableGroup.x+i*140,y:cableGroup.y,color:cableGroup.color,group:'cables',process:'Cable Lines'};});
     return map;
   },[]);
 
-  // Data aggregation
-  const flowData=useMemo(()=>{
-    const fr=(records||[]).filter(r=>{
+  // Data aggregation (unchanged logic)
+  var flowData=useMemo(function(){
+    var fr=(records||[]).filter(function(r){
       if(r.date<dateFrom||r.date>dateTo)return false;
       if(flowShift!=='all'&&r.shiftNum!==flowShift)return false;
       return true;
     });
-    const map={};
-    fr.forEach(r=>{
+    var map={};
+    fr.forEach(function(r){
       if(!map[r.equipCode])map[r.equipCode]={totalOutput:0,operators:new Set(),products:new Set(),sm:0,dtm:0,tgt:0,good:0,def:0};
-      const e=map[r.equipCode];
+      var e=map[r.equipCode];
       e.totalOutput+=parseInt(r.goodUnits)||0;e.good+=parseInt(r.goodUnits)||0;
-      const avail=60-(parseInt(r.scheduledMins)||0);e.sm+=avail;
+      var avail=60-(parseInt(r.scheduledMins)||0);e.sm+=avail;
       e.dtm+=totalDTMins(r.downtime||[]);e.tgt+=parseInt(r.target)||0;
-      e.def+=(r.defects||[]).reduce((s,d)=>s+parseInt(d.qty||0),0);
-      (r.operators||[]).forEach(op=>{if(op)e.operators.add(op);});
+      e.def+=(r.defects||[]).reduce(function(s,d){return s+parseInt(d.qty||0);},0);
+      (r.operators||[]).forEach(function(op){if(op)e.operators.add(op);});
       if(r.productCode)e.products.add(r.productCode);
     });
-    Object.keys(map).forEach(k=>{
-      const e=map[k],run=e.sm-e.dtm,tp=e.good+e.def;
-      const a=e.sm>0?(run/e.sm):0,p=run>0&&e.tgt>0?((tp*e.sm)/(run*e.tgt)):0,q=tp>0?(e.good/tp):1;
+    Object.keys(map).forEach(function(k){
+      var e=map[k],run=e.sm-e.dtm,tp=e.good+e.def;
+      var a=e.sm>0?(run/e.sm):0,p=run>0&&e.tgt>0?((tp*e.sm)/(run*e.tgt)):0,q=tp>0?(e.good/tp):1;
       e.oee=a*p*q*100;e.availability=a*100;e.performance=p*100;e.quality=q*100;
     });
     return map;
   },[records,dateFrom,dateTo,flowShift]);
 
-  // Bottleneck detection
-  const bottlenecks=useMemo(()=>{
-    const allBoltCodes=['shears','peelers','threaders','headers','assembly'].flatMap(gId=>(processGroups.find(pg=>pg.id===gId)||{codes:[]}).codes);
-    let globalMin=Infinity,globalMinCode=null;
-    allBoltCodes.forEach(c=>{const d=flowData[c];if(d&&d.totalOutput>0&&d.totalOutput<globalMin){globalMin=d.totalOutput;globalMinCode=c;}});
-    const result=new Set();if(globalMinCode)result.add(globalMinCode);
-    return result;
-  },[flowData]);
+  function groupOutput(gId){
+    var g=boltGroups.find(function(pg){return pg.id===gId;});
+    if(!g)return 0;
+    return g.codes.reduce(function(s,c){var d=flowData[c];return s+(d?d.totalOutput:0);},0);
+  }
 
-  // Connection definitions
-  const connections=[
-    {from:'shears',to:'peelers'},{from:'peelers',to:'threaders'},{from:'threaders',to:'headers'},{from:'headers',to:'assembly'},
-    {fromCode:'WV-MISC-BIGSAW',toCode:'WV-MISC-OFFWELD'},{fromCode:'WV-MISC-OFFWELD',toCode:'WV-MISC-PIPEASSY'},
-    {fromCode:'WV-MISC-PIPEASSY',toCode:'WV-CABLE-C3'},{fromCode:'WV-MISC-BIGSAW',toCode:'WV-MISC-LANDISASSM'},
-    {fromCode:'WV-MISC-LANDISASSM',toCode:'WV-CABLE-C1'},{fromCode:'WV-MISC-OFFWELD',toCode:'WV-CABLE-C2'},
-    {fromCode:'WV-MISC-OFFWELD',toCode:'WV-CABLE-C4'}
-  ];
-  function getGroupCenter(gId){const g=processGroups.find(pg=>pg.id===gId);if(!g)return{x:0,y:0};if(g.horizontal){const tw=g.codes.length*(NODE_W+12)-12;return{x:g.x+tw/2,y:g.y+NODE_H/2};}const th=g.codes.length*(NODE_H+NODE_GAP)-NODE_GAP;return{x:g.x+NODE_W/2,y:g.y+th/2};}
-  function getGroupRight(gId){const c=getGroupCenter(gId);const g=processGroups.find(pg=>pg.id===gId);return{x:(g.horizontal?g.x+g.codes.length*(NODE_W+12)-12:g.x)+NODE_W+6,y:c.y};}
-  function getGroupLeft(gId){const g=processGroups.find(pg=>pg.id===gId);return{x:g.x-6,y:getGroupCenter(gId).y};}
-  function getNodeRight(code){const p=nodePositions[code];return p?{x:p.x+NODE_W+4,y:p.y+NODE_H/2}:{x:0,y:0};}
-  function getNodeLeft(code){const p=nodePositions[code];return p?{x:p.x-4,y:p.y+NODE_H/2}:{x:0,y:0};}
-  function getNodeTop(code){const p=nodePositions[code];return p?{x:p.x+NODE_W/2,y:p.y-4}:{x:0,y:0};}
-  function getNodeBottom(code){const p=nodePositions[code];return p?{x:p.x+NODE_W/2,y:p.y+NODE_H+4}:{x:0,y:0};}
-  function oeeColor(val){return val>=80?'#059669':val>=60?'#D97706':'#DC2626';}
+  // Bottleneck — always active, scope-selectable
+  var bottleneckCodes=useMemo(function(){
+    var result=new Set();
+    function findMin(codes){
+      var min=Infinity,minC=null;
+      codes.forEach(function(c){var d=flowData[c];if(d&&d.totalOutput>0&&d.totalOutput<min){min=d.totalOutput;minC=c;}});
+      if(minC)result.add(minC);
+    }
+    if(bnScope==='equipment'){
+      var boltCodes=boltGroups.flatMap(function(g){return g.codes;});
+      findMin(boltCodes);
+    } else if(bnScope==='process'){
+      var worstG=null,worstOut=Infinity;
+      boltGroups.forEach(function(g){var out=groupOutput(g.id);if(out>0&&out<worstOut){worstOut=out;worstG=g.id;}});
+      if(worstG){var wg=boltGroups.find(function(pg){return pg.id===worstG;});if(wg)wg.codes.forEach(function(c){result.add(c);});}
+    } else if(bnScope==='cable'){
+      findMin(cableGroup.codes);
+    } else if(bnScope==='subassembly'){
+      findMin(subCodes.map(function(s){return s.code;}).concat([unitCode]));
+    }
+    return result;
+  },[flowData,bnScope]);
 
   function handleNodeHover(code,evt){
     if(!code){setHoveredNode(null);return;}
     setHoveredNode(code);
-    if(svgRef.current&&evt){const rect=svgRef.current.getBoundingClientRect();setTooltipPos({x:evt.clientX-rect.left,y:evt.clientY-rect.top-10});}
+    if(svgRef.current&&evt){var rect=svgRef.current.getBoundingClientRect();setTooltipPos({x:evt.clientX-rect.left,y:evt.clientY-rect.top-10});}
   }
   function nodeOpacity(code){
     if(highlightGroup==='none')return '';
-    const pos=nodePositions[code];if(!pos)return 'pfd-highlight-dim';
+    var pos=nodePositions[code];if(!pos)return 'pfd-highlight-dim';
     if(pos.process===highlightGroup)return 'pfd-highlight-bright';
     return 'pfd-highlight-dim';
   }
+  function oeeColor(val){return val>=80?'#059669':val>=60?'#D97706':'#DC2626';}
 
-  function renderNode(code,x,y,baseColor){
-    const d=flowData[code]||{totalOutput:0,operators:new Set(),products:new Set(),oee:0};
-    const name=getEquipName(code);const shortName=name.length>18?name.substring(0,16)+'..':name;
-    const ops=[...(d.operators||[])];const prods=[...(d.products||[])];
-    const isBottleneck=bottlenecks.has(code);const hCls=nodeOpacity(code);
-    const fillColor=d.totalOutput>0?baseColor:(baseColor+'40');
-    return h('g',{key:code,className:'pfd-node'+(hCls?' '+hCls:''),transform:'translate('+x+','+y+')',
+  // Render an equipment node: icon circle + name + output
+  function renderEquip(code,x,y,color){
+    var d=flowData[code]||{totalOutput:0,operators:new Set(),products:new Set(),oee:0};
+    var name=getEquipName(code);var short=name.length>13?name.substring(0,11)+'..':name;
+    var ops=[...(d.operators||[])];
+    var isActive=d.totalOutput>0;var isBN=bottleneckCodes.has(code);var hCls=nodeOpacity(code);
+    var cls='pfd-node'+(hCls?' '+hCls:'')+(isActive?'':' pfd-node-inactive')+(isBN?' pfd-bottleneck':'');
+    var iconPath=ICONS[iconFor(code)];
+    var fillCol=isActive?color:COLORS.inactive;
+    var bgFill=isActive?color+'18':'#F3F4F6';
+    return h('g',{key:code,className:cls,transform:'translate('+x+','+y+')',
       onMouseEnter:function(e){handleNodeHover(code,e);},onMouseLeave:function(){handleNodeHover(null);}},
-      h('rect',{width:NODE_W,height:NODE_H,rx:6,ry:6,fill:fillColor,stroke:isBottleneck?'#EF4444':baseColor,strokeWidth:isBottleneck?2.5:1,className:isBottleneck?'pfd-rate-limit':''}),
-      h('text',{x:6,y:12,fill:'#fff',fontSize:9,fontWeight:700,dominantBaseline:'middle'},shortName),
-      h('text',{x:6,y:22,fill:'rgba(255,255,255,0.65)',fontSize:7.5,dominantBaseline:'middle'},
-        ops.length>0?ops.slice(0,2).map(o=>o.split(' ').map(w=>w[0]||'').join('')).join(', '):'—'),
-      d.totalOutput>0?h('g',null,
-        h('rect',{className:'pfd-output-badge-bg',x:NODE_W-38,y:3,width:34,height:14,fill:'rgba(255,255,255,0.2)'}),
-        h('text',{className:'pfd-output-badge',x:NODE_W-21,y:12,fill:'#fff',fontSize:8.5,fontWeight:800,textAnchor:'middle',dominantBaseline:'middle'},d.totalOutput.toLocaleString())
-      ):null,
-      prods.length>0?h('title',null,getProductName(prods[0])+' | OEE: '+(d.oee||0).toFixed(1)+'%'):null
+      // Icon circle background
+      h('circle',{cx:ICON_R,cy:ICON_R,r:ICON_R,fill:bgFill,stroke:isBN?'#DC2626':fillCol,strokeWidth:isBN?2:0.8,opacity:isActive?1:0.5}),
+      // Icon path
+      h('g',{transform:'translate('+(ICON_R-9)+','+(ICON_R-9)+') scale(1)'},
+        h('path',{d:iconPath,fill:'none',stroke:isActive?(isBN?'#DC2626':color):'#B0B5BD',strokeWidth:1.4,strokeLinecap:'round',strokeLinejoin:'round'})
+      ),
+      // Equipment name
+      h('text',{x:ICON_R*2+6,y:ICON_R-2,fill:isActive?'#1D1D1F':'#B0B5BD',fontSize:8,fontWeight:700,dominantBaseline:'middle'},short),
+      // Operators (if active)
+      isActive&&ops.length>0?h('text',{x:ICON_R*2+6,y:ICON_R+7,fill:'#94A3B8',fontSize:6.5,dominantBaseline:'middle'},
+        ops.slice(0,2).map(function(o){return o.split(' ').map(function(w){return w[0]||'';}).join('');}).join(', ')):null,
+      // Output badge (right-aligned)
+      isActive?h('text',{x:120,y:ICON_R,fill:color,fontSize:9,fontWeight:800,textAnchor:'end',dominantBaseline:'middle',fontVariantNumeric:'tabular-nums'},d.totalOutput.toLocaleString()):null
     );
   }
-  function renderGroupBoundary(g){
-    const pad=10;let bx,by,bw,bh;
-    if(g.horizontal){const tw=g.codes.length*(NODE_W+12)-12;bx=g.x-pad;by=g.y-pad;bw=tw+NODE_W+pad*2;bh=NODE_H+pad*2;}
-    else{const th=g.codes.length*(NODE_H+NODE_GAP)-NODE_GAP;bx=g.x-pad;by=g.y-pad;bw=NODE_W+pad*2;bh=th+pad*2;}
-    return h('g',{key:'grp-'+g.id},h('rect',{x:bx,y:by,width:bw,height:bh,className:'pfd-group-boundary',stroke:g.color+'66'}),
-      h('text',{x:bx+bw/2,y:by-4,className:'pfd-group-label',fill:g.color+'99',textAnchor:'middle'},g.label));
+
+  // Group: label + stacked equipment
+  function renderGroup(g,centerY){
+    var totalH=g.codes.length*ROW_H;
+    var startY=centerY-totalH/2;
+    return h('g',{key:'grp-'+g.id},
+      h('text',{x:g.x+65,y:startY-12,className:'pfd-group-label',fill:g.color+'80',textAnchor:'middle'},g.label.toUpperCase()),
+      g.codes.map(function(code,i){return renderEquip(code,g.x,startY+i*ROW_H,g.color);})
+    );
   }
-  function renderConnections(){
-    return connections.map(function(conn,i){
-      var x1,y1,x2,y2;
-      if(conn.from&&conn.to){var r=getGroupRight(conn.from),l=getGroupLeft(conn.to);x1=r.x;y1=r.y;x2=l.x;y2=l.y;}
-      else{var fr=getNodeRight(conn.fromCode),tl=getNodeLeft(conn.toCode);
-        var fp=nodePositions[conn.fromCode],tp=nodePositions[conn.toCode];
-        if(fp&&tp&&Math.abs(tp.y-fp.y)>60){fr=getNodeBottom(conn.fromCode);tl=getNodeTop(conn.toCode);}
-        x1=fr.x;y1=fr.y;x2=tl.x;y2=tl.y;}
-      var mx=(x1+x2)/2;
-      return h('path',{key:'conn-'+i,d:'M'+x1+' '+y1+' C'+mx+' '+y1+' '+mx+' '+y2+' '+x2+' '+y2,className:'pfd-connection',fill:'none',stroke:'#94A3B8',strokeWidth:1.5,markerEnd:'url(#pfd-arrow)'});
-    });
+  function renderHorizGroup(g){
+    return h('g',{key:'grp-'+g.id},
+      h('text',{x:g.x+g.codes.length*70,y:g.y-10,className:'pfd-group-label',fill:g.color+'80',textAnchor:'middle'},g.label.toUpperCase()),
+      g.codes.map(function(code,i){return renderEquip(code,g.x+i*140,g.y,g.color);})
+    );
   }
+
+  // Clean arrow between two points
+  function arrow(x1,y1,x2,y2,color,key,dashed){
+    var mx=(x1+x2)/2;
+    var d='M'+x1+' '+y1+' C'+mx+' '+y1+' '+mx+' '+y2+' '+x2+' '+y2;
+    return h('path',{key:key,d:d,fill:'none',stroke:color||'#CBD5E1',strokeWidth:1.2,strokeDasharray:dashed?'4 3':'none',markerEnd:'url(#pfd-arrow)',className:dashed?'':'pfd-connection'});
+  }
+  // Straight arrow
+  function straightArrow(x1,y1,x2,y2,color,key,dashed){
+    return h('line',{key:key,x1:x1,y1:y1,x2:x2,y2:y2,stroke:color||'#CBD5E1',strokeWidth:1.2,strokeDasharray:dashed?'4 3':'none',markerEnd:'url(#pfd-arrow)'});
+  }
+
+  // WIP diamond with output above
+  function renderWip(fromGroupId,x,y,key){
+    var s=4,out=groupOutput(fromGroupId);
+    return h('g',{key:key},
+      out>0?h('text',{x:x,y:y-9,textAnchor:'middle',fill:'#1B3D6E',fontSize:7.5,fontWeight:800,opacity:0.5,fontVariantNumeric:'tabular-nums'},out.toLocaleString()):null,
+      h('polygon',{points:(x-s)+','+y+' '+x+','+(y-s)+' '+(x+s)+','+y+' '+x+','+(y+s),fill:'#F0A500',stroke:'#C89B20',strokeWidth:0.6})
+    );
+  }
+
+  // Tooltip
   function renderTooltip(){
     if(!hoveredNode)return null;
     var d=flowData[hoveredNode]||{totalOutput:0,operators:new Set(),products:new Set(),oee:0,availability:0,performance:0,quality:0};
     var name=getEquipName(hoveredNode);var ops=[...(d.operators||[])];var prods=[...(d.products||[])];
-    return h('div',{className:'pfd-tooltip',style:{left:tooltipPos.x-80,top:tooltipPos.y-130}},
+    return h('div',{className:'pfd-tooltip',style:{left:tooltipPos.x-80,top:tooltipPos.y-140}},
       h('div',{className:'pfd-tooltip-title'},name),
       h('div',{className:'pfd-tooltip-row'},h('span',null,'Output:'),h('span',null,(d.totalOutput||0).toLocaleString()+' pcs')),
       h('div',{className:'pfd-tooltip-row'},h('span',null,'OEE:'),h('span',{style:{color:oeeColor(d.oee||0)}},(d.oee||0).toFixed(1)+'%')),
       h('div',{className:'pfd-tooltip-row'},h('span',null,'A / P / Q:'),h('span',null,(d.availability||0).toFixed(0)+' / '+(d.performance||0).toFixed(0)+' / '+(d.quality||0).toFixed(0)+'%')),
       h('div',{className:'pfd-tooltip-row'},h('span',null,'Operators:'),h('span',null,ops.length>0?ops.slice(0,3).join(', '):'—')),
-      h('div',{className:'pfd-tooltip-row'},h('span',null,'Product:'),h('span',null,prods.length>0?prods.slice(0,2).map(p=>{var n=getProductName(p);return n.length>15?n.substring(0,13)+'..':n;}).join(', '):'—'))
+      h('div',{className:'pfd-tooltip-row'},h('span',null,'Product:'),h('span',null,prods.length>0?prods.slice(0,2).map(function(p){var n=getProductName(p);return n.length>15?n.substring(0,13)+'..':n;}).join(', '):'—'))
     );
   }
 
   var flowIcon=h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M4 6h4m-4 6h4m-4 6h4m4-12h8m-8 6h8m-8 6h8',strokeLinecap:'round'}));
-  var highlightOptions=['none','Shears','Peeling','Threaders','Headers','Assembly','Plate Presses','Cable Lines','Misc Equipment'];
+  var highlightOptions=['none','Shears','Peeling','Threading','Heading','Assembly','Plate Presses','Cable Lines','Cable Line Subassemblies','Unit Assembly'];
+
+  // Compute WIP positions between bolt groups
+  var wipPositions=[];
+  for(var wi=0;wi<boltGroups.length-1;wi++){
+    var gR=boltGroups[wi],gL=boltGroups[wi+1];
+    wipPositions.push({x:(gR.x+130+gL.x)/2,y:BOLT_Y,fromId:gR.id});
+  }
 
   return h('div',{className:'pfd-wrap'},
     h('div',{className:'pfd-header'},
@@ -2183,47 +2276,81 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
           h('button',{className:'dash-shift-btn'+(flowShift==='1'?' active':''),onClick:function(){setFlowShift('1');}},'Shift 1'),
           h('button',{className:'dash-shift-btn'+(flowShift==='2'?' active':''),onClick:function(){setFlowShift('2');}},'Shift 2')
         ),
+        h('select',{className:'pfd-bn-select',value:bnScope,onChange:function(e){setBnScope(e.target.value);}},
+          h('option',{value:'equipment'},'Bottleneck: Equipment'),
+          h('option',{value:'process'},'Bottleneck: Process'),
+          h('option',{value:'cable'},'Bottleneck: Cable Lines'),
+          h('option',{value:'subassembly'},'Bottleneck: Subassemblies')
+        ),
         h('select',{className:'dash-filter-select',value:highlightGroup,onChange:function(e){setHighlightGroup(e.target.value);}},
           h('option',{value:'none'},'No Highlight'),
-          highlightOptions.slice(1).map(o=>h('option',{key:o,value:o},o)))
+          highlightOptions.slice(1).map(function(o){return h('option',{key:o,value:o},o);}))
       )
     ),
     h('div',{style:{position:'relative'}},
       renderTooltip(),
       h('div',{className:'pfd-svg-wrap'},
-        h('svg',{ref:svgRef,viewBox:'0 0 1000 540',xmlns:'http://www.w3.org/2000/svg',style:{width:'100%',height:'auto'}},
+        h('svg',{ref:svgRef,viewBox:'0 0 960 490',xmlns:'http://www.w3.org/2000/svg',style:{width:'100%',height:'auto'}},
           h('defs',null,
-            h('marker',{id:'pfd-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'},
-              h('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'#94A3B8'})),
-            h('linearGradient',{id:'pfd-grad-navy',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},h('stop',{offset:'0%',stopColor:'#1B3D6E'}),h('stop',{offset:'100%',stopColor:'#2A5199'})),
-            h('linearGradient',{id:'pfd-grad-purple',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},h('stop',{offset:'0%',stopColor:'#7C3AED'}),h('stop',{offset:'100%',stopColor:'#9F67FF'})),
-            h('linearGradient',{id:'pfd-grad-green',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},h('stop',{offset:'0%',stopColor:'#059669'}),h('stop',{offset:'100%',stopColor:'#34D399'})),
-            h('linearGradient',{id:'pfd-grad-amber',x1:'0%',y1:'0%',x2:'100%',y2:'100%'},h('stop',{offset:'0%',stopColor:'#D97706'}),h('stop',{offset:'100%',stopColor:'#FBBF24'}))
+            h('marker',{id:'pfd-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:5,markerHeight:5,orient:'auto-start-reverse'},
+              h('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'#94A3B8'}))
           ),
-          h('pattern',{id:'pfd-grid',width:40,height:40,patternUnits:'userSpaceOnUse'},
-            h('path',{d:'M 40 0 L 0 0 0 40',fill:'none',stroke:'#E5E7EB',strokeWidth:0.4})),
-          h('rect',{width:'100%',height:'100%',fill:'url(#pfd-grid)'}),
-          h('text',{x:500,y:18,textAnchor:'middle',fill:'#1B3D6E',fontSize:11,fontWeight:800,letterSpacing:1},'MAIN BOLT LINE'),
-          h('line',{x1:80,y1:22,x2:420,y2:22,stroke:'#1B3D6E22',strokeWidth:1}),
-          h('line',{x1:580,y1:22,x2:960,y2:22,stroke:'#1B3D6E22',strokeWidth:1}),
-          h('g',{opacity:0.7},renderConnections()),
-          h('polygon',{points:'195,85 200,78 205,85 200,92',className:'pfd-wip'}),
-          h('polygon',{points:'385,85 390,78 395,85 390,92',className:'pfd-wip'}),
-          h('polygon',{points:'575,95 580,88 585,95 580,102',className:'pfd-wip'}),
-          h('polygon',{points:'785,95 790,88 795,95 790,102',className:'pfd-wip'}),
-          processGroups.map(g=>renderGroupBoundary(g)),
-          h('g',{key:'grp-misc'},h('rect',{x:16,y:278,width:780,height:126,className:'pfd-group-boundary',stroke:'#D9770666'}),
-            h('text',{x:406,y:274,className:'pfd-group-label',fill:'#D9770699',textAnchor:'middle'},'MISC ROUTING')),
-          processGroups.map(g=>g.codes.map((code,i)=>{var pos=nodePositions[code];return renderNode(code,pos.x,pos.y,pos.color);})),
-          miscNodes.map(n=>{var pos=nodePositions[n.code];return renderNode(n.code,pos.x,pos.y,pos.color);}),
-          h('g',{transform:'translate(830,470)'},
-            h('text',{x:0,y:0,fontSize:8,fontWeight:700,fill:'#64748B',letterSpacing:0.5},'LEGEND'),
-            h('rect',{x:0,y:6,width:12,height:8,rx:2,fill:'#1B3D6E'}),h('text',{x:16,y:13,fontSize:7.5,fill:'#64748B'},'Bolt Line'),
-            h('rect',{x:0,y:20,width:12,height:8,rx:2,fill:'#7C3AED'}),h('text',{x:16,y:27,fontSize:7.5,fill:'#64748B'},'Presses'),
-            h('rect',{x:0,y:34,width:12,height:8,rx:2,fill:'#059669'}),h('text',{x:16,y:41,fontSize:7.5,fill:'#64748B'},'Cable Lines'),
-            h('rect',{x:0,y:48,width:12,height:8,rx:2,fill:'#D97706'}),h('text',{x:16,y:55,fontSize:7.5,fill:'#64748B'},'Misc Routing'),
-            h('line',{x1:80,y1:9,x2:100,y2:9,stroke:'#EF4444',strokeWidth:2,strokeDasharray:'4 2'}),h('text',{x:104,y:13,fontSize:7.5,fill:'#64748B'},'Bottleneck'),
-            h('polygon',{points:'86,27 90,21 94,27 90,33',fill:'#C8A951',stroke:'#B8941F',strokeWidth:0.5}),h('text',{x:104,y:27,fontSize:7.5,fill:'#64748B'},'WIP Buffer')
+          // Subtle dot grid
+          h('pattern',{id:'pfd-dots',width:20,height:20,patternUnits:'userSpaceOnUse'},
+            h('circle',{cx:10,cy:10,r:0.4,fill:'#D1D5DB',opacity:0.4})),
+          h('rect',{width:'100%',height:'100%',fill:'url(#pfd-dots)'}),
+
+          // ── Section: MAIN BOLT LINE ──
+          h('text',{x:420,y:18,textAnchor:'middle',fill:'#1B3D6E',fontSize:9,fontWeight:800,letterSpacing:2,opacity:0.2},'MAIN BOLT LINE'),
+
+          // Bolt line group-to-group arrows
+          boltGroups.slice(0,-1).map(function(g,i){
+            var nx=boltGroups[i+1].x;
+            return arrow(g.x+130,BOLT_Y,nx,BOLT_Y,'#CBD5E1','bconn'+i);
+          }),
+
+          // WIP diamonds between bolt groups
+          wipPositions.map(function(wp,i){return renderWip(wp.fromId,wp.x,wp.y,'wip'+i);}),
+
+          // Bolt line equipment groups
+          boltGroups.map(function(g){return renderGroup(g,BOLT_Y);}),
+
+          // ── Section: PLATE PRESSES ── centered below
+          renderHorizGroup(pressGroup),
+
+          // ── Section: UNIT ASSEMBLY ── below headers, arrow UP to assembly
+          h('text',{x:unitX+65,y:unitY-10,className:'pfd-group-label',fill:COLORS.sub+'80',textAnchor:'middle'},'UNIT ASSEMBLY'),
+          renderEquip(unitCode,unitX,unitY,COLORS.sub),
+          // Arrow from Unit Assembly UP and RIGHT into Assembly group (between A2 and A3)
+          arrow(unitX+65,unitY,680+65,BOLT_Y+ROW_H*1.5,'#D9770666','unit-to-assy',true),
+          h('text',{x:(unitX+680)/2+65,y:(unitY+BOLT_Y+ROW_H*1.5)/2-4,fill:'#D97706',fontSize:6,fontWeight:700,opacity:0.45,textAnchor:'middle',letterSpacing:0.5},'FEEDS A3 / A4'),
+
+          // ── Section: CABLE LINE SUBASSEMBLIES ── left side
+          h('text',{x:subStartX+70,y:subY-12,className:'pfd-group-label',fill:COLORS.sub+'80',textAnchor:'middle'},'CABLE LINE SUBASSEMBLIES'),
+          subCodes.map(function(sc,i){
+            var col=i%2,row=Math.floor(i/2);
+            return renderEquip(sc.code,subStartX+col*140,subY+row*ROW_H,COLORS.sub);
+          }),
+
+          // Subassembly to cable line connections (clean, spaced, no overlap)
+          arrow(subStartX+130,subY+ICON_R,cableGroup.x,cableGroup.y+ICON_R,'#D9770640','sub-c1',true),
+          arrow(subStartX+270,subY+ICON_R,cableGroup.x+140,cableGroup.y+ICON_R,'#D9770640','sub-c2',true),
+          arrow(subStartX+130,subY+ROW_H+ICON_R,cableGroup.x+280,cableGroup.y+ICON_R,'#D9770640','sub-c3',true),
+          arrow(subStartX+270,subY+ROW_H+ICON_R,cableGroup.x+420,cableGroup.y+ICON_R,'#D9770640','sub-c4',true),
+
+          // ── Section: CABLE LINES ── bottom
+          renderHorizGroup(cableGroup),
+
+          // ── LEGEND ── bottom-right
+          h('g',{transform:'translate(830,400)'},
+            h('text',{x:0,y:0,fontSize:7,fontWeight:700,fill:'#94A3B8',letterSpacing:1},'LEGEND'),
+            h('circle',{cx:5,cy:10,r:5,fill:COLORS.bolt+'20',stroke:COLORS.bolt,strokeWidth:0.8}),h('text',{x:14,y:13,fontSize:7,fill:'#64748B'},'Bolt Line'),
+            h('circle',{cx:5,cy:24,r:5,fill:COLORS.press+'20',stroke:COLORS.press,strokeWidth:0.8}),h('text',{x:14,y:27,fontSize:7,fill:'#64748B'},'Presses'),
+            h('circle',{cx:5,cy:38,r:5,fill:COLORS.cable+'20',stroke:COLORS.cable,strokeWidth:0.8}),h('text',{x:14,y:41,fontSize:7,fill:'#64748B'},'Cable Lines'),
+            h('circle',{cx:5,cy:52,r:5,fill:COLORS.sub+'20',stroke:COLORS.sub,strokeWidth:0.8}),h('text',{x:14,y:55,fontSize:7,fill:'#64748B'},'Subassemblies'),
+            h('circle',{cx:5,cy:66,r:5,fill:'#F3F4F6',stroke:'#D1D5DB',strokeWidth:0.8}),h('text',{x:14,y:69,fontSize:7,fill:'#64748B'},'Inactive'),
+            h('circle',{cx:5,cy:80,r:5,fill:'none',stroke:'#DC2626',strokeWidth:1.5}),h('text',{x:14,y:83,fontSize:7,fill:'#64748B'},'Bottleneck'),
+            h('polygon',{points:'1,93 5,89 9,93 5,97',fill:'#F0A500',stroke:'#C89B20',strokeWidth:0.5}),h('text',{x:14,y:96,fontSize:7,fill:'#64748B'},'WIP Buffer')
           )
         )
       )
