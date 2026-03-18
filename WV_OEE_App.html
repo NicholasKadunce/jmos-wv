@@ -767,7 +767,7 @@ input[type=number]{-moz-appearance:textfield}
 .tv-no-data{font-size:11px;color:var(--jm-text-ter);font-style:italic;padding:8px 0}
 @media(max-width:1024px){.tv-display{height:auto;overflow-y:auto}.tv-grid{grid-template-columns:1fr!important;overflow-y:auto;overflow-x:hidden;max-height:none;height:auto!important}.tv-equip-card{min-height:auto;height:auto!important;overflow:visible}.tv-content-grid{grid-template-columns:1fr}.tv-equip-header{flex-direction:column;align-items:flex-start}.tv-oee-pills{width:100%;flex-wrap:wrap}.tv-summary-row{flex-wrap:wrap}.tv-summary-stat{flex:1 1 45%}.tv-equip-title{font-size:16px}.tv-oee-pill-val{font-size:14px}.tv-summary-val{font-size:16px}.tv-section{padding:8px 12px}.tv-section-title{font-size:11px;margin-bottom:6px}.tv-chart-wrap{min-height:220px}}
 /* TV Large Screen: Scale up all text for distance readability */
-@media(min-width:1280px){.tv-header-title{font-size:28px}.tv-header-sub{font-size:15px}.tv-select{font-size:16px;height:40px;padding:0 14px}.tv-range-btn{font-size:14px;height:34px;padding:0 16px}.tv-equip-header{padding:14px 20px}.tv-equip-title{font-size:22px}.tv-equip-product{font-size:13px}.tv-oee-pill{min-width:60px;padding:4px 10px;border-radius:8px}.tv-oee-pill-val{font-size:18px}.tv-oee-pill-label{font-size:9px}.tv-oee-pill.oee-hero{padding:8px 16px;min-width:80px}.tv-oee-pill.oee-hero .tv-oee-pill-val{font-size:28px}.tv-oee-pill.oee-hero .tv-oee-pill-label{font-size:10px}.tv-bar-row{gap:8px;margin-bottom:4px}.tv-bar-label{font-size:13px;width:50px}.tv-bar-track{height:22px;border-radius:5px}.tv-bar-val{font-size:12px}.tv-bar-val-out{font-size:12px;min-width:36px}.tv-prev-info{font-size:10px}.tv-summary-stat{padding:10px 8px}.tv-summary-val{font-size:22px}.tv-summary-label{font-size:11px}.tv-section-title{font-size:13px;margin-bottom:6px}.tv-no-data{font-size:15px}}
+@media(min-width:1280px){.tv-header-title{font-size:34px;letter-spacing:-0.8px}.tv-header-sub{font-size:17px;letter-spacing:1px}.tv-select{font-size:17px;height:44px;padding:0 16px}.tv-range-btn{font-size:15px;height:38px;padding:0 20px}.tv-equip-header{padding:16px 22px}.tv-equip-title{font-size:26px}.tv-equip-product{font-size:15px}.tv-equip-operators{font-size:14px!important}.tv-oee-pills{gap:8px}.tv-oee-pill{min-width:70px;padding:6px 12px;border-radius:8px;border-left-width:4px}.tv-oee-pill-val{font-size:22px}.tv-oee-pill-label{font-size:10px}.tv-oee-pill.oee-hero{padding:10px 18px;min-width:95px;border-left-width:5px}.tv-oee-pill.oee-hero .tv-oee-pill-val{font-size:34px}.tv-oee-pill.oee-hero .tv-oee-pill-label{font-size:12px}.tv-bar-row{gap:10px;margin-bottom:5px}.tv-bar-label{font-size:15px;width:56px}.tv-bar-track{height:26px;border-radius:5px}.tv-bar-val{font-size:14px}.tv-bar-val-out{font-size:14px;min-width:42px}.tv-prev-info{font-size:12px}.tv-summary-stat{padding:14px 10px}.tv-summary-val{font-size:28px}.tv-summary-label{font-size:13px;margin-top:2px}.tv-section-title{font-size:16px;margin-bottom:8px}.tv-no-data{font-size:16px}}
 
 /* Grid & Cards */
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
@@ -3775,32 +3775,34 @@ function TVView({dataVersion,master}){
         const tgtVal=chartData.length>0?chartData[0].target:0;
 
         const isMobile=window.innerWidth<=1024;
+        const isTV=window.innerWidth>=1280;
+        const axFs=isTV?14:8;const lblFs=isTV?14:7;const legFs=isTV?13:9;const tgtFs=isTV?12:7;const barMax=isTV?36:20;const yW=isTV?48:32;const priorFs=isTV?12:9;const dotSz=isTV?12:8;
         return h('div',{className:'tv-section',style:{padding:'4px 8px',display:'flex',flexDirection:'column',...(isMobile?{minHeight:'auto'}:{flex:1,minHeight:0})}},
           // Header with prior shift info + operators
-          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:1,flexShrink:0}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:isTV?4:1,flexShrink:0}},
             h('div',{className:'tv-section-title',style:{margin:0}},'Hourly — Shift ',eq.currentShift),
-            h('div',{style:{display:'flex',gap:8,alignItems:'center'}},
-              h('span',{style:{fontSize:9,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#34C759'}}),'Over'),
-              h('span',{style:{fontSize:9,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#FF3B30'}}),'Under'),
-              priorLabel&&h('span',{style:{fontSize:9,color:'#64748B',display:'flex',alignItems:'center',gap:2}},h('span',{style:{width:8,height:8,borderRadius:1,display:'inline-block',background:'#CBD5E1'}}),'Prior')
+            h('div',{style:{display:'flex',gap:isTV?14:8,alignItems:'center'}},
+              h('span',{style:{fontSize:legFs,color:'#64748B',display:'flex',alignItems:'center',gap:3}},h('span',{style:{width:dotSz,height:dotSz,borderRadius:2,display:'inline-block',background:'#34C759'}}),'Over'),
+              h('span',{style:{fontSize:legFs,color:'#64748B',display:'flex',alignItems:'center',gap:3}},h('span',{style:{width:dotSz,height:dotSz,borderRadius:2,display:'inline-block',background:'#FF3B30'}}),'Under'),
+              priorLabel&&h('span',{style:{fontSize:legFs,color:'#64748B',display:'flex',alignItems:'center',gap:3}},h('span',{style:{width:dotSz,height:dotSz,borderRadius:2,display:'inline-block',background:'#CBD5E1'}}),'Prior')
             )
           ),
-          priorOps.length>0&&h('div',{style:{fontSize:9,color:'#94A3B8',marginBottom:2,flexShrink:0,fontStyle:'italic'}},'Prior (',priorLabel,'): ',priorOps.join(', ')),
+          priorOps.length>0&&h('div',{style:{fontSize:priorFs,color:'#94A3B8',marginBottom:2,flexShrink:0,fontStyle:'italic'}},'Prior (',priorLabel,'): ',priorOps.join(', ')),
           // Chart — use fixed height on mobile since flex:1 with height:100% collapses
           h('div',{className:'tv-chart-wrap',style:isMobile?{height:240}:{flex:1,minHeight:0}},
             h(ResponsiveContainer,{width:'100%',height:isMobile?240:'100%'},
-              h(BarChart,{data:chartData,margin:{top:20,right:4,bottom:4,left:0},barGap:1,barCategoryGap:'20%'},
+              h(BarChart,{data:chartData,margin:{top:isTV?28:20,right:4,bottom:4,left:0},barGap:1,barCategoryGap:'20%'},
                 h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E7EB',vertical:false}),
-                h(XAxis,{dataKey:'hour',tick:{fontSize:8,fill:'#64748B'},tickLine:false,axisLine:{stroke:'#E5E7EB'}}),
-                h(YAxis,{tick:{fontSize:8,fill:'#94A3B8'},tickLine:false,axisLine:false,width:32}),
-                h(ReferenceLine,{y:tgtVal,stroke:'#F59E0B',strokeDasharray:'4 3',strokeWidth:1.5,label:{value:'Target: '+tgtVal,position:'insideTopLeft',fontSize:7,fill:'#F59E0B',fontWeight:600}}),
-                priorLabel&&h(Bar,{dataKey:'prior',name:'Prior',fill:'#CBD5E1',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:20}),
-                h(Bar,{dataKey:'current',name:'Current',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:20},
+                h(XAxis,{dataKey:'hour',tick:{fontSize:axFs,fill:'#64748B',fontWeight:isTV?700:400},tickLine:false,axisLine:{stroke:'#E5E7EB'}}),
+                h(YAxis,{tick:{fontSize:axFs,fill:'#94A3B8'},tickLine:false,axisLine:false,width:yW}),
+                h(ReferenceLine,{y:tgtVal,stroke:'#F59E0B',strokeDasharray:'4 3',strokeWidth:isTV?2:1.5,label:{value:'Target: '+tgtVal,position:'insideTopLeft',fontSize:tgtFs,fill:'#F59E0B',fontWeight:700}}),
+                priorLabel&&h(Bar,{dataKey:'prior',name:'Prior',fill:'#CBD5E1',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:barMax}),
+                h(Bar,{dataKey:'current',name:'Current',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:barMax},
                   chartData.map((d,i)=>h(Cell,{key:i,fill:d.current>=d.target?'#34C759':'#FF3B30'})),
                   h(LabelList,{dataKey:'current',position:'top',content:props=>{
                     const{x,y,width:w,value}=props;
                     if(typeof value==='undefined')return null;
-                    return h('text',{x:(x||0)+(w||0)/2,y:(y||0)-2,textAnchor:'middle',fontSize:7,fontWeight:700,fill:'#374151'},value);
+                    return h('text',{x:(x||0)+(w||0)/2,y:(y||0)-(isTV?4:2),textAnchor:'middle',fontSize:lblFs,fontWeight:800,fill:'#374151'},value);
                   }})
                 )
               )
