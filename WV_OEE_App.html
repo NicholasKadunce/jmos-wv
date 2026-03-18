@@ -887,9 +887,7 @@ input[type=number]{-moz-appearance:textfield}
 .ai-ask-close{background:none;border:none;cursor:pointer;color:#9CA3AF;font-size:18px;padding:2px 6px;line-height:1;border-radius:6px;transition:all .15s}
 .ai-ask-close:hover{color:var(--jm-text);background:rgba(0,0,0,0.05)}
 .ai-ask-input-row{display:flex;gap:6px;align-items:center}
-.ai-ask-input{flex:1;border:1.5px solid rgba(27,61,110,0.12);border-radius:12px;padding:10px 14px;font-size:13px;font-family:inherit;outline:none;transition:all .2s;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-.ai-ask-input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,0.08),0 1px 3px rgba(0,0,0,0.04)}
-.ai-ask-input::placeholder{color:#B0BEC5;font-weight:400}
+/* ai-ask-input defined in dark theme section above */
 .ai-ask-mic{width:38px;height:38px;border-radius:10px;border:1.5px solid rgba(27,61,110,0.12);background:#fff;color:#9CA3AF;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
 .ai-ask-mic:hover{border-color:var(--jm-navy);color:var(--jm-navy);background:var(--jm-blue-tint)}
 .ai-ask-mic.listening{border-color:#DC2626;color:#DC2626;background:#FEF2F2;animation:micPulse 1.2s ease infinite}
@@ -2005,6 +2003,8 @@ function Dashboard({dataVersion,master}){
   const [equipFilter,setEquipFilter]=useState('all');
   const [processFilter,setProcessFilter]=useState('all');
   const [expandedDt,setExpandedDt]=useState(null);
+  const [dtEquipFilter,setDtEquipFilter]=useState('all');
+  const [defEquipFilter,setDefEquipFilter]=useState('all');
   const [expandedDef,setExpandedDef]=useState(null);
   const [drillDown,setDrillDown]=useState(null);
   const [opView,setOpView]=useState('topBottom'); // 'topBottom','all' // null, 'oee', 'a', 'p', 'q'
@@ -2188,15 +2188,61 @@ function Dashboard({dataVersion,master}){
   },[filtered,activePreset,allRecords,shiftFilter,equipFilter,processFilter]);
 
   // Add cumulative % to pareto data
+  // Equipment-filtered pareto data
+  const dtParetoFiltered=useMemo(()=>{
+    if(dtEquipFilter==='all')return dtPareto;
+    const map={};
+    filtered.filter(r=>r.equipCode===dtEquipFilter).forEach(r=>{
+      r.downtime.forEach(d=>{
+        const code=d.dtCode;if(!code)return;
+        const name=DT_CODES[code]||('Code '+code);
+        if(!map[code])map[code]={code,name,mins:0,count:0,subs:{},equip:{}};
+        map[code].mins+=parseInt(d.mins||0);map[code].count++;
+        if(d.subItem){
+          if(!map[code].subs[d.subItem])map[code].subs[d.subItem]={name:d.subItem,mins:0,count:0};
+          map[code].subs[d.subItem].mins+=parseInt(d.mins||0);map[code].subs[d.subItem].count++;
+        }
+        const eqName=(INIT_EQUIPMENT.find(e=>e.code===r.equipCode)||{}).name||r.equipCode;
+        if(!map[code].equip[r.equipCode])map[code].equip[r.equipCode]={name:eqName,mins:0,count:0};
+        map[code].equip[r.equipCode].mins+=parseInt(d.mins||0);map[code].equip[r.equipCode].count++;
+      });
+    });
+    return Object.values(map).map(d=>({...d,subs:Object.values(d.subs).sort((a,b)=>b.mins-a.mins),equip:Object.values(d.equip).sort((a,b)=>b.mins-a.mins)})).sort((a,b)=>b.mins-a.mins);
+  },[filtered,dtPareto,dtEquipFilter]);
+
+  const defParetoFiltered=useMemo(()=>{
+    if(defEquipFilter==='all')return defPareto;
+    const map={};
+    filtered.filter(r=>r.equipCode===defEquipFilter).forEach(r=>{
+      r.defects.forEach(d=>{
+        const code=d.defCode;if(!code)return;
+        const name=DEF_CODES[code]||('Code '+code);
+        if(!map[name])map[name]={name,qty:0,count:0,equip:{}};
+        map[name].qty+=parseInt(d.qty||0);map[name].count++;
+        const eqName=(INIT_EQUIPMENT.find(e=>e.code===r.equipCode)||{}).name||r.equipCode;
+        if(!map[name].equip[r.equipCode])map[name].equip[r.equipCode]={name:eqName,qty:0,count:0};
+        map[name].equip[r.equipCode].qty+=parseInt(d.qty||0);map[name].equip[r.equipCode].count++;
+      });
+    });
+    return Object.values(map).map(d=>({...d,equip:Object.values(d.equip).sort((a,b)=>b.qty-a.qty)})).sort((a,b)=>b.qty-a.qty);
+  },[filtered,defPareto,defEquipFilter]);
+
   const dtParetoWithCum=useMemo(()=>{
-    let cum=0;const dt=metrics.dtm;
-    return dtPareto.map(d=>{cum+=d.mins;return{...d,cumPct:dt>0?(cum/dt*100):0};});
-  },[dtPareto,metrics.dtm]);
+    let cum=0;const dt=dtParetoFiltered.reduce((s,d)=>s+d.mins,0);
+    return dtParetoFiltered.map(d=>{cum+=d.mins;return{...d,cumPct:dt>0?(cum/dt*100):0};});
+  },[dtParetoFiltered]);
 
   const defParetoWithCum=useMemo(()=>{
-    let cum=0;const totalDef=metrics.def;
-    return defPareto.map(d=>{cum+=d.qty;return{...d,cumPct:totalDef>0?(cum/totalDef*100):0};});
-  },[defPareto,metrics.def]);
+    let cum=0;const totalDef=defParetoFiltered.reduce((s,d)=>s+d.qty,0);
+    return defParetoFiltered.map(d=>{cum+=d.qty;return{...d,cumPct:totalDef>0?(cum/totalDef*100):0};});
+  },[defParetoFiltered]);
+
+  // Get unique equipment in current filtered data for pareto dropdowns
+  const activeEquipCodes=useMemo(()=>{
+    const codes=new Set();
+    filtered.forEach(r=>codes.add(r.equipCode));
+    return [...codes].map(c=>({code:c,name:getEquipName(c)})).sort((a,b)=>a.name.localeCompare(b.name));
+  },[filtered]);
 
   // Loss waterfall — all losses as % of entitlement (target), normalized across equipment
   const [lossView,setLossView]=useState('category'); // 'category' or 'code'
@@ -2340,11 +2386,30 @@ function Dashboard({dataVersion,master}){
     if(hasData){
       ctx.summary={oee:metrics.oee.toFixed(1),availability:metrics.a.toFixed(1),performance:metrics.p.toFixed(1),quality:metrics.q.toFixed(1),goodUnits:metrics.good,targetUnits:metrics.tgt,totalDefects:metrics.def,downtimeMinutes:Math.round(metrics.dtm),runningMinutes:Math.round(metrics.run),scheduledMinutes:Math.round(metrics.sm),records:filtered.length};
       ctx.hourlyOEE=hourlyOEE.map(d=>({hour:d.hour,oee:d.oee,a:d.a,p:d.p,q:d.q,good:d.good,target:d.tgt}));
+      // Per-hour detailed breakdown: downtime codes, defects, equipment, operators for each hour
+      const hourlyDetail={};
+      filtered.forEach(r=>{
+        const hr=r.hourIdx;
+        if(!hourlyDetail[hr])hourlyDetail[hr]={hour:hr,equipment:[],totalGood:0,totalTarget:0,totalDT:0,totalDef:0,dtCodes:{},defCodes:{}};
+        const hd=hourlyDetail[hr];
+        hd.totalGood+=r.goodUnits;hd.totalTarget+=r.target;
+        const dtMins=totalDTMins(r.downtime);hd.totalDT+=dtMins;
+        hd.totalDef+=r.defects.reduce((s,x)=>s+parseInt(x.qty||0),0);
+        r.downtime.forEach(d=>{const nm=DT_CODES[d.dtCode]||d.dtCode;if(!hd.dtCodes[nm])hd.dtCodes[nm]=0;hd.dtCodes[nm]+=parseInt(d.mins||0);});
+        r.defects.forEach(d=>{const nm=DEF_CODES[d.defCode]||d.defCode;if(!hd.defCodes[nm])hd.defCodes[nm]=0;hd.defCodes[nm]+=parseInt(d.qty||0);});
+        hd.equipment.push({name:getEquipName(r.equipCode),good:r.goodUnits,target:r.target,dt:dtMins,ops:(r.operators||[]).join(',')});
+      });
+      ctx.hourlyDetail=Object.values(hourlyDetail).sort((a,b)=>a.hour-b.hour).map(hd=>({
+        hour:'Hr '+hd.hour,good:hd.totalGood,target:hd.totalTarget,dtMins:hd.totalDT,defects:hd.totalDef,
+        dtBreakdown:Object.entries(hd.dtCodes).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>k+':'+v+'min'),
+        defBreakdown:Object.entries(hd.defCodes).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>k+':'+v),
+        equipment:hd.equipment.slice(0,8).map(e=>e.name+' (good:'+e.good+'/tgt:'+e.target+(e.dt>0?',dt:'+e.dt+'min':'')+(e.ops?',ops:'+e.ops:'')+')')
+      }));
       ctx.equipmentFocus=equipMetrics.slice(0,10).map(em=>({name:getEquipName(em.ec),oee:em.oee.toFixed(1),a:em.a.toFixed(1),p:em.p.toFixed(1),q:em.q.toFixed(1),bottleneck:em.bottleneck}));
       ctx.downtimePareto=dtPareto.slice(0,10).map(d=>({reason:d.name,mins:d.mins,events:d.count,subs:d.subs.slice(0,5).map(s=>({name:s.name,mins:s.mins,count:s.count})),equipment:d.equip.slice(0,5).map(e=>({name:e.name,mins:e.mins,count:e.count}))}));
       ctx.defectPareto=defPareto.slice(0,10).map(d=>({type:d.name,qty:d.qty,events:d.count,equipment:d.equip.slice(0,5).map(e=>({name:e.name,qty:e.qty}))}));
       ctx.operators=operatorMetrics.slice(0,10).map(op=>({name:op.name,perf:op.perf.toFixed(1),hours:op.hrs,output:op.good,target:op.tgt,defects:op.def,downtime:Math.round(op.dtm)}));
-      if(lossWaterfall&&lossWaterfall.totalTarget>0){ctx.lossWaterfall={actualPct:lossWaterfall.actualPct,losses:(lossWaterfall.byCategory||[]).map(l=>({name:l.name,type:l.type,pct:l.pct}))};}
+      if(lossWaterfall&&lossWaterfall.totalTarget>0){ctx.lossWaterfall={actualPct:lossWaterfall.actualPct,losses:(lossWaterfall.byCategory||[]).map(l=>({name:l.name,type:l.type,pct:l.pct})),byCode:(lossWaterfall.byCode||[]).slice(0,10).map(l=>({name:l.name,type:l.type,pct:l.pct}))};}
     }
     return JSON.stringify(ctx);
   },[hasData,metrics,hourlyOEE,equipMetrics,dtPareto,defPareto,operatorMetrics,lossWaterfall,filtered,dateFrom,dateTo,shiftFilter]);
@@ -2867,10 +2932,14 @@ function Dashboard({dataVersion,master}){
         chartLogo,
         h('div',{className:'dash-card-header'},
           h('div',{className:'dash-card-title'},h(Icon.clock),' Downtime Pareto'),
-          h('div',{style:{display:'flex',gap:8,alignItems:'center'}},
-            hasData&&h('div',{className:'dash-card-badge'},Math.round(metrics.dtm)+' min total'),
+          h('div',{style:{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}},
+            h('select',{className:'dash-filter-select',value:dtEquipFilter,onChange:e=>{setDtEquipFilter(e.target.value);setExpandedDt(null);},style:{fontSize:11,height:26,padding:'0 22px 0 6px'}},
+              h('option',{value:'all'},'All Equipment'),
+              activeEquipCodes.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name))
+            ),
+            hasData&&h('div',{className:'dash-card-badge'},dtParetoFiltered.reduce((s,d)=>s+d.mins,0)+' min'),
             hasData&&dtParetoWithCum.length>0&&h('div',{className:'dash-card-badge badge-amber'},
-              dtParetoWithCum.filter(d=>d.cumPct<=80).length+' of '+dtParetoWithCum.length+' cause 80% of losses')
+              dtParetoWithCum.filter(d=>d.cumPct<=80).length+' of '+dtParetoWithCum.length+' cause 80%')
           )),
         dtParetoWithCum.length>0?h('div',null,
           h(ResponsiveContainer,{width:'100%',height:200},
@@ -2947,9 +3016,12 @@ function Dashboard({dataVersion,master}){
         chartLogo,
         h('div',{className:'dash-card-header'},
           h('div',{className:'dash-card-title'},h(Icon.alertTri),' Defect Pareto'),
-          h('div',{style:{display:'flex',gap:8,alignItems:'center'}},
-            hasData&&metrics.def>0&&h('div',{className:'dash-card-badge'},metrics.def+' total'),
-            hasData&&metrics.def>0&&h('div',{className:'dash-card-badge'},(metrics.good+metrics.def>0?((metrics.def/(metrics.good+metrics.def))*1000000).toFixed(0):'0')+' DPMO')
+          h('div',{style:{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}},
+            h('select',{className:'dash-filter-select',value:defEquipFilter,onChange:e=>setDefEquipFilter(e.target.value),style:{fontSize:11,height:26,padding:'0 22px 0 6px'}},
+              h('option',{value:'all'},'All Equipment'),
+              activeEquipCodes.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name))
+            ),
+            hasData&&defParetoFiltered.reduce((s,d)=>s+d.qty,0)>0&&h('div',{className:'dash-card-badge'},defParetoFiltered.reduce((s,d)=>s+d.qty,0)+' total')
           )),
         defParetoWithCum.length>0?h('div',null,
           h(ResponsiveContainer,{width:'100%',height:200},
