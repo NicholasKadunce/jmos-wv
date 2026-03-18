@@ -4007,6 +4007,7 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   // Database browser state
   const [dbRecords,setDbRecords]=useState([]);const [dbLoading,setDbLoading]=useState(false);const [dbDateFrom,setDbDateFrom]=useState('');const [dbDateTo,setDbDateTo]=useState('');
   const [dbExpanded,setDbExpanded]=useState(null);
+  const [dbFilterShift,setDbFilterShift]=useState('');const [dbFilterEquip,setDbFilterEquip]=useState('');const [dbFilterProcess,setDbFilterProcess]=useState('');
   // Daily report state
   const [reportDate,setReportDate]=useState(()=>{const d=toET(new Date());d.setDate(d.getDate()-1);return fmtDate(d);});
   const [reportSending,setReportSending]=useState(false);const [reportMsg,setReportMsg]=useState('');
@@ -4021,27 +4022,42 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
     if(dbDateFrom)params.set('from',dbDateFrom);if(dbDateTo)params.set('to',dbDateTo);
     fetch('/api/data'+(params.toString()?'?'+params.toString():'')).then(r=>r.json()).then(d=>{setDbRecords(Array.isArray(d)?d:[]);setDbLoading(false);}).catch(()=>{setDbLoading(false);});
   }
+  function getFilteredDbRecords(){
+    return dbRecords.filter(rec=>{
+      if(!rec.shiftData||!rec.equipData)return false;
+      const sd=rec.shiftData;
+      if(dbFilterShift&&sd.shiftNum!==dbFilterShift)return false;
+      if(dbFilterEquip||dbFilterProcess){
+        const eqs=Object.keys(rec.equipData);
+        if(dbFilterEquip&&!eqs.includes(dbFilterEquip))return false;
+        if(dbFilterProcess){const match=eqs.some(ec=>{const eq=INIT_EQUIPMENT.find(e=>e.code===ec);return eq&&eq.process===dbFilterProcess;});if(!match)return false;}
+      }
+      return true;
+    });
+  }
   function exportXLS(){
-    // Build CSV from records (opens as .xls in Excel)
-    const rows=[['Date','Shift','Equipment','Hour','Product','Target','Good Units','Defects','DT Minutes','Operators']];
-    dbRecords.forEach(rec=>{
-      if(!rec.shiftData||!rec.equipData)return;
+    const filtered=getFilteredDbRecords();
+    const rows=[['Date','Shift','Equipment','Process','Hour','Product','Target','Good Units','Defects','DT Minutes','Operators']];
+    filtered.forEach(rec=>{
       const sd=rec.shiftData;
       Object.keys(rec.equipData).forEach(ec=>{
+        if(dbFilterEquip&&ec!==dbFilterEquip)return;
+        if(dbFilterProcess){const eq=INIT_EQUIPMENT.find(e=>e.code===ec);if(!eq||eq.process!==dbFilterProcess)return;}
         (rec.equipData[ec]||[]).forEach(hr=>{
           const defQty=(hr.defects||[]).reduce((s,d)=>s+parseInt(d.qty||0),0);
           const dtMins=(hr.downtime||[]).reduce((s,d)=>s+parseInt(d.mins||0),0);
           const ops=(hr.operators||[]).join('; ');
-          rows.push([sd.shiftDate,sd.shiftNum,ec,hr.hourIdx,hr.productCode,hr.target,hr.goodUnits||0,defQty,dtMins,ops]);
+          const eq=INIT_EQUIPMENT.find(e=>e.code===ec);
+          rows.push([sd.shiftDate,sd.shiftNum,getEquipName(ec),eq?eq.process:'',hr.hourIdx,getProductName(hr.productCode),hr.target,hr.goodUnits||0,defQty,dtMins,ops]);
         });
       });
     });
     const csv=rows.map(r=>r.map(c=>'"'+(String(c).replace(/"/g,'""'))+'"').join(',')).join('\n');
     const blob=new Blob(['\uFEFF'+csv],{type:'application/vnd.ms-excel;charset=utf-8'});
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download='JMOS_Data_Export_'+today()+'.xls';
+    const a=document.createElement('a');a.href=url;a.download='JMOS_Export_'+(dbDateFrom||'all')+'_'+(dbDateTo||today())+'.xls';
     document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-    showToast('Data exported to Excel');
+    showToast('Exported '+rows.length+' rows to Excel');
   }
   // Equipment state
   const [newEquipCode,setNewEquipCode]=useState('');const [newEquipName,setNewEquipName]=useState('');const [newEquipProcess,setNewEquipProcess]=useState('');
@@ -4448,40 +4464,85 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
     ),
 
     // ═══ DATABASE BROWSER TAB ═══
-    tab==='data'&&h('div',{className:'admin-storage'},
+    tab==='data'&&(()=>{
+      const svgMail=h('svg',{width:15,height:15,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'}),h('polyline',{points:'22,6 12,13 2,6'}));
+      const svgEye=h('svg',{width:15,height:15,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'}),h('circle',{cx:12,cy:12,r:3}));
+      const svgDownload=h('svg',{width:15,height:15,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'}),h('polyline',{points:'7 10 12 15 17 10'}),h('line',{x1:12,y1:15,x2:12,y2:3}));
+      const svgRefresh=h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round'},h('polyline',{points:'23 4 23 10 17 10'}),h('path',{d:'M20.49 15a9 9 0 1 1-2.12-9.36L23 10'}));
+      const svgFilter=h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('polygon',{points:'22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3'}));
+      const inputStyle={height:34,border:'1.5px solid var(--jm-border)',borderRadius:6,padding:'0 10px',fontSize:12,fontFamily:'inherit',background:'#fff'};
+      const selectStyle={...inputStyle,minWidth:100,appearance:'auto'};
+      const iconBtnStyle={display:'inline-flex',alignItems:'center',gap:6,padding:'0 14px',height:34,border:'1.5px solid var(--jm-border)',borderRadius:6,background:'#fff',cursor:'pointer',fontFamily:'inherit',fontSize:12,fontWeight:600,color:'var(--jm-navy)',transition:'all 0.12s'};
+      const iconBtnPrimaryStyle={...iconBtnStyle,background:'var(--jm-navy)',color:'#fff',border:'none'};
+      // Build unique equipment/process lists from loaded records
+      const dbEquipCodes=new Set();const dbProcesses=new Set();
+      dbRecords.forEach(rec=>{if(rec.equipData)Object.keys(rec.equipData).forEach(ec=>{dbEquipCodes.add(ec);const eq=INIT_EQUIPMENT.find(e=>e.code===ec);if(eq)dbProcesses.add(eq.process);});});
+      const filteredRecs=getFilteredDbRecords();
+      // Count filtered rows
+      let filteredRows=0;filteredRecs.forEach(rec=>{Object.keys(rec.equipData).forEach(ec=>{
+        if(dbFilterEquip&&ec!==dbFilterEquip)return;if(dbFilterProcess){const eq=INIT_EQUIPMENT.find(e=>e.code===ec);if(!eq||eq.process!==dbFilterProcess)return;}
+        filteredRows+=(rec.equipData[ec]||[]).length;
+      });});
+      return h('div',{className:'admin-storage'},
+      // ── Report Section ──
       h('div',{className:'admin-storage-section'},
-        h('div',{className:'admin-storage-title'},'Daily OEE Email Report'),
+        h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}},
+          h('div',{className:'admin-storage-title',style:{marginBottom:0}},'Daily OEE Report'),
+          reportMsg&&h('span',{style:{fontSize:11,fontWeight:600,color:reportMsg.startsWith('Sent')?'var(--jm-success)':'var(--jm-error)'}},reportMsg)
+        ),
         h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}},
-          h('input',{type:'date',value:reportDate,onChange:e=>setReportDate(e.target.value),style:{height:34,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:12,fontFamily:'inherit'}}),
-          h('button',{className:'btn btn-primary btn-sm',disabled:reportSending,onClick:async()=>{
+          h('input',{type:'date',value:reportDate,onChange:e=>setReportDate(e.target.value),style:inputStyle}),
+          h('button',{style:iconBtnPrimaryStyle,disabled:reportSending,onClick:async()=>{
             setReportSending(true);setReportMsg('');
             try{const r=await fetch('/api/report/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:reportDate})});const d=await r.json();setReportMsg(d.sent?'Sent to '+d.to:(d.error||d.reason||'Failed'));}
             catch(e){setReportMsg('Error: '+e.message);}
             setReportSending(false);
-          }},reportSending?'Sending...':'\uD83D\uDCE7 Send Report'),
-          h('a',{href:'/api/report/preview?date='+reportDate,target:'_blank',className:'btn btn-secondary btn-sm'},'\uD83D\uDC41 Preview'),
-          reportMsg&&h('span',{style:{fontSize:12,marginLeft:4,color:reportMsg.startsWith('Sent')?'var(--jm-success)':'var(--jm-error)'}},reportMsg)
+          }},svgMail,reportSending?'Sending...':'Send Report'),
+          h('a',{href:'/api/report/preview?date='+reportDate,target:'_blank',style:{...iconBtnStyle,textDecoration:'none'}},svgEye,'Preview')
         )
       ),
+      // ── Filters Section ──
       h('div',{className:'admin-storage-section'},
-        h('div',{className:'admin-storage-title'},'Production Data Browser'),
-        h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:12}},
-          h('input',{type:'date',value:dbDateFrom,onChange:e=>setDbDateFrom(e.target.value),style:{height:34,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:12,fontFamily:'inherit'}}),
-          h('span',{style:{fontSize:12,color:'var(--jm-text-sec)'}},'to'),
-          h('input',{type:'date',value:dbDateTo,onChange:e=>setDbDateTo(e.target.value),style:{height:34,border:'1.5px solid var(--jm-border)',borderRadius:'var(--radius-sm)',padding:'0 8px',fontSize:12,fontFamily:'inherit'}}),
-          h('button',{className:'btn btn-primary btn-sm',onClick:loadDbRecords},dbLoading?'Loading...':'Refresh'),
-          h('button',{className:'btn btn-secondary btn-sm',onClick:exportXLS,disabled:dbRecords.length===0},'\uD83D\uDCE5 Export to Excel'),
-          h('div',{className:'dash-card-badge',style:{marginLeft:'auto'}},dbRecords.length+' submissions')
+        h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}},
+          h('div',{className:'admin-storage-title',style:{marginBottom:0,display:'flex',alignItems:'center',gap:6}},svgFilter,' Production Data'),
+          h('span',{style:{fontSize:11,fontWeight:700,color:'var(--jm-text-ter)',letterSpacing:0.3}},filteredRows+' rows from '+filteredRecs.length+' submissions')
+        ),
+        // Filter row
+        h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:14}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:6}},
+            h('label',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)',whiteSpace:'nowrap'}},'Date Range'),
+            h('input',{type:'date',value:dbDateFrom,onChange:e=>setDbDateFrom(e.target.value),style:{...inputStyle,width:130}}),
+            h('span',{style:{fontSize:11,color:'var(--jm-text-ter)'}},'to'),
+            h('input',{type:'date',value:dbDateTo,onChange:e=>setDbDateTo(e.target.value),style:{...inputStyle,width:130}})
+          ),
+          h('select',{value:dbFilterShift,onChange:e=>setDbFilterShift(e.target.value),style:selectStyle},
+            h('option',{value:''},'All Shifts'),h('option',{value:'1'},'Shift 1'),h('option',{value:'2'},'Shift 2')
+          ),
+          h('select',{value:dbFilterProcess,onChange:e=>{setDbFilterProcess(e.target.value);setDbFilterEquip('');},style:selectStyle},
+            h('option',{value:''},'All Processes'),[...dbProcesses].sort().map(p=>h('option',{key:p,value:p},p))
+          ),
+          h('select',{value:dbFilterEquip,onChange:e=>setDbFilterEquip(e.target.value),style:{...selectStyle,minWidth:140}},
+            h('option',{value:''},'All Equipment'),
+            [...dbEquipCodes].filter(ec=>{if(!dbFilterProcess)return true;const eq=INIT_EQUIPMENT.find(e=>e.code===ec);return eq&&eq.process===dbFilterProcess;}).sort().map(ec=>h('option',{key:ec,value:ec},getEquipName(ec)))
+          )
+        ),
+        // Action row
+        h('div',{style:{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}},
+          h('button',{style:iconBtnPrimaryStyle,onClick:loadDbRecords,disabled:dbLoading},svgRefresh,dbLoading?'Loading...':'Load Data'),
+          h('button',{style:iconBtnStyle,onClick:exportXLS,disabled:filteredRecs.length===0},svgDownload,'Export to Excel'),
+          (dbFilterShift||dbFilterEquip||dbFilterProcess)&&h('button',{style:{...iconBtnStyle,fontSize:11,color:'var(--jm-text-ter)'},onClick:()=>{setDbFilterShift('');setDbFilterEquip('');setDbFilterProcess('');}},'Clear Filters')
         )
       ),
-      h('div',{className:'admin-storage-section'},
-        dbRecords.length===0?h('p',{style:{color:'var(--jm-text-ter)',textAlign:'center',padding:20}},'No data found. Submit production data to see it here.'):
+      // ── Data Table ──
+      h('div',{className:'admin-storage-section',style:{padding:0}},
+        filteredRecs.length===0?h('p',{style:{color:'var(--jm-text-ter)',textAlign:'center',padding:32,fontSize:13}},'No data matches your filters. Adjust the date range or filters above, then click Load Data.'):
         h('div',{style:{overflowX:'auto'}},
           h('table',{className:'admin-table'},
-            h('thead',null,h('tr',null,h('th',{style:{width:30}},'#'),h('th',null,'Date'),h('th',null,'Shift'),h('th',null,'Equipment'),h('th',{className:'num'},'Hours'),h('th',{className:'num'},'Good'),h('th',{className:'num'},'Target'),h('th',{className:'num'},'Defects'),h('th',{className:'num'},'DT Min'),h('th',{style:{width:40}}))),
-            h('tbody',null,dbRecords.map((rec,idx)=>{
-              if(!rec.shiftData||!rec.equipData)return null;
-              const sd=rec.shiftData;const eqs=Object.keys(rec.equipData);
+            h('thead',null,h('tr',null,h('th',{style:{width:30}},'#'),h('th',null,'Date'),h('th',null,'Shift'),h('th',null,'Equipment'),h('th',{className:'num'},'Hours'),h('th',{className:'num'},'Good'),h('th',{className:'num'},'Target'),h('th',{className:'num'},'Defects'),h('th',{className:'num'},'DT Min'),h('th',{style:{width:36}}))),
+            h('tbody',null,filteredRecs.map((rec,idx)=>{
+              const sd=rec.shiftData;let eqs=Object.keys(rec.equipData);
+              if(dbFilterEquip)eqs=eqs.filter(ec=>ec===dbFilterEquip);
+              if(dbFilterProcess)eqs=eqs.filter(ec=>{const eq=INIT_EQUIPMENT.find(e=>e.code===ec);return eq&&eq.process===dbFilterProcess;});
               let totalGood=0,totalTgt=0,totalDef=0,totalDt=0,totalHrs=0;
               eqs.forEach(ec=>(rec.equipData[ec]||[]).forEach(hr=>{totalGood+=parseInt(hr.goodUnits||0);totalTgt+=hr.target||0;totalDef+=(hr.defects||[]).reduce((s,d)=>s+parseInt(d.qty||0),0);totalDt+=(hr.downtime||[]).reduce((s,d)=>s+parseInt(d.mins||0),0);totalHrs++;}));
               const isExp=dbExpanded===idx;
@@ -4494,14 +4555,13 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
                   h('td',{className:'num'},totalHrs),
                   h('td',{className:'num',style:{fontWeight:600}},totalGood.toLocaleString()),
                   h('td',{className:'num'},totalTgt.toLocaleString()),
-                  h('td',{className:'num',style:{color:totalDef>0?'#B02028':'inherit'}},totalDef),
+                  h('td',{className:'num',style:{color:totalDef>0?'var(--jm-error)':'inherit'}},totalDef),
                   h('td',{className:'num'},totalDt),
-                  h('td',null,h('span',{style:{fontSize:14}},isExp?'\u25B2':'\u25BC'))
+                  h('td',null,h('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'var(--jm-text-ter)',strokeWidth:2.5,style:{transform:isExp?'rotate(180deg)':'none',transition:'transform 0.15s'}},h('polyline',{points:'6 9 12 15 18 9'})))
                 ),
                 isExp&&eqs.map(ec=>(rec.equipData[ec]||[]).map(hr=>
-                  h('tr',{key:ec+'-'+hr.hourIdx,style:{background:'#f8f9fa',fontSize:11}},
-                    h('td',null),
-                    h('td',null),h('td',null),
+                  h('tr',{key:ec+'-'+hr.hourIdx,style:{background:'#f8fafc',fontSize:11}},
+                    h('td',null),h('td',null),h('td',null),
                     h('td',{style:{paddingLeft:16,fontWeight:500}},getEquipName(ec)+' Hr'+hr.hourIdx),
                     h('td',{className:'num'},'1'),
                     h('td',{className:'num'},hr.goodUnits||0),
@@ -4516,6 +4576,7 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
           )
         )
       )
+    );})()
     )
       ) /* end settings-content */
     ) /* end settings-layout */
