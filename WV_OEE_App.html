@@ -3795,7 +3795,12 @@ function TVView({dataVersion,master}){
                 h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E7EB',vertical:false}),
                 h(XAxis,{dataKey:'hour',tick:{fontSize:axFs,fill:'#64748B',fontWeight:isTV?700:400},tickLine:false,axisLine:{stroke:'#E5E7EB'}}),
                 h(YAxis,{tick:{fontSize:axFs,fill:'#94A3B8'},tickLine:false,axisLine:false,width:yW}),
-                h(ReferenceLine,{y:tgtVal,stroke:'#F59E0B',strokeDasharray:'4 3',strokeWidth:isTV?2:1.5,label:{value:'Target: '+tgtVal,position:'insideTopLeft',fontSize:tgtFs,fill:'#F59E0B',fontWeight:700}}),
+                h(ReferenceLine,{y:tgtVal,stroke:'#F59E0B',strokeDasharray:'4 3',strokeWidth:isTV?2.5:1.5,isFront:true,label:props=>{
+                  const{viewBox}=props;const vx=viewBox.x+viewBox.width+2;const vy=viewBox.y;
+                  return h('g',null,
+                    h('text',{x:vx,y:vy,textAnchor:'start',dominantBaseline:'middle',fontSize:tgtFs,fill:'#F59E0B',fontWeight:700,transform:'rotate(-90,'+vx+','+vy+')'},'Tgt: '+tgtVal)
+                  );
+                }}),
                 priorLabel&&h(Bar,{dataKey:'prior',name:'Prior',fill:'#CBD5E1',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:barMax}),
                 h(Bar,{dataKey:'current',name:'Current',radius:[2,2,0,0],isAnimationActive:false,maxBarSize:barMax},
                   chartData.map((d,i)=>h(Cell,{key:i,fill:d.current>=d.target?'#34C759':'#FF3B30'})),
