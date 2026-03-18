@@ -2026,34 +2026,31 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
   const svgRef=useRef(null);
   useEffect(()=>{setFlowShift(shiftFilter||'all');},[shiftFilter]);
 
-  // ── Icon-driven process flow v3 ──
-  // Equipment rendered as icon + label, light airy premium feel
-  var ICON_R=14,ROW_H=28,COL_GAP=10;
-  // Layout: 5 bolt-line groups across top, plate presses below-center,
-  // unit assembly below headers flowing up to assembly,
-  // cable line subassemblies on left, cable lines across bottom
+  // ── Icon-driven process flow v4 ──
+  // Crisp relevant icons, straight lines with rounded bends, vertical stacking,
+  // products shown, unit assembly feeds A3+A4, no arrow overlap
+  var ICON_R=14,ROW_H=30;
   var COLORS={bolt:'#1B3D6E',press:'#7C3AED',cable:'#059669',sub:'#D97706',inactive:'#D1D5DB'};
 
-  // SVG icon paths for each process type (18x18 viewBox)
+  // SVG icon paths — relevant to each process (18x18 viewBox)
   var ICONS={
-    shear:'M3 3l6 6m0-6L3 9M11 3l6 6m0-6l-6 6',
-    peel:'M4 14c2-4 5-7 10-10M4 16c3-4 6-8 12-11',
-    thread:'M6 2v14M10 2v14M6 5h4M6 9h4M6 13h4',
-    header:'M4 12h10M9 4v4l-3 4h6l-3-4V4',
-    assembly:'M9 2L4 7h4v4h2V7h4L9 2zM3 13h12v2H3z',
-    press:'M5 3h8v2H5zM7 5v4M11 5v4M4 9h10v2H4zM6 11v3h6v-3',
-    cable:'M3 9a6 6 0 0112 0M5 9a4 4 0 018 0M7 9a2 2 0 014 0',
-    saw:'M9 3v4M5 5l2.5 2.5M13 5l-2.5 2.5M3 9h12M5 13l2.5-2.5M13 13l-2.5-2.5M9 11v4',
-    weld:'M5 13L9 3l4 10M7 9h4',
-    pipe:'M3 6h12v6H3zM6 6V4M12 6V4M6 12v2M12 12v2',
-    unit:'M4 10h4v4H4zM10 10h4v4h-4zM7 4h4v4H7z',
-    tie:'M3 8h3v2H3zM8 8h3v2H8zM13 8h3v2h-3zM6 9h2M11 9h2',
-    landis:'M4 6h10l-2 3H6L4 6zM6 9v4M12 9v4'
+    shear:'M3 9h12M7 3v12M11 3v12',                                    // cutting blades crossing
+    peel:'M3 14Q9 2 15 6M3 16Q9 4 15 8',                               // peeling strips curving off
+    thread:'M5 3v12M5 6h8M5 10h8M13 3v12',                             // threaded bolt profile
+    header:'M5 3h8v4H5zM7 7v7M11 7v7M5 14h8',                         // bolt head being stamped
+    assembly:'M9 2l5 4-5 4-5-4zM4 10v4l5 3 5-3v-4',                   // box/package assembly
+    press:'M4 4h10M6 4v5M12 4v5M3 9h12v3H3zM5 12v3h8v-3',             // hydraulic press
+    cable:'M3 6q6 8 12 0M3 10q6 8 12 0',                               // cable/wire strands
+    saw:'M9 3v3M4 6a5 5 0 0010 0M4 6h10M9 12v3',                      // circular saw blade
+    weld:'M7 14l2-10 2 10M4 6l2 2M14 6l-2 2M6 2l1 2M12 2l-1 2',      // welding torch sparks
+    pipe:'M3 7h12v5H3zM5 5v2M13 5v2M5 12v2M13 12v2',                  // pipe section
+    unit:'M4 8h4v5H4zM10 8h4v5h-4zM7 3h4v4H7z',                       // component blocks
+    tie:'M2 8h4l1 2h2l1-2h4l1 2h2l1-2',                               // chain links
+    landis:'M4 5h10v3H4zM6 8v5M12 8v5M4 13h10'                        // lathe/threader
   };
-  // Map equipment code prefix to icon key
   function iconFor(code){
     if(code.includes('SHEAR'))return 'shear';if(code.includes('PEEL')||code.includes('SWAG'))return 'peel';
-    if(code.includes('THREAD'))return 'thread';if(code.includes('HEAD'))return 'header';
+    if(code.includes('THREAD')&&!code.includes('LANDIS'))return 'thread';if(code.includes('HEAD'))return 'header';
     if(code.includes('ASSY'))return 'assembly';if(code.includes('PRESS'))return 'press';
     if(code.includes('CABLE'))return 'cable';if(code.includes('BIGSAW'))return 'saw';
     if(code.includes('OFFWELD'))return 'weld';if(code.includes('PIPE'))return 'pipe';
@@ -2061,56 +2058,54 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     if(code.includes('LANDIS'))return 'landis';return 'assembly';
   }
 
-  // Process groups with positions (viewBox 960x520)
-  // Main bolt line centered vertically around y=100
-  var BOLT_Y=100;
+  // ── Layout (viewBox 960x520) ──
+  // Row 1 (y~100): Main Bolt Line — 5 groups centered vertically
+  // Row 2 left (y~240): Plate Presses stacked vertically
+  // Row 2 right (y~240): Unit Assembly → feeds up to Assembly A3+A4
+  // Row 3 left (y~310): Cable Line Subassemblies stacked vertically
+  // Row 3 right (y~310): Cable Lines stacked vertically
+  var BOLT_Y=105,NODE_W=130;
   var boltGroups=[
-    {id:'shears',label:'Shears',color:COLORS.bolt,x:30,codes:['WV-SHEAR-AS1','WV-SHEAR-AS2']},
-    {id:'peelers',label:'Peeling',color:COLORS.bolt,x:190,codes:['WV-PEEL-MAN','WV-PEEL-AUTO','WV-PEEL-SWAG']},
-    {id:'threaders',label:'Threading',color:COLORS.bolt,x:350,codes:['WV-THREAD-T1','WV-THREAD-T2','WV-THREAD-AT']},
-    {id:'headers',label:'Heading',color:COLORS.bolt,x:510,codes:['WV-HEAD-H1','WV-HEAD-H2','WV-HEAD-H3','WV-HEAD-AUTO']},
-    {id:'assembly',label:'Assembly',color:COLORS.bolt,x:680,codes:['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4']}
+    {id:'shears',label:'Shears',color:COLORS.bolt,x:20,codes:['WV-SHEAR-AS1','WV-SHEAR-AS2']},
+    {id:'peelers',label:'Peeling',color:COLORS.bolt,x:175,codes:['WV-PEEL-MAN','WV-PEEL-AUTO','WV-PEEL-SWAG']},
+    {id:'threaders',label:'Threading',color:COLORS.bolt,x:330,codes:['WV-THREAD-T1','WV-THREAD-T2','WV-THREAD-AT']},
+    {id:'headers',label:'Heading',color:COLORS.bolt,x:490,codes:['WV-HEAD-H1','WV-HEAD-H2','WV-HEAD-H3','WV-HEAD-AUTO']},
+    {id:'assembly',label:'Assembly',color:COLORS.bolt,x:660,codes:['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4']}
   ];
-  // Plate presses — centered below bolt line
-  var pressGroup={id:'presses',label:'Plate Presses',color:COLORS.press,x:300,y:240,codes:['WV-PRESS-400','WV-PRESS-500A','WV-PRESS-500B'],horizontal:true};
-  // Unit Assembly — below headers, feeds UP into assembly
-  var unitCode='WV-MISC-UNITS',unitX=560,unitY=240;
-  // Cable Line Subassemblies — left side below
+  // Plate presses — stacked vertically, left side row 2
+  var pressX=30,pressY=235;
+  var pressCodes=['WV-PRESS-400','WV-PRESS-500A','WV-PRESS-500B'];
+  // Unit Assembly — row 2 right, feeds up into assembly
+  var unitCode='WV-MISC-UNITS',unitX=500,unitY=250;
+  // Cable Line Subassemblies — stacked vertically left
   var subCodes=[
     {code:'WV-MISC-BIGSAW',label:'Big Saw'},
     {code:'WV-MISC-OFFWELD',label:'Off. Welding'},
-    {code:'WV-MISC-PIPEASSY',label:'Pipe Assy'},
-    {code:'WV-MISC-LANDISASSM',label:'Landis Thrd'},
+    {code:'WV-MISC-PIPEASSY',label:'Pipe Assembly'},
+    {code:'WV-MISC-LANDISASSM',label:'Landis Threader'},
     {code:'WV-MISC-TIELINE',label:'Tie Line'}
   ];
-  var subStartX=30,subY=340;
-  // Cable lines — across bottom
-  var cableGroup={id:'cables',label:'Cable Lines',color:COLORS.cable,x:300,y:430,codes:['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C3','WV-CABLE-C4'],horizontal:true};
+  var subX=30,subY=345;
+  // Cable Lines — stacked vertically to the RIGHT of subassemblies
+  // Order optimized to minimize crossovers with sub connections
+  var cableX=350,cableY=345;
+  var cableCodes=['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C3','WV-CABLE-C4'];
 
-  // Build node positions
+  // Node positions
   var nodePositions=useMemo(function(){
     var map={};
-    // Bolt line groups: vertically centered
     boltGroups.forEach(function(g){
-      var totalH=g.codes.length*ROW_H;
-      var startY=BOLT_Y-totalH/2;
+      var totalH=g.codes.length*ROW_H;var startY=BOLT_Y-totalH/2;
       g.codes.forEach(function(c,i){map[c]={x:g.x,y:startY+i*ROW_H,color:g.color,group:g.id,process:g.label};});
     });
-    // Presses: horizontal
-    pressGroup.codes.forEach(function(c,i){map[c]={x:pressGroup.x+i*140,y:pressGroup.y,color:pressGroup.color,group:'presses',process:'Plate Presses'};});
-    // Unit Assembly
+    pressCodes.forEach(function(c,i){map[c]={x:pressX,y:pressY+i*ROW_H,color:COLORS.press,group:'presses',process:'Plate Presses'};});
     map[unitCode]={x:unitX,y:unitY,color:COLORS.sub,group:'unit',process:'Unit Assembly'};
-    // Cable subassemblies: 2 columns
-    subCodes.forEach(function(sc,i){
-      var col=i%2,row=Math.floor(i/2);
-      map[sc.code]={x:subStartX+col*140,y:subY+row*ROW_H,color:COLORS.sub,group:'subassembly',process:'Cable Line Subassemblies'};
-    });
-    // Cable lines: horizontal
-    cableGroup.codes.forEach(function(c,i){map[c]={x:cableGroup.x+i*140,y:cableGroup.y,color:cableGroup.color,group:'cables',process:'Cable Lines'};});
+    subCodes.forEach(function(sc,i){map[sc.code]={x:subX,y:subY+i*ROW_H,color:COLORS.sub,group:'subassembly',process:'Cable Line Subassemblies'};});
+    cableCodes.forEach(function(c,i){map[c]={x:cableX,y:cableY+i*ROW_H,color:COLORS.cable,group:'cables',process:'Cable Lines'};});
     return map;
   },[]);
 
-  // Data aggregation (unchanged logic)
+  // Data aggregation
   var flowData=useMemo(function(){
     var fr=(records||[]).filter(function(r){
       if(r.date<dateFrom||r.date>dateTo)return false;
@@ -2142,7 +2137,7 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     return g.codes.reduce(function(s,c){var d=flowData[c];return s+(d?d.totalOutput:0);},0);
   }
 
-  // Bottleneck — always active, scope-selectable
+  // Bottleneck
   var bottleneckCodes=useMemo(function(){
     var result=new Set();
     function findMin(codes){
@@ -2150,18 +2145,13 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
       codes.forEach(function(c){var d=flowData[c];if(d&&d.totalOutput>0&&d.totalOutput<min){min=d.totalOutput;minC=c;}});
       if(minC)result.add(minC);
     }
-    if(bnScope==='equipment'){
-      var boltCodes=boltGroups.flatMap(function(g){return g.codes;});
-      findMin(boltCodes);
-    } else if(bnScope==='process'){
+    if(bnScope==='equipment'){findMin(boltGroups.flatMap(function(g){return g.codes;}));}
+    else if(bnScope==='process'){
       var worstG=null,worstOut=Infinity;
       boltGroups.forEach(function(g){var out=groupOutput(g.id);if(out>0&&out<worstOut){worstOut=out;worstG=g.id;}});
       if(worstG){var wg=boltGroups.find(function(pg){return pg.id===worstG;});if(wg)wg.codes.forEach(function(c){result.add(c);});}
-    } else if(bnScope==='cable'){
-      findMin(cableGroup.codes);
-    } else if(bnScope==='subassembly'){
-      findMin(subCodes.map(function(s){return s.code;}).concat([unitCode]));
-    }
+    } else if(bnScope==='cable'){findMin(cableCodes);}
+    else if(bnScope==='subassembly'){findMin(subCodes.map(function(s){return s.code;}).concat([unitCode]));}
     return result;
   },[flowData,bnScope]);
 
@@ -2178,62 +2168,56 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
   }
   function oeeColor(val){return val>=80?'#059669':val>=60?'#D97706':'#DC2626';}
 
-  // Render an equipment node: icon circle + name + output
+  // ── Render equipment node: icon + name + product + output ──
   function renderEquip(code,x,y,color){
     var d=flowData[code]||{totalOutput:0,operators:new Set(),products:new Set(),oee:0};
-    var name=getEquipName(code);var short=name.length>13?name.substring(0,11)+'..':name;
-    var ops=[...(d.operators||[])];
+    var name=getEquipName(code);var short=name.length>14?name.substring(0,12)+'..':name;
+    var prods=[...(d.products||[])];
+    var prodName=prods.length>0?getProductName(prods[0]):'';
+    var prodShort=prodName.length>16?prodName.substring(0,14)+'..':prodName;
     var isActive=d.totalOutput>0;var isBN=bottleneckCodes.has(code);var hCls=nodeOpacity(code);
     var cls='pfd-node'+(hCls?' '+hCls:'')+(isActive?'':' pfd-node-inactive')+(isBN?' pfd-bottleneck':'');
     var iconPath=ICONS[iconFor(code)];
     var fillCol=isActive?color:COLORS.inactive;
-    var bgFill=isActive?color+'18':'#F3F4F6';
+    var bgFill=isActive?color+'15':'#F3F4F6';
     return h('g',{key:code,className:cls,transform:'translate('+x+','+y+')',
       onMouseEnter:function(e){handleNodeHover(code,e);},onMouseLeave:function(){handleNodeHover(null);}},
-      // Icon circle background
-      h('circle',{cx:ICON_R,cy:ICON_R,r:ICON_R,fill:bgFill,stroke:isBN?'#DC2626':fillCol,strokeWidth:isBN?2:0.8,opacity:isActive?1:0.5}),
-      // Icon path
-      h('g',{transform:'translate('+(ICON_R-9)+','+(ICON_R-9)+') scale(1)'},
-        h('path',{d:iconPath,fill:'none',stroke:isActive?(isBN?'#DC2626':color):'#B0B5BD',strokeWidth:1.4,strokeLinecap:'round',strokeLinejoin:'round'})
+      h('circle',{cx:ICON_R,cy:ICON_R,r:ICON_R,fill:bgFill,stroke:isBN?'#DC2626':fillCol,strokeWidth:isBN?2:0.7,opacity:isActive?1:0.4}),
+      h('g',{transform:'translate('+(ICON_R-9)+','+(ICON_R-9)+')'},
+        h('path',{d:iconPath,fill:'none',stroke:isActive?(isBN?'#DC2626':color):'#B0B5BD',strokeWidth:1.3,strokeLinecap:'round',strokeLinejoin:'round'})
       ),
-      // Equipment name
-      h('text',{x:ICON_R*2+6,y:ICON_R-2,fill:isActive?'#1D1D1F':'#B0B5BD',fontSize:8,fontWeight:700,dominantBaseline:'middle'},short),
-      // Operators (if active)
-      isActive&&ops.length>0?h('text',{x:ICON_R*2+6,y:ICON_R+7,fill:'#94A3B8',fontSize:6.5,dominantBaseline:'middle'},
-        ops.slice(0,2).map(function(o){return o.split(' ').map(function(w){return w[0]||'';}).join('');}).join(', ')):null,
-      // Output badge (right-aligned)
-      isActive?h('text',{x:120,y:ICON_R,fill:color,fontSize:9,fontWeight:800,textAnchor:'end',dominantBaseline:'middle',fontVariantNumeric:'tabular-nums'},d.totalOutput.toLocaleString()):null
+      h('text',{x:ICON_R*2+6,y:isActive?ICON_R-4:ICON_R,fill:isActive?'#1D1D1F':'#B0B5BD',fontSize:8.5,fontWeight:700,dominantBaseline:'middle'},short),
+      isActive&&prodShort?h('text',{x:ICON_R*2+6,y:ICON_R+5,fill:'#94A3B8',fontSize:6,dominantBaseline:'middle',fontStyle:'italic'},prodShort):null,
+      isActive?h('text',{x:NODE_W,y:ICON_R,fill:color,fontSize:9,fontWeight:800,textAnchor:'end',dominantBaseline:'middle',fontVariantNumeric:'tabular-nums'},d.totalOutput.toLocaleString()):null
     );
   }
 
-  // Group: label + stacked equipment
-  function renderGroup(g,centerY){
-    var totalH=g.codes.length*ROW_H;
-    var startY=centerY-totalH/2;
-    return h('g',{key:'grp-'+g.id},
-      h('text',{x:g.x+65,y:startY-12,className:'pfd-group-label',fill:g.color+'80',textAnchor:'middle'},g.label.toUpperCase()),
-      g.codes.map(function(code,i){return renderEquip(code,g.x,startY+i*ROW_H,g.color);})
-    );
-  }
-  function renderHorizGroup(g){
-    return h('g',{key:'grp-'+g.id},
-      h('text',{x:g.x+g.codes.length*70,y:g.y-10,className:'pfd-group-label',fill:g.color+'80',textAnchor:'middle'},g.label.toUpperCase()),
-      g.codes.map(function(code,i){return renderEquip(code,g.x+i*140,g.y,g.color);})
+  // ── Render vertical group ──
+  function renderVertGroup(label,codes,x,startY,color,groupKey){
+    return h('g',{key:'grp-'+(groupKey||label)},
+      h('text',{x:x+NODE_W/2,y:startY-10,className:'pfd-group-label',fill:color+'80',textAnchor:'middle'},label.toUpperCase()),
+      codes.map(function(code,i){return renderEquip(code,x,startY+i*ROW_H,color);})
     );
   }
 
-  // Clean arrow between two points
-  function arrow(x1,y1,x2,y2,color,key,dashed){
-    var mx=(x1+x2)/2;
-    var d='M'+x1+' '+y1+' C'+mx+' '+y1+' '+mx+' '+y2+' '+x2+' '+y2;
-    return h('path',{key:key,d:d,fill:'none',stroke:color||'#CBD5E1',strokeWidth:1.2,strokeDasharray:dashed?'4 3':'none',markerEnd:'url(#pfd-arrow)',className:dashed?'':'pfd-connection'});
-  }
-  // Straight arrow
-  function straightArrow(x1,y1,x2,y2,color,key,dashed){
-    return h('line',{key:key,x1:x1,y1:y1,x2:x2,y2:y2,stroke:color||'#CBD5E1',strokeWidth:1.2,strokeDasharray:dashed?'4 3':'none',markerEnd:'url(#pfd-arrow)'});
+  // ── Straight-line arrow with optional 90° rounded bend ──
+  function elbowArrow(x1,y1,x2,y2,color,key,dashed,bendR){
+    var r=bendR||6;var col=color||'#CBD5E1';var da=dashed?'4 3':'none';
+    var d;
+    if(Math.abs(y1-y2)<2){
+      d='M'+x1+' '+y1+'L'+x2+' '+y2;
+    } else if(Math.abs(x1-x2)<2){
+      d='M'+x1+' '+y1+'L'+x2+' '+y2;
+    } else {
+      // Horizontal then vertical with rounded corner
+      var mx=x2,my=y1;
+      if(y2>y1){d='M'+x1+' '+y1+'L'+(mx-r)+' '+my+'Q'+mx+' '+my+' '+mx+' '+(my+r)+'L'+x2+' '+y2;}
+      else{d='M'+x1+' '+y1+'L'+(mx-r)+' '+my+'Q'+mx+' '+my+' '+mx+' '+(my-r)+'L'+x2+' '+y2;}
+    }
+    return h('path',{key:key,d:d,fill:'none',stroke:col,strokeWidth:1.2,strokeDasharray:da,markerEnd:'url(#pfd-arrow)',className:dashed?'':'pfd-connection'});
   }
 
-  // WIP diamond with output above
+  // WIP diamond with output
   function renderWip(fromGroupId,x,y,key){
     var s=4,out=groupOutput(fromGroupId);
     return h('g',{key:key},
@@ -2247,25 +2231,28 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
     if(!hoveredNode)return null;
     var d=flowData[hoveredNode]||{totalOutput:0,operators:new Set(),products:new Set(),oee:0,availability:0,performance:0,quality:0};
     var name=getEquipName(hoveredNode);var ops=[...(d.operators||[])];var prods=[...(d.products||[])];
-    return h('div',{className:'pfd-tooltip',style:{left:tooltipPos.x-80,top:tooltipPos.y-140}},
+    return h('div',{className:'pfd-tooltip',style:{left:tooltipPos.x-80,top:tooltipPos.y-150}},
       h('div',{className:'pfd-tooltip-title'},name),
       h('div',{className:'pfd-tooltip-row'},h('span',null,'Output:'),h('span',null,(d.totalOutput||0).toLocaleString()+' pcs')),
       h('div',{className:'pfd-tooltip-row'},h('span',null,'OEE:'),h('span',{style:{color:oeeColor(d.oee||0)}},(d.oee||0).toFixed(1)+'%')),
       h('div',{className:'pfd-tooltip-row'},h('span',null,'A / P / Q:'),h('span',null,(d.availability||0).toFixed(0)+' / '+(d.performance||0).toFixed(0)+' / '+(d.quality||0).toFixed(0)+'%')),
       h('div',{className:'pfd-tooltip-row'},h('span',null,'Operators:'),h('span',null,ops.length>0?ops.slice(0,3).join(', '):'—')),
-      h('div',{className:'pfd-tooltip-row'},h('span',null,'Product:'),h('span',null,prods.length>0?prods.slice(0,2).map(function(p){var n=getProductName(p);return n.length>15?n.substring(0,13)+'..':n;}).join(', '):'—'))
+      prods.length>0?h('div',{className:'pfd-tooltip-row'},h('span',null,'Product:'),h('span',null,prods.slice(0,2).map(function(p){var n=getProductName(p);return n.length>18?n.substring(0,16)+'..':n;}).join(', '))):null
     );
   }
 
   var flowIcon=h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M4 6h4m-4 6h4m-4 6h4m4-12h8m-8 6h8m-8 6h8',strokeLinecap:'round'}));
   var highlightOptions=['none','Shears','Peeling','Threading','Heading','Assembly','Plate Presses','Cable Lines','Cable Line Subassemblies','Unit Assembly'];
 
-  // Compute WIP positions between bolt groups
+  // WIP positions between bolt groups
   var wipPositions=[];
   for(var wi=0;wi<boltGroups.length-1;wi++){
-    var gR=boltGroups[wi],gL=boltGroups[wi+1];
-    wipPositions.push({x:(gR.x+130+gL.x)/2,y:BOLT_Y,fromId:gR.id});
+    wipPositions.push({x:(boltGroups[wi].x+NODE_W+boltGroups[wi+1].x)/2,y:BOLT_Y,fromId:boltGroups[wi].id});
   }
+
+  // Assembly A3 and A4 positions for unit assembly arrows
+  var a3Pos=nodePositions['WV-ASSY-A3']||{x:660,y:BOLT_Y+ROW_H};
+  var a4Pos=nodePositions['WV-ASSY-A4']||{x:660,y:BOLT_Y+ROW_H*1.5};
 
   return h('div',{className:'pfd-wrap'},
     h('div',{className:'pfd-header'},
@@ -2295,62 +2282,61 @@ function ProcessFlowDiagram({records,shiftFilter,dateFrom,dateTo}){
             h('marker',{id:'pfd-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:5,markerHeight:5,orient:'auto-start-reverse'},
               h('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'#94A3B8'}))
           ),
-          // Subtle dot grid
           h('pattern',{id:'pfd-dots',width:20,height:20,patternUnits:'userSpaceOnUse'},
-            h('circle',{cx:10,cy:10,r:0.4,fill:'#D1D5DB',opacity:0.4})),
+            h('circle',{cx:10,cy:10,r:0.35,fill:'#D1D5DB',opacity:0.35})),
           h('rect',{width:'100%',height:'100%',fill:'url(#pfd-dots)'}),
 
-          // ── Section: MAIN BOLT LINE ──
-          h('text',{x:420,y:18,textAnchor:'middle',fill:'#1B3D6E',fontSize:9,fontWeight:800,letterSpacing:2,opacity:0.2},'MAIN BOLT LINE'),
+          // ── MAIN BOLT LINE ──
+          h('text',{x:420,y:16,textAnchor:'middle',fill:'#1B3D6E',fontSize:9,fontWeight:800,letterSpacing:2,opacity:0.18},'MAIN BOLT LINE'),
 
-          // Bolt line group-to-group arrows
+          // Bolt line horizontal arrows between groups
           boltGroups.slice(0,-1).map(function(g,i){
             var nx=boltGroups[i+1].x;
-            return arrow(g.x+130,BOLT_Y,nx,BOLT_Y,'#CBD5E1','bconn'+i);
+            return elbowArrow(g.x+NODE_W,BOLT_Y,nx,BOLT_Y,'#CBD5E1','bconn'+i);
           }),
-
-          // WIP diamonds between bolt groups
+          // WIP diamonds
           wipPositions.map(function(wp,i){return renderWip(wp.fromId,wp.x,wp.y,'wip'+i);}),
-
-          // Bolt line equipment groups
-          boltGroups.map(function(g){return renderGroup(g,BOLT_Y);}),
-
-          // ── Section: PLATE PRESSES ── centered below
-          renderHorizGroup(pressGroup),
-
-          // ── Section: UNIT ASSEMBLY ── below headers, arrow UP to assembly
-          h('text',{x:unitX+65,y:unitY-10,className:'pfd-group-label',fill:COLORS.sub+'80',textAnchor:'middle'},'UNIT ASSEMBLY'),
-          renderEquip(unitCode,unitX,unitY,COLORS.sub),
-          // Arrow from Unit Assembly UP and RIGHT into Assembly group (between A2 and A3)
-          arrow(unitX+65,unitY,680+65,BOLT_Y+ROW_H*1.5,'#D9770666','unit-to-assy',true),
-          h('text',{x:(unitX+680)/2+65,y:(unitY+BOLT_Y+ROW_H*1.5)/2-4,fill:'#D97706',fontSize:6,fontWeight:700,opacity:0.45,textAnchor:'middle',letterSpacing:0.5},'FEEDS A3 / A4'),
-
-          // ── Section: CABLE LINE SUBASSEMBLIES ── left side
-          h('text',{x:subStartX+70,y:subY-12,className:'pfd-group-label',fill:COLORS.sub+'80',textAnchor:'middle'},'CABLE LINE SUBASSEMBLIES'),
-          subCodes.map(function(sc,i){
-            var col=i%2,row=Math.floor(i/2);
-            return renderEquip(sc.code,subStartX+col*140,subY+row*ROW_H,COLORS.sub);
+          // Bolt line groups
+          boltGroups.map(function(g){
+            var totalH=g.codes.length*ROW_H;var startY=BOLT_Y-totalH/2;
+            return renderVertGroup(g.label,g.codes,g.x,startY,g.color,g.id);
           }),
 
-          // Subassembly to cable line connections (clean, spaced, no overlap)
-          arrow(subStartX+130,subY+ICON_R,cableGroup.x,cableGroup.y+ICON_R,'#D9770640','sub-c1',true),
-          arrow(subStartX+270,subY+ICON_R,cableGroup.x+140,cableGroup.y+ICON_R,'#D9770640','sub-c2',true),
-          arrow(subStartX+130,subY+ROW_H+ICON_R,cableGroup.x+280,cableGroup.y+ICON_R,'#D9770640','sub-c3',true),
-          arrow(subStartX+270,subY+ROW_H+ICON_R,cableGroup.x+420,cableGroup.y+ICON_R,'#D9770640','sub-c4',true),
+          // ── PLATE PRESSES ── stacked vertically, left side
+          renderVertGroup('Plate Presses',pressCodes,pressX,pressY,COLORS.press,'presses'),
 
-          // ── Section: CABLE LINES ── bottom
-          renderHorizGroup(cableGroup),
+          // ── UNIT ASSEMBLY ── feeds up to Assembly A3 + A4
+          h('text',{x:unitX+NODE_W/2,y:unitY-10,className:'pfd-group-label',fill:COLORS.sub+'80',textAnchor:'middle'},'UNIT ASSEMBLY'),
+          renderEquip(unitCode,unitX,unitY,COLORS.sub),
+          // Arrow from unit assembly UP to A3
+          elbowArrow(unitX+NODE_W,unitY+ICON_R,a3Pos.x,a3Pos.y+ICON_R,'#D9770650','unit-a3',true,8),
+          // Arrow from unit assembly UP to A4
+          elbowArrow(unitX+NODE_W+10,unitY+ICON_R,a4Pos.x,a4Pos.y+ICON_R,'#D9770650','unit-a4',true,8),
+          h('text',{x:unitX+NODE_W+30,y:unitY+ICON_R-6,fill:'#D97706',fontSize:6,fontWeight:700,opacity:0.4,letterSpacing:0.5},'FEEDS A3 + A4'),
 
-          // ── LEGEND ── bottom-right
-          h('g',{transform:'translate(830,400)'},
+          // ── CABLE LINE SUBASSEMBLIES ── stacked vertically left
+          renderVertGroup('Cable Line Subassemblies',subCodes.map(function(s){return s.code;}),subX,subY,COLORS.sub,'subs'),
+
+          // ── CABLE LINES ── stacked vertically right of subassemblies
+          renderVertGroup('Cable Lines',cableCodes,cableX,cableY,COLORS.cable,'cables'),
+
+          // Subassembly → Cable Line connections (straight horizontal with rounded bends, no overlap)
+          // Big Saw → Cable Line #4, Off. Welding → Cable Line #2, Pipe Assy → Cable Line #3, Landis → Cable Line #1, Tie Line → (standalone)
+          elbowArrow(subX+NODE_W,subY+ICON_R,cableX,cableY+3*ROW_H+ICON_R,'#D9770635','s2c-1',true,8),
+          elbowArrow(subX+NODE_W,subY+ROW_H+ICON_R,cableX,cableY+ROW_H+ICON_R,'#D9770635','s2c-2',true,8),
+          elbowArrow(subX+NODE_W,subY+ROW_H*2+ICON_R,cableX,cableY+ROW_H*2+ICON_R,'#D9770635','s2c-3',true,8),
+          elbowArrow(subX+NODE_W,subY+ROW_H*3+ICON_R,cableX,cableY+ICON_R,'#D9770635','s2c-4',true,8),
+
+          // ── LEGEND ──
+          h('g',{transform:'translate(830,340)'},
             h('text',{x:0,y:0,fontSize:7,fontWeight:700,fill:'#94A3B8',letterSpacing:1},'LEGEND'),
-            h('circle',{cx:5,cy:10,r:5,fill:COLORS.bolt+'20',stroke:COLORS.bolt,strokeWidth:0.8}),h('text',{x:14,y:13,fontSize:7,fill:'#64748B'},'Bolt Line'),
-            h('circle',{cx:5,cy:24,r:5,fill:COLORS.press+'20',stroke:COLORS.press,strokeWidth:0.8}),h('text',{x:14,y:27,fontSize:7,fill:'#64748B'},'Presses'),
-            h('circle',{cx:5,cy:38,r:5,fill:COLORS.cable+'20',stroke:COLORS.cable,strokeWidth:0.8}),h('text',{x:14,y:41,fontSize:7,fill:'#64748B'},'Cable Lines'),
-            h('circle',{cx:5,cy:52,r:5,fill:COLORS.sub+'20',stroke:COLORS.sub,strokeWidth:0.8}),h('text',{x:14,y:55,fontSize:7,fill:'#64748B'},'Subassemblies'),
-            h('circle',{cx:5,cy:66,r:5,fill:'#F3F4F6',stroke:'#D1D5DB',strokeWidth:0.8}),h('text',{x:14,y:69,fontSize:7,fill:'#64748B'},'Inactive'),
-            h('circle',{cx:5,cy:80,r:5,fill:'none',stroke:'#DC2626',strokeWidth:1.5}),h('text',{x:14,y:83,fontSize:7,fill:'#64748B'},'Bottleneck'),
-            h('polygon',{points:'1,93 5,89 9,93 5,97',fill:'#F0A500',stroke:'#C89B20',strokeWidth:0.5}),h('text',{x:14,y:96,fontSize:7,fill:'#64748B'},'WIP Buffer')
+            h('circle',{cx:5,cy:12,r:5,fill:COLORS.bolt+'15',stroke:COLORS.bolt,strokeWidth:0.7}),h('text',{x:14,y:15,fontSize:7,fill:'#64748B'},'Bolt Line'),
+            h('circle',{cx:5,cy:26,r:5,fill:COLORS.press+'15',stroke:COLORS.press,strokeWidth:0.7}),h('text',{x:14,y:29,fontSize:7,fill:'#64748B'},'Presses'),
+            h('circle',{cx:5,cy:40,r:5,fill:COLORS.cable+'15',stroke:COLORS.cable,strokeWidth:0.7}),h('text',{x:14,y:43,fontSize:7,fill:'#64748B'},'Cable Lines'),
+            h('circle',{cx:5,cy:54,r:5,fill:COLORS.sub+'15',stroke:COLORS.sub,strokeWidth:0.7}),h('text',{x:14,y:57,fontSize:7,fill:'#64748B'},'Subassemblies'),
+            h('circle',{cx:5,cy:68,r:5,fill:'#F3F4F6',stroke:'#D1D5DB',strokeWidth:0.7}),h('text',{x:14,y:71,fontSize:7,fill:'#64748B'},'Inactive'),
+            h('circle',{cx:5,cy:82,r:5,fill:'none',stroke:'#DC2626',strokeWidth:1.5}),h('text',{x:14,y:85,fontSize:7,fill:'#64748B'},'Bottleneck'),
+            h('polygon',{points:'1,95 5,91 9,95 5,99',fill:'#F0A500',stroke:'#C89B20',strokeWidth:0.5}),h('text',{x:14,y:98,fontSize:7,fill:'#64748B'},'WIP Buffer')
           )
         )
       )
