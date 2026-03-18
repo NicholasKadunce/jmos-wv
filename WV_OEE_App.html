@@ -567,9 +567,10 @@ input[type=number]{-moz-appearance:textfield}
 .bdr-panel-empty-text{font-size:14px;font-weight:600;color:#64748b}
 .bdr-panel-empty-sub{font-size:12px;margin-top:4px}
 /* AI ASSISTANT */
-.ai-fab{position:fixed;bottom:16px;right:16px;z-index:999;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--jm-navy),#2a5199);border:none;cursor:pointer;box-shadow:0 6px 24px rgba(27,61,110,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;transition:transform 0.2s,box-shadow 0.2s}
-.ai-fab:hover{transform:scale(1.08);box-shadow:0 10px 32px rgba(27,61,110,0.55)}
-@media(max-width:768px){.ai-fab{bottom:12px;right:12px;width:46px;height:46px;font-size:18px}}
+.ai-fab{position:fixed;bottom:20px;right:20px;z-index:999;width:48px;height:48px;border-radius:14px;background:linear-gradient(145deg,#0f172a,#1e3a5f);border:1px solid rgba(255,255,255,0.08);cursor:pointer;box-shadow:0 4px 20px rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.85);transition:all 0.2s}
+.ai-fab:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(15,23,42,0.45);color:#fff}
+.ai-fab svg{width:22px;height:22px}
+@media(max-width:768px){.ai-fab{bottom:14px;right:14px;width:44px;height:44px;border-radius:12px}.ai-fab svg{width:20px;height:20px}}
 .ai-modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:12px}
 @media(max-width:768px){.ai-modal-overlay{padding:0;align-items:stretch;justify-content:stretch}}
 .ai-modal{width:420px;max-width:100%;height:600px;max-height:92vh;background:var(--jm-surface);border-radius:20px;box-shadow:0 24px 80px rgba(10,20,50,0.35);display:flex;flex-direction:column;overflow:hidden;animation:aiSlideIn 0.25s ease}
@@ -606,16 +607,15 @@ input[type=number]{-moz-appearance:textfield}
 .ai-input:focus{border-color:var(--jm-navy)}
 .ai-send-btn{width:38px;height:38px;border-radius:50%;background:var(--jm-navy);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:background 0.15s}
 .ai-send-btn:hover{background:#2a5199}.ai-send-btn:disabled{opacity:0.45;cursor:not-allowed}
-/* SETTINGS NAV */
-.settings-nav{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:20px}
-.settings-nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--jm-border-light);border-radius:10px;background:#fff;cursor:pointer;transition:all 0.15s;font-family:inherit;text-align:left}
-.settings-nav-item:hover{border-color:var(--jm-navy);background:var(--jm-blue-tint)}
-.settings-nav-item.active{border-color:var(--jm-navy);background:linear-gradient(135deg,rgba(27,61,110,0.06),rgba(27,61,110,0.02));box-shadow:0 2px 8px rgba(27,61,110,0.08)}
-.settings-nav-icon{font-size:20px;flex-shrink:0;line-height:1}
-.settings-nav-text{display:flex;flex-direction:column;min-width:0}
-.settings-nav-label{font-size:13px;font-weight:700;color:var(--jm-navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.settings-nav-desc{font-size:10px;color:var(--jm-text-ter);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media(max-width:768px){.settings-nav{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}.settings-nav-item{padding:8px 10px;gap:6px}.settings-nav-icon{font-size:16px}.settings-nav-label{font-size:11px}.settings-nav-desc{display:none}}
+/* SETTINGS NAV — minimal, clean */
+.settings-nav{display:flex;gap:0;margin-bottom:24px;border-bottom:1.5px solid var(--jm-border-light);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.settings-nav-item{padding:12px 18px;border:none;background:transparent;cursor:pointer;transition:all 0.15s;font-family:inherit;text-align:center;position:relative;flex-shrink:0;border-bottom:2.5px solid transparent;margin-bottom:-1.5px}
+.settings-nav-item:hover{color:var(--jm-navy)}
+.settings-nav-item.active{border-bottom-color:var(--jm-navy)}
+.settings-nav-item.active .settings-nav-label{color:var(--jm-navy)}
+.settings-nav-label{font-size:13px;font-weight:600;color:var(--jm-text-sec);letter-spacing:0.2px;white-space:nowrap}
+.settings-nav-item.active .settings-nav-label{font-weight:800}
+@media(max-width:768px){.settings-nav-item{padding:10px 12px}.settings-nav-label{font-size:11px}}
 /* ADMIN */
 .admin-table{width:100%;border-collapse:collapse;font-size:14px}
 .admin-table th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--jm-text-sec);border-bottom:2px solid var(--jm-border);background:#FAFAFA}
@@ -3896,7 +3896,7 @@ function BDRNotificationPanel({open,onClose,pending,onApprove,onDecline}){
 // ── AI SETTINGS ASSISTANT ──
 function AISettingsAssistant({master,onUpdate}){
   const [open,setOpen]=useState(false);
-  const [msgs,setMsgs]=useState([{role:'ai',text:"Hey there! I can help you get people, equipment, and products set up in the system. Here's the kind of things you can tell me:\n\n\u2022 \"Add Mike Johnson as an operator\"\n\u2022 \"I need to add a new press \u2014 it's called the 600 Ton Press\"\n\u2022 \"Add a product for 3/4 inch bolts\"\n\u2022 \"Add three operators: Smith, Jones, and Davis\"\n\nI'll make sure everything gets formatted the right way and matches what's already in the system. Just type what you need!",actions:[]}]);
+  const [msgs,setMsgs]=useState([{role:'ai',text:"What would you like to add or update?",actions:[]}]);
   const [input,setInput]=useState('');
   const [loading,setLoading]=useState(false);
   const chatRef=useRef(null);
@@ -3942,7 +3942,11 @@ function AISettingsAssistant({master,onUpdate}){
 
   return h(React.Fragment,null,
     // FAB button
-    h('button',{className:'ai-fab',onClick:()=>setOpen(true),title:'AI Settings Assistant'},'AI'),
+    h('button',{className:'ai-fab',onClick:()=>setOpen(true),title:'Settings Assistant'},
+      h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round'},
+        h('path',{d:'M12 2L2 7l10 5 10-5-10-5z'}),h('path',{d:'M2 17l10 5 10-5'}),h('path',{d:'M2 12l10 5 10-5'})
+      )
+    ),
     // Modal
     open&&h('div',{className:'ai-modal-overlay',onClick:e=>{if(e.target===e.currentTarget)setOpen(false);}},
       h('div',{className:'ai-modal'},
@@ -3950,10 +3954,14 @@ function AISettingsAssistant({master,onUpdate}){
         h('div',{className:'ai-modal-header'},
           h('div',{className:'ai-modal-header-top'},
             h('div',{className:'ai-modal-brand'},
-              h('div',{className:'ai-modal-logo'},'AI'),
+              h('div',{className:'ai-modal-logo'},
+                h('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
+                  h('path',{d:'M12 2L2 7l10 5 10-5-10-5z'}),h('path',{d:'M2 17l10 5 10-5'}),h('path',{d:'M2 12l10 5 10-5'})
+                )
+              ),
               h('div',null,
-                h('div',{className:'ai-modal-title'},'JMOS Settings Assistant'),
-                h('div',{className:'ai-modal-subtitle'},'Add people, equipment & products')
+                h('div',{className:'ai-modal-title'},'Settings Assistant'),
+                h('div',{className:'ai-modal-subtitle'},'JMOS Configuration')
               )
             ),
             h('button',{className:'ai-modal-close',onClick:()=>setOpen(false)},'\u00D7')
@@ -3962,7 +3970,7 @@ function AISettingsAssistant({master,onUpdate}){
         // Chat area
         h('div',{className:'ai-chat-area',ref:chatRef},
           msgs.map((msg,i)=>h('div',{key:i,className:'ai-msg '+(msg.role==='user'?'user':'ai')},
-            h('div',{className:'ai-msg-avatar'},msg.role==='user'?'You':'AI'),
+            h('div',{className:'ai-msg-avatar'},msg.role==='user'?h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5},h('circle',{cx:12,cy:8,r:4}),h('path',{d:'M5 20c0-4 3.5-6 7-6s7 2 7 6'})):h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M12 2L2 7l10 5 10-5-10-5z'}),h('path',{d:'M2 17l10 5 10-5'}),h('path',{d:'M2 12l10 5 10-5'}))),
             h('div',null,
               h('div',{className:'ai-msg-bubble'},msg.text),
               (msg.actions||[]).length>0&&h('div',{style:{marginTop:6}},
@@ -3973,7 +3981,7 @@ function AISettingsAssistant({master,onUpdate}){
             )
           )),
           loading&&h('div',{className:'ai-msg ai'},
-            h('div',{className:'ai-msg-avatar'},'AI'),
+            h('div',{className:'ai-msg-avatar'},h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M12 2L2 7l10 5 10-5-10-5z'}),h('path',{d:'M2 17l10 5 10-5'}),h('path',{d:'M2 12l10 5 10-5'}))),
             h('div',{className:'ai-msg-bubble'},h('div',{className:'ai-typing'},h('span'),h('span'),h('span')))
           )
         ),
@@ -4041,14 +4049,14 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   const [prodSearch,setProdSearch]=useState('');
   const isAdmin=authUser&&authUser.role==='admin';
   const tabs=[
-    {id:'personnel',label:'Personnel',icon:'\uD83D\uDCCB',desc:'Data entry staff'},
-    {id:'operators',label:'Operators',icon:'\uD83D\uDC77',desc:'Shop floor workers'},
-    {id:'equipment',label:'Equipment',icon:'\u2699\uFE0F',desc:'Machines & stations'},
-    {id:'products',label:'Products',icon:'\uD83D\uDCE6',desc:'Part types & rates'},
-    {id:'rates',label:'Rates',icon:'\uD83D\uDCC8',desc:'Target rate management',adminOnly:true},
-    {id:'users',label:'Users',icon:'\uD83D\uDD11',desc:'Accounts & access',adminOnly:true},
-    {id:'account',label:'Account',icon:'\uD83D\uDC64',desc:'Your password & profile'},
-    {id:'data',label:'Database',icon:'\uD83D\uDCBE',desc:'Data & reports'}
+    {id:'personnel',label:'Personnel'},
+    {id:'operators',label:'Operators'},
+    {id:'equipment',label:'Equipment'},
+    {id:'products',label:'Products'},
+    {id:'rates',label:'Rates',adminOnly:true},
+    {id:'users',label:'Users',adminOnly:true},
+    {id:'account',label:'Account'},
+    {id:'data',label:'Database'}
   ].filter(t=>!t.adminOnly||isAdmin);
   // BDR state
   const [bdrPending,setBdrPending]=useState(BDR.getPending());
@@ -4130,11 +4138,7 @@ function AdminPanel({master,onUpdate,onDataChange,authUser}){
   return h('div',{className:'card'},
     h('div',{className:'card-title'},'Settings'),h('div',{className:'card-sub'},'Manage personnel, operators, equipment, products and system configuration.'),
     h('div',{className:'settings-nav'},tabs.map(t=>h('button',{key:t.id,className:'settings-nav-item'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},
-      h('span',{className:'settings-nav-icon'},t.icon),
-      h('span',{className:'settings-nav-text'},
-        h('span',{className:'settings-nav-label'},t.label),
-        h('span',{className:'settings-nav-desc'},t.desc)
-      )
+      h('span',{className:'settings-nav-label'},t.label)
     ))),
     (['personnel','operators','equipment','products'].includes(tab))&&h(AISettingsAssistant,{master,onUpdate}),
     tab==='personnel'&&h('div',null,
