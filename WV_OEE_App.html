@@ -3954,8 +3954,9 @@ function AISettingsAssistant({master,onUpdate}){
   return h(React.Fragment,null,
     // FAB button
     h('button',{className:'ai-fab',onClick:()=>setOpen(true),title:'Settings Assistant'},
-      h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round'},
-        h('path',{d:'M12 2L2 7l10 5 10-5-10-5z'}),h('path',{d:'M2 17l10 5 10-5'}),h('path',{d:'M2 12l10 5 10-5'})
+      h('svg',{viewBox:'0 0 24 24',fill:'currentColor',stroke:'none'},
+        h('path',{d:'M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z'}),
+        h('path',{d:'M20 3L21 6L24 7L21 8L20 11L19 8L16 7L19 6L20 3Z',opacity:0.6})
       )
     ),
     // Modal
@@ -3966,8 +3967,9 @@ function AISettingsAssistant({master,onUpdate}){
           h('div',{className:'ai-modal-header-top'},
             h('div',{className:'ai-modal-brand'},
               h('div',{className:'ai-modal-logo'},
-                h('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
-                  h('path',{d:'M12 2L2 7l10 5 10-5-10-5z'}),h('path',{d:'M2 17l10 5 10-5'}),h('path',{d:'M2 12l10 5 10-5'})
+                h('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'currentColor',stroke:'none'},
+                  h('path',{d:'M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z'}),
+                  h('path',{d:'M20 3L21 6L24 7L21 8L20 11L19 8L16 7L19 6L20 3Z',opacity:0.6})
                 )
               ),
               h('div',null,
