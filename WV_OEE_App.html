@@ -362,6 +362,68 @@ function(a,b,c){if(!Vd(b))throw Error(n(200));return Wd(null,a,b,!1,c)};Q.unmoun
 [data-theme="dark"] .ai-action-chip{background:rgba(27,61,110,0.2);border-color:var(--jm-border);color:#93B5E8}
 [data-theme="dark"] .equip-focus-row:hover{background:rgba(255,255,255,0.03)}
 [data-theme="dark"] .sidebar{background:linear-gradient(180deg,#070D1A 0%,#0B1120 100%)}
+/* Buttons, selects, toggles */
+[data-theme="dark"] .dash-shift-btn{background:var(--jm-surface);color:var(--jm-text-sec);border-color:var(--jm-border)}
+[data-theme="dark"] .dash-shift-btn.active{background:var(--jm-navy);color:#fff}
+[data-theme="dark"] .dash-filter-select{background:var(--jm-surface);color:var(--jm-text);border-color:var(--jm-border)}
+[data-theme="dark"] .dash-date-group input[type=date]{background:var(--jm-surface);color:var(--jm-text);border-color:var(--jm-border)}
+[data-theme="dark"] .oee-hr-scope-btn{background:var(--jm-surface);color:var(--jm-text-sec);border-color:var(--jm-border)}
+[data-theme="dark"] .oee-hr-scope-btn.active{background:var(--jm-navy);color:#fff}
+[data-theme="dark"] .oee-hr-shift-btn{background:var(--jm-surface);color:var(--jm-text-sec);border-color:var(--jm-border)}
+[data-theme="dark"] .oee-hr-shift-btn.active{background:var(--jm-navy);color:#fff}
+[data-theme="dark"] .btn{color:var(--jm-text)}
+[data-theme="dark"] .btn-primary{color:#fff}
+/* Badges */
+[data-theme="dark"] .dash-card-badge{background:rgba(255,255,255,0.08);color:var(--jm-text-sec)}
+[data-theme="dark"] .dash-card-badge.badge-green{background:rgba(52,199,89,0.15);color:#4ADE80}
+[data-theme="dark"] .dash-card-badge.badge-amber{background:rgba(255,149,0,0.15);color:#FBBF24}
+[data-theme="dark"] .badge-startup{background:rgba(25,103,210,0.15);color:#60A5FA}
+[data-theme="dark"] .badge-lunch{background:rgba(230,81,0,0.15);color:#FB923C}
+[data-theme="dark"] .badge-cleanup{background:rgba(46,125,50,0.15);color:#4ADE80}
+[data-theme="dark"] .badge-local{background:rgba(21,101,192,0.15);color:#60A5FA}
+[data-theme="dark"] .badge-sharepoint{background:rgba(46,125,50,0.15);color:#4ADE80}
+/* OEE cells */
+[data-theme="dark"] .dash-oee-good{background:rgba(22,163,74,0.18);color:#4ADE80}
+[data-theme="dark"] .dash-oee-warn{background:rgba(217,119,6,0.18);color:#FBBF24}
+[data-theme="dark"] .dash-oee-bad{background:rgba(220,38,38,0.18);color:#FCA5A5}
+/* Constraint badges */
+[data-theme="dark"] .dash-constraint.loss-a{background:rgba(220,38,38,0.15);color:#FCA5A5}
+[data-theme="dark"] .dash-constraint.loss-p{background:rgba(217,119,6,0.15);color:#FCD34D}
+[data-theme="dark"] .dash-constraint.loss-q{background:rgba(139,92,246,0.15);color:#C4B5FD}
+/* Inputs in data entry */
+[data-theme="dark"] .good-units-input{background:var(--jm-surface);color:var(--jm-text);border-color:var(--jm-border)}
+[data-theme="dark"] .good-units-input:focus{background:#1E293B}
+[data-theme="dark"] .good-units-input.over-target{background:rgba(22,163,74,0.12);color:#4ADE80}
+[data-theme="dark"] .good-units-input.under-target{background:rgba(220,38,38,0.12);color:#FCA5A5}
+[data-theme="dark"] .mins-input,[data-theme="dark"] .qty-input{background:var(--jm-surface);color:var(--jm-text);border-color:var(--jm-border)}
+/* Tables */
+[data-theme="dark"] .dash-table td{border-color:var(--jm-border-light)}
+[data-theme="dark"] .dash-table th{border-color:var(--jm-border);color:var(--jm-text-sec)}
+[data-theme="dark"] .dash-dt-sub td{background:#0F172A}
+[data-theme="dark"] .dash-dt-bar{background:rgba(255,255,255,0.08)}
+[data-theme="dark"] .dash-oee-bar{background:rgba(255,255,255,0.08)}
+/* Modals */
+[data-theme="dark"] .add-equip-modal-box{background:var(--jm-surface);color:var(--jm-text);border:1px solid var(--jm-border)}
+[data-theme="dark"] .confirm-box{background:var(--jm-surface);color:var(--jm-text);border:1px solid var(--jm-border)}
+[data-theme="dark"] .bdr-card{background:var(--jm-surface);border-color:var(--jm-border)}
+/* Sync badges */
+[data-theme="dark"] .sync-badge.online{background:rgba(5,150,105,0.2);color:#34D399}
+[data-theme="dark"] .sync-badge.offline{background:rgba(220,38,38,0.2);color:#FCA5A5}
+[data-theme="dark"] .sync-badge.pending{background:rgba(217,119,6,0.2);color:#FBBF24}
+/* TV view */
+[data-theme="dark"] .tv-select{background:var(--jm-surface);color:var(--jm-text);border-color:var(--jm-border)}
+[data-theme="dark"] .tv-oee-pill{background:var(--jm-surface);border-color:var(--jm-border)}
+[data-theme="dark"] .tv-bar-track{background:rgba(255,255,255,0.08)}
+/* Login */
+[data-theme="dark"] .login-field{background:#1E293B;color:var(--jm-text);border-color:var(--jm-border)}
+[data-theme="dark"] .login-field:focus{background:#1E293B;border-color:var(--jm-navy-light)}
+[data-theme="dark"] .login-card{background:var(--jm-surface);border-color:var(--jm-border)}
+/* AI settings inline */
+[data-theme="dark"] .ai-settings-input{background:#1E293B;color:var(--jm-text);border-color:var(--jm-border)}
+/* Recharts tooltips */
+[data-theme="dark"] .recharts-tooltip-wrapper .recharts-default-tooltip{background:var(--jm-surface)!important;border-color:var(--jm-border)!important;color:var(--jm-text)!important}
+/* Admin storage sections */
+[data-theme="dark"] .admin-storage-section{background:#0F172A;border-color:var(--jm-border-light)}
 .theme-toggle{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.55);padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
 .theme-toggle:hover{color:#fff;background:rgba(255,255,255,0.1)}
 *{box-sizing:border-box;margin:0;padding:0}
