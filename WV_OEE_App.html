@@ -4025,11 +4025,14 @@ function AISettingsAssistant({master,onUpdate}){
     const q=input.trim();if(!q||loading)return;
     setInput('');
     const userMsg={role:'user',text:q,actions:[]};
-    setMsgs(m=>[...m,userMsg]);
+    const updatedMsgs=[...msgs,userMsg];
+    setMsgs(updatedMsgs);
     setLoading(true);
     try{
       const currentData={supervisors:master.supervisors||[],operators:master.operators||[],customEquipment:master.customEquipment||[],customProducts:master.customProducts||[]};
-      const r=await fetch('/api/ai/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,currentData})});
+      // Send full conversation history so AI has context
+      const history=updatedMsgs.map(function(m){return{role:m.role==='user'?'user':'assistant',content:m.text};});
+      const r=await fetch('/api/ai/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,currentData,history:history})});
       if(!r.ok)throw new Error('Server error '+r.status);
       const d=await r.json();
       setMsgs(m=>[...m,{role:'ai',text:d.reply||'Done.',actions:d.actions||[]}]);
@@ -4086,7 +4089,7 @@ function AISettingsAssistant({master,onUpdate}){
           onChange:function(e){setInput(e.target.value);},
           onKeyDown:function(e){if(e.key==='Enter'){e.preventDefault();send();}}}),
         h('button',{className:'ai-settings-send',disabled:loading||!input.trim(),onClick:send},'\u2192'),
-        h('button',{className:'ai-settings-send',style:{background:'transparent',color:'var(--jm-text-sec)',fontSize:11},onClick:function(){setOpen(false);}},'\u2715')
+        h('button',{className:'ai-settings-send',style:{background:'transparent',color:'var(--jm-text-sec)',fontSize:11},onClick:function(){setOpen(false);setMsgs([{role:'ai',text:"Hey \u2014 just tell me what you need. A new operator, product, equipment... I\u2019ll handle the details and you just confirm.",actions:[]}]);setInput('');}},'\u2715')
       )
     )
   );

@@ -979,7 +979,7 @@ function registerRoutes() {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) return res.status(503).json({ error: 'AI not configured — ANTHROPIC_API_KEY not set', reply: 'AI assistant is not configured. Please ask your administrator to set up the ANTHROPIC_API_KEY.', actions: [] });
-      const { message, context, currentData } = req.body;
+      const { message, context, currentData, history } = req.body;
       if (!message) return res.status(400).json({ error: 'Missing message' });
       const systemPrompt = `You help manage the JMOS OEE Dashboard settings for Jennmar's WV Bolt Plant. Talk like a helpful coworker — friendly, direct, no corporate-speak or buzzwords.
 
@@ -1025,7 +1025,9 @@ CRITICAL RULES — you MUST follow these:
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 600,
           system: systemPrompt,
-          messages: [{ role: 'user', content: message }]
+          messages: Array.isArray(history) && history.length > 1
+            ? history.filter(m => m.role === 'user' || m.role === 'assistant')
+            : [{ role: 'user', content: message }]
         })
       });
       if (!resp.ok) { const err = await resp.text(); return res.status(502).json({ error: 'AI API error', reply: 'AI request failed. Please try again.', actions: [] }); }
