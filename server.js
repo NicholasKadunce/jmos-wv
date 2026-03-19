@@ -1474,14 +1474,37 @@ RESPONSE STYLE:
   }
 
   // ── API: MySQL status ──
-  app.get('/api/mysql/status', (req, res) => {
-    res.json({
+  app.get('/api/mysql/status', async (req, res) => {
+    const status = {
       connected: !!mysqlPool,
       cacheAge: mysqlCache.lastRefresh ? Date.now() - mysqlCache.lastRefresh : null,
       equipCount: Object.keys(MYSQL_EQUIP_MAP).length,
       cachedProductionDates: mysqlCache.production ? Object.keys(Object.values(mysqlCache.production)[0] || {}) : [],
-      cachedDowntimeEvents: mysqlCache.downtime ? mysqlCache.downtime.length : 0
-    });
+      cachedDowntimeEvents: mysqlCache.downtime ? mysqlCache.downtime.length : 0,
+      config: { host: process.env.MYSQL_HOST || '10.114.77.205', port: process.env.MYSQL_PORT || '3306', database: process.env.MYSQL_DATABASE || 'JMWVL2' }
+    };
+    // Live connection test if requested
+    if (req.query.test === '1') {
+      try {
+        const mysql = require('mysql2/promise');
+        const testConn = await mysql.createConnection({
+          host: process.env.MYSQL_HOST || '10.114.77.205',
+          port: parseInt(process.env.MYSQL_PORT || '3306'),
+          user: process.env.MYSQL_USER || 'powerBI',
+          password: process.env.MYSQL_PASSWORD || 'ignitionData',
+          database: process.env.MYSQL_DATABASE || 'JMWVL2',
+          connectTimeout: 10000
+        });
+        const [rows] = await testConn.query('SELECT COUNT(*) as cnt FROM ProductionRecording WHERE DATE(ProductionDate) = CURDATE()');
+        status.liveTest = { success: true, todayRecords: rows[0].cnt };
+        await testConn.end();
+        // If pool was null but test succeeded, reinitialize
+        if (!mysqlPool) { initMySQL(0); }
+      } catch (e) {
+        status.liveTest = { success: false, error: e.message, code: e.code || null };
+      }
+    }
+    res.json(status);
   });
 
   // ── API: Hourly production from MySQL ──
