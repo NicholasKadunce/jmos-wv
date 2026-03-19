@@ -2583,10 +2583,11 @@ function Dashboard({dataVersion,master}){
       const pd=procMap[proc],avail=60-r.scheduledMins;
       pd.sm+=avail;pd.dtm+=totalDTMins(r.downtime);pd.udtm+=unschedDTMins(r.downtime);pd.tgt+=r.target;pd.good+=r.goodUnits;
       pd.def+=r.defects.reduce((s,x)=>s+parseInt(x.qty||0),0);
-      if(!pd.equips[r.equipCode])pd.equips[r.equipCode]={code:r.equipCode,name:eq.name,sm:0,dtm:0,udtm:0,tgt:0,good:0,def:0};
+      if(!pd.equips[r.equipCode])pd.equips[r.equipCode]={code:r.equipCode,name:eq.name,sm:0,dtm:0,udtm:0,tgt:0,good:0,def:0,ops:new Set()};
       const ed=pd.equips[r.equipCode];
       ed.sm+=avail;ed.dtm+=totalDTMins(r.downtime);ed.udtm+=unschedDTMins(r.downtime);ed.tgt+=r.target;ed.good+=r.goodUnits;
       ed.def+=r.defects.reduce((s,x)=>s+parseInt(x.qty||0),0);
+      (r.operators||[]).forEach(op=>{if(op)ed.ops.add(op);});
     });
     function calc(d){
       const run=d.sm-d.dtm;
@@ -2599,7 +2600,7 @@ function Dashboard({dataVersion,master}){
     }
     return Object.values(procMap).map(pd=>({
       process:pd.process,...calc(pd),
-      equipment:Object.values(pd.equips).map(ed=>({code:ed.code,name:ed.name,...calc(ed)})).sort((a,b)=>b.oee-a.oee)
+      equipment:Object.values(pd.equips).map(ed=>({code:ed.code,name:ed.name,operators:[...ed.ops].sort(),...calc(ed)})).sort((a,b)=>b.oee-a.oee)
     })).sort((a,b)=>b.good-a.good);
   },[filtered,selectedHour]);
 
@@ -2982,7 +2983,9 @@ function Dashboard({dataVersion,master}){
                     const ePct=isOEE?Math.min(eVal,100):(eMax>0?eVal/eMax*100:0);
                     const eColor=isOEE?(eVal>=85?'#1B3D6E':eVal>=60?'#F59E0B':'#DC2626'):(eq.tgt>0&&eq.good>=eq.tgt?'#059669':eq.tgt>0&&eq.good>=eq.tgt*0.8?'#F59E0B':'#DC2626');
                     return h('div',{key:eq.code,className:'hr-drill-eq'},
-                      h('div',{className:'hr-drill-eq-name'},eq.name),
+                      h('div',{className:'hr-drill-eq-name'},eq.name,
+                        eq.operators&&eq.operators.length>0&&h('span',{style:{fontSize:10,fontWeight:400,color:'#9CA3AF',marginLeft:6}},' \u2014 ',eq.operators.join(', '))
+                      ),
                       h('div',{className:'hr-drill-eq-stats'},
                         isOEE?h(React.Fragment,null,
                           h('span',null,'A: ',h('strong',null,eq.a+'%')),
