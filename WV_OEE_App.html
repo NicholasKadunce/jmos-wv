@@ -1046,6 +1046,75 @@ input[type=number]{-moz-appearance:textfield}
 @keyframes login-fade-in{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
 @keyframes login-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+/* ── Six Sigma Toolbox ── */
+@keyframes ssFadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes ssSlideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@keyframes ssPulse{0%,100%{opacity:1}50%{opacity:.6}}
+.ss-tool-tabs{display:flex;gap:2px;background:var(--jm-bg);border-radius:var(--radius-md);padding:3px;margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ss-tool-tab{padding:9px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;background:transparent;color:var(--jm-text-sec);font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.ss-tool-tab:hover{background:rgba(27,61,110,.06)}
+.ss-tool-tab.active{background:var(--jm-navy);color:#fff;box-shadow:0 2px 8px rgba(27,61,110,.25)}
+.ss-tool-tab svg{width:14px;height:14px}
+.ss-tool-content{animation:ssFadeIn .35s ease-out both}
+.ss-card{background:var(--jm-surface);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm);margin-bottom:16px;animation:ssFadeIn .35s ease-out both}
+.ss-card-title{font-size:18px;font-weight:800;color:var(--jm-navy);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.ss-card-sub{font-size:12px;color:var(--jm-text-ter);margin-bottom:18px;line-height:1.5}
+.ss-result-card{background:var(--jm-surface);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm);animation:ssFadeIn .4s ease-out both;border-top:3px solid var(--jm-border)}
+.ss-result-card:nth-child(1){animation-delay:0s}.ss-result-card:nth-child(2){animation-delay:.07s}.ss-result-card:nth-child(3){animation-delay:.14s}.ss-result-card:nth-child(4){animation-delay:.21s}
+.ss-result-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--jm-text-ter);margin-bottom:6px}
+.ss-result-value{font-size:28px;font-weight:800;color:var(--jm-navy);letter-spacing:-1px}
+.ss-result-sub{font-size:11px;color:var(--jm-text-sec);margin-top:4px}
+.ss-verdict{background:var(--jm-blue-tint);border-left:4px solid var(--jm-navy);border-radius:0 var(--radius-md) var(--radius-md) 0;padding:18px 22px;margin-top:18px;animation:ssFadeIn .5s ease-out .3s both}
+.ss-verdict-grade{font-size:36px;font-weight:900;letter-spacing:-1px}
+.ss-verdict-msg{font-size:13px;color:var(--jm-text-sec);line-height:1.7;margin-top:6px}
+.ss-verdict-recs{margin-top:12px;padding-left:18px;font-size:12px;color:var(--jm-text-sec);line-height:1.8}
+.ss-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:16px 0}
+.ss-stat-box{background:var(--jm-surface);border:1px solid var(--jm-border);border-radius:var(--radius-md);padding:12px;text-align:center;animation:ssFadeIn .3s ease-out both}
+.ss-stat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--jm-text-ter)}
+.ss-stat-value{font-size:20px;font-weight:700;color:var(--jm-navy);margin-top:2px}
+.ss-stat-unit{font-size:10px;color:var(--jm-text-ter);font-weight:500}
+.ss-explanation{background:#FAFBFC;border:1px solid var(--jm-border);border-radius:var(--radius-md);padding:16px 18px;margin-top:14px;font-size:13px;line-height:1.7;color:var(--jm-text-sec);animation:ssFadeIn .4s ease-out .2s both}
+.ss-explanation strong{color:var(--jm-text);font-weight:600}
+.ss-explanation h4{font-size:13px;font-weight:700;color:var(--jm-navy);margin:0 0 6px}
+.ss-mode-toggle{display:inline-flex;gap:2px;background:var(--jm-bg);border-radius:var(--radius-sm);padding:2px;margin-bottom:14px}
+.ss-mode-btn{padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;background:transparent;color:var(--jm-text-sec);font-family:inherit}
+.ss-mode-btn.active{background:var(--jm-navy);color:#fff;box-shadow:var(--shadow-sm)}
+.ss-filter-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:end}
+.ss-filter-row label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--jm-text-ter);display:block;margin-bottom:3px}
+.ss-filter-row select,.ss-filter-row input{height:36px;border:1.5px solid var(--jm-border);border-radius:var(--radius-sm);padding:0 10px;font-size:13px;font-family:inherit;transition:var(--trans);min-width:140px}
+.ss-filter-row select:focus,.ss-filter-row input:focus{border-color:var(--jm-navy);box-shadow:0 0 0 3px rgba(27,61,110,.1)}
+.ss-input-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.ss-input-group{display:flex;flex-direction:column;gap:3px}
+.ss-input-group label{font-size:11px;font-weight:700;color:var(--jm-text-sec)}
+.ss-input-group input,.ss-input-group select{height:40px;border:1.5px solid var(--jm-border);border-radius:var(--radius-sm);padding:0 12px;font-size:14px;font-family:inherit;transition:var(--trans)}
+.ss-input-group input:focus,.ss-input-group select:focus{border-color:var(--jm-navy);box-shadow:0 0 0 3px rgba(27,61,110,.1)}
+.ss-btn-row{display:flex;gap:10px;margin-top:6px}
+.ss-sipoc-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px}
+.ss-sipoc-table th{background:var(--jm-navy);color:#fff;padding:10px 12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:10px}
+.ss-sipoc-table td{padding:10px 12px;border:1px solid var(--jm-border);vertical-align:top;line-height:1.6}
+.ss-sipoc-table tr:nth-child(even) td{background:var(--jm-bg)}
+.ss-rty-flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;margin:24px 0;animation:ssFadeIn .4s ease-out both}
+.ss-rty-box{display:flex;flex-direction:column;align-items:center;background:var(--jm-surface);border:2px solid var(--jm-border);border-radius:var(--radius-lg);padding:14px 18px;min-width:110px;transition:border-color .3s}
+.ss-rty-yield{font-size:22px;font-weight:800;letter-spacing:-1px}
+.ss-rty-name{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--jm-text-ter);margin-bottom:4px;letter-spacing:.5px}
+.ss-rty-units{font-size:11px;color:var(--jm-text-sec);margin-top:4px}
+.ss-rty-arrow{display:flex;align-items:center;padding:0 6px;color:var(--jm-navy)}
+.ss-rty-arrow svg{width:28px;height:28px}
+.ss-rty-total{text-align:center;margin-top:20px;animation:ssFadeIn .5s ease-out .3s both}
+.ss-rty-total-value{font-size:42px;font-weight:900;letter-spacing:-2px}
+.ss-rty-total-label{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--jm-text-ter);letter-spacing:1px;margin-top:4px}
+.ss-violation-card{background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--radius-md);padding:12px 14px;margin-bottom:8px;animation:ssFadeIn .3s ease-out both}
+.ss-violation-rule{font-size:12px;font-weight:700;color:#991B1B}
+.ss-violation-desc{font-size:11px;color:#7F1D1D;margin-top:2px;line-height:1.5}
+.ss-violation-reason{font-size:11px;color:var(--jm-text-sec);margin-top:4px;font-style:italic}
+.ss-teaching{background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--radius-md);padding:14px 16px;margin-top:12px;animation:ssFadeIn .3s ease-out both}
+.ss-teaching h4{font-size:12px;font-weight:700;color:#92400E;margin:0 0 6px;display:flex;align-items:center;gap:6px}
+.ss-teaching p{font-size:12px;color:#78350F;line-height:1.6;margin:0}
+.ss-teaching code{background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px;font-size:11px}
+.ss-lane-container{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:16px 0;padding-bottom:8px}
+.ss-heatmap-cell{transition:opacity .2s}
+.ss-heatmap-cell:hover{opacity:.8;stroke:#1B3D6E;stroke-width:1}
+@media(max-width:768px){.ss-input-grid{grid-template-columns:1fr}.ss-stat-grid{grid-template-columns:repeat(2,1fr)}.ss-rty-flow{flex-direction:column}.ss-rty-arrow{transform:rotate(90deg)}.ss-filter-row{flex-direction:column}.ss-filter-row select,.ss-filter-row input{min-width:100%}}
 .login-card{position:relative;z-index:1;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-radius:24px;padding:48px 40px 40px;width:100%;max-width:400px;box-shadow:0 25px 80px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.05),inset 0 1px 0 rgba(255,255,255,.8);text-align:center;animation:login-fade-in .6s ease-out}
 .login-logo{height:56px;margin-bottom:16px;filter:drop-shadow(0 2px 8px rgba(27,61,110,.15))}
 .login-title{font-size:32px;font-weight:900;color:var(--jm-navy);margin:0 0 2px;letter-spacing:2px}
@@ -1107,6 +1176,7 @@ const Icon={
   userPlus:()=>h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round'},h('path',{d:'M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2'}),h('circle',{cx:8.5,cy:7,r:4}),h('line',{x1:20,y1:8,x2:20,y2:14}),h('line',{x1:23,y1:11,x2:17,y2:11})),
   menu:()=>h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round'},h('line',{x1:3,y1:6,x2:21,y2:6}),h('line',{x1:3,y1:12,x2:21,y2:12}),h('line',{x1:3,y1:18,x2:21,y2:18})),
   analytics:()=>h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M21 21H4.6c-.56 0-.84 0-1.05-.11a1 1 0 01-.44-.44C3 20.24 3 19.96 3 19.4V3'}),h('path',{d:'M7 14l4-4 4 4 6-6'})),
+  sixsigma:()=>h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},h('path',{d:'M5 4h10l-5 7 5 7H5'}),h('circle',{cx:18,cy:7,r:2.5,fill:'currentColor',stroke:'none'})),
 };
 
 // ─── MASTER DATA ──────────────────────────────────────────────────────────────
@@ -1220,6 +1290,46 @@ const EQUIP_PRODUCTS={
   'WV-MISC-LANDISASSM':['P-LND-001'],'WV-MISC-PIPEASSY':['P-PPA-001'],'WV-MISC-UNITS':['P-UNT-001','P-UNT-002'],
 };
 
+// ─── FINISHED PRODUCT DEFINITIONS (for Swim Lane / RTY) ───
+const BOLT_EQUIP={Shears:['WV-SHEAR-AS1','WV-SHEAR-AS2'],Peeling:['WV-PEEL-MAN','WV-PEEL-AUTO','WV-PEEL-SWAG'],Threading:['WV-THREAD-T1','WV-THREAD-T2','WV-THREAD-AT'],Heading:['WV-HEAD-H1','WV-HEAD-H2','WV-HEAD-H3','WV-HEAD-AUTO'],Assembly:['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4']};
+const BOLT_ROUTE=['Shears','Peeling','Threading','Heading','Assembly'];
+const FINISHED_PRODUCTS=[
+  {id:'bolt-58',name:'5/8 Bolts',category:'Bolts',route:BOLT_ROUTE,equipGroups:BOLT_EQUIP,
+    productFilter:c=>/^P-(SHR-00[1-4]|HDG-00[1-3]|ATH-00[12]|TR1|MPL|APL|SWG|ASY)/.test(c)&&/5\/8/.test(getProductName(c))},
+  {id:'bolt-34',name:'3/4 Bolts',category:'Bolts',route:BOLT_ROUTE,equipGroups:BOLT_EQUIP,
+    productFilter:c=>/^P-(SHR-00[56]|HDG|ATH|TR|MPL|APL|SWG|ASY)/.test(c)&&/3\/4/.test(getProductName(c))},
+  {id:'bolt-5164',name:'51/64 Bolts',category:'Bolts',route:BOLT_ROUTE,equipGroups:BOLT_EQUIP,
+    productFilter:c=>/^P-(SHR-00[789]|HDG-005|ATH-004|TR|MPL|APL|SWG|ASY)/.test(c)&&/51\/64/.test(getProductName(c))},
+  {id:'bolt-677',name:'677/6RB Bolts',category:'Bolts',route:BOLT_ROUTE,equipGroups:BOLT_EQUIP,
+    productFilter:c=>/^P-(SHR-01[0-3]|HDG-004|ATH-003|TR|MPL|APL|SWG|ASY)/.test(c)&&/677|6RB|6JB/.test(getProductName(c))},
+  {id:'bolt-804',name:'804/7RB Bolts',category:'Bolts',route:BOLT_ROUTE,equipGroups:BOLT_EQUIP,
+    productFilter:c=>/^P-(SHR-01[4-8]|HDG-00[6-8]|ATH-00[5-7]|TR|MPL|APL|SWG|ASY)/.test(c)&&/804|7RB/.test(getProductName(c))},
+  {id:'plates',name:'All Plates',category:'Plates',route:['Presses'],
+    equipGroups:{Presses:['WV-PRESS-400','WV-PRESS-500A','WV-PRESS-500B']},
+    productFilter:c=>c.startsWith('P-PRS-')},
+  {id:'cable-icc',name:'I-CC Cables',category:'Cables',route:['Cable Lines'],
+    equipGroups:{'Cable Lines':['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C3','WV-CABLE-C4']},
+    productFilter:c=>c.startsWith('P-CBL-')&&/I-CC/.test(getProductName(c))},
+  {id:'cable-passive',name:'Passive Cables',category:'Cables',route:['Big Saw','Cable Lines'],
+    equipGroups:{'Big Saw':['WV-MISC-BIGSAW'],'Cable Lines':['WV-CABLE-C1','WV-CABLE-C2','WV-CABLE-C4']},
+    productFilter:c=>(c.startsWith('P-CBL-')&&/Passive/.test(getProductName(c)))||c==='P-SAW-002'},
+  {id:'cable-fg',name:'Fully Grouted Cables',category:'Cables',route:['Big Saw','Offline Welding','Pipe Assembly','Cable Lines'],
+    equipGroups:{'Big Saw':['WV-MISC-BIGSAW'],'Offline Welding':['WV-MISC-OFFWELD'],'Pipe Assembly':['WV-MISC-PIPEASSY'],'Cable Lines':['WV-CABLE-C3']},
+    productFilter:c=>(c.startsWith('P-CBL-')&&/Fully Grouted/.test(getProductName(c)))||c==='P-SAW-002'||c==='P-WLD-001'||c==='P-PPA-001'},
+];
+
+// ─── SIX SIGMA STATISTICAL UTILITIES ───
+function ssMean(a){if(!a.length)return 0;return a.reduce((s,v)=>s+v,0)/a.length;}
+function ssVariance(a){if(a.length<2)return 0;const m=ssMean(a);return a.reduce((s,v)=>s+(v-m)*(v-m),0)/(a.length-1);}
+function ssStdDev(a){return Math.sqrt(ssVariance(a));}
+function ssSkewness(a){if(a.length<3)return 0;const m=ssMean(a),s=ssStdDev(a),n=a.length;if(s===0)return 0;return(n/((n-1)*(n-2)))*a.reduce((acc,v)=>acc+Math.pow((v-m)/s,3),0);}
+function ssKurtosis(a){if(a.length<4)return 0;const m=ssMean(a),s=ssStdDev(a),n=a.length;if(s===0)return 0;return((n*(n+1))/((n-1)*(n-2)*(n-3)))*a.reduce((acc,v)=>acc+Math.pow((v-m)/s,4),0)-(3*(n-1)*(n-1))/((n-2)*(n-3));}
+function ssQuartiles(a){const s=[...a].sort((x,y)=>x-y);const n=s.length;const q=(p)=>{const i=p*(n-1);const lo=Math.floor(i);const hi=Math.ceil(i);return lo===hi?s[lo]:s[lo]*(hi-i)+s[hi]*(i-lo);};return{min:s[0],q1:q(.25),q2:q(.5),q3:q(.75),max:s[n-1],iqr:q(.75)-q(.25)};}
+function ssNormalCDF(z){const p=.2316419,b1=.31938153,b2=-.356563782,b3=1.781477937,b4=-1.821255978,b5=1.330274429;const t=1/(1+p*Math.abs(z));const d=.3989422804*Math.exp(-z*z/2);const prob=d*t*(b1+t*(b2+t*(b3+t*(b4+t*b5))));return z>0?1-prob:prob;}
+function ssNormalPPF(p){if(p<=0)return-Infinity;if(p>=1)return Infinity;if(p===.5)return 0;const a1=-3.969683028665376e1,a2=2.209460984245205e2,a3=-2.759285104469687e2,a4=1.383577518672690e2,a5=-3.066479806614716e1,a6=2.506628277459239e0;const b1=-5.447609879822406e1,b2=1.615858368580409e2,b3=-1.556989798598866e2,b4=6.680131188771972e1,b5=-1.328068155288572e1;const c1=-7.784894002430293e-3,c2=-3.223964580411365e-1,c3=-2.400758277161838,c4=-2.549732539343734,c5=4.374664141464968,c6=2.938163982698783;const d1=7.784695709041462e-3,d2=3.224671290700398e-1,d3=2.445134137142996,d4=3.754408661907416;const pLow=.02425,pHigh=1-pLow;let q,r;if(p<pLow){q=Math.sqrt(-2*Math.log(p));r=(((((c1*q+c2)*q+c3)*q+c4)*q+c5)*q+c6)/((((d1*q+d2)*q+d3)*q+d4)*q+1);}else if(p<=pHigh){q=p-.5;r=q*q;r=(((((a1*r+a2)*r+a3)*r+a4)*r+a5)*r+a6)*q/(((((b1*r+b2)*r+b3)*r+b4)*r+b5)*r+1);}else{q=Math.sqrt(-2*Math.log(1-p));r=-(((((c1*q+c2)*q+c3)*q+c4)*q+c5)*q+c6)/((((d1*q+d2)*q+d3)*q+d4)*q+1);}return r;}
+function ssMovingAvg(data,n){return data.map((v,i)=>i<n-1?null:ssMean(data.slice(i-n+1,i+1)));}
+function ssMovingRange(data){return data.map((v,i)=>i===0?null:Math.abs(v-data[i-1]));}
+
 // Target rates
 const TARGET_RATES={};
 // Shears
@@ -1304,13 +1414,15 @@ let _masterRef=null;
 function setMasterRef(m){_masterRef=m;}
 function getProductName(c){const p=INIT_PRODUCTS.find(x=>x.code===c);if(p)return p.name;const cp=(_masterRef&&_masterRef.customProducts||[]).find(x=>x.code===c);return cp?cp.name:c;}
 function getEquipName(c){const e=INIT_EQUIPMENT.find(x=>x.code===c);if(e)return e.name;const ce=(_masterRef&&_masterRef.customEquipment)||(Storage.loadMaster()&&Storage.loadMaster().customEquipment)||[];const found=ce.find(x=>x.code===c);return found?found.name:c;}
-function getEquipProducts(equipCode,master){const base=EQUIP_PRODUCTS[equipCode]||[];const custom=(master&&master.customProducts)||[];const customCodes=custom.filter(p=>!p.equip||p.equip.includes(equipCode)).map(p=>p.code);return[...base,...customCodes.filter(c=>!base.includes(c))];}
+function getEquipProducts(equipCode,master){const base=EQUIP_PRODUCTS[equipCode]||[];const custom=(master&&master.customProducts)||[];const customCodes=custom.filter(p=>{if(p.equip)return p.equip.includes(equipCode);const assignedElsewhere=Object.entries(EQUIP_PRODUCTS).some(([k,v])=>k!==equipCode&&v.includes(p.code));return!assignedElsewhere;}).map(p=>p.code);return[...base,...customCodes.filter(c=>!base.includes(c))];}
 function getActiveEquipment(master){
   const deactivated=(master&&master.deactivatedEquip)||[];
   const custom=(master&&master.customEquipment)||[];
   return[...INIT_EQUIPMENT.filter(e=>!deactivated.includes(e.code)),...custom.filter(e=>e.active)];
 }
 function totalDTMins(arr){return arr.reduce((s,e)=>s+parseInt(e.mins||0),0);}
+function schedDTMins(arr){return arr.filter(d=>String(d.dtCode)==='16').reduce((s,e)=>s+parseInt(e.mins||0),0);}
+function unschedDTMins(arr){return totalDTMins(arr)-schedDTMins(arr);}
 function makeNewDT(){return{id:Date.now()+Math.random(),mins:'',dtCode:'',subItem:''};}
 function makeNewDef(){return{id:Date.now()+Math.random(),qty:'',defCode:''};}
 function getTimeRange(hi,sn,sh){const st=sh?getShiftStart(sn,sh):(SHIFT_START_HOURS[sn]||5);const h1=(st+hi-1)%24;const h2=(st+hi)%24;const f=h=>{const p=h>=12?'PM':'AM';return`${h%12||12} ${p}`;};return`${f(h1)} - ${f(h2)}`;}
@@ -1915,13 +2027,15 @@ const BDR={
     if(eligible.length<8)return null; // Must sustain for 8+ hours
     const currentTarget=this.getEffectiveTarget(equipCode,productCode);
     if(!currentTarget||currentTarget<=0)return null;
-    let totalGood=0,totalAvailMins=0,totalSchedMins=0,totalDTMinutes=0,totalDefects=0;
+    let totalGood=0,totalAvailMins=0,totalSchedMins=0,totalDTMinutes=0,totalUnschedDT=0,totalDefects=0;
     eligible.forEach(hr=>{
       totalGood+=parseInt(hr.goodUnits||0);
       const sm=hr.scheduledMins||0;
       const dtm=totalDTMins(hr.downtime);
+      const udtm=unschedDTMins(hr.downtime);
       totalSchedMins+=sm;
       totalDTMinutes+=dtm;
+      totalUnschedDT+=udtm;
       totalDefects+=(hr.defects||[]).reduce((s,d)=>s+parseInt(d.qty||0),0);
       const avail=60-sm-dtm;
       totalAvailMins+=Math.max(avail,0);
@@ -1934,7 +2048,7 @@ const BDR={
     // Calculate OEE metrics for the BDR record
     const totalPlannedMins=eligible.length*60;
     const totalRunMins=totalPlannedMins-totalSchedMins-totalDTMinutes;
-    const availability=totalPlannedMins>0?Math.round((totalPlannedMins-totalSchedMins-totalDTMinutes)/(totalPlannedMins-totalSchedMins)*1000)/10:0;
+    const availability=totalPlannedMins>0?Math.round((totalPlannedMins-totalSchedMins-totalUnschedDT)/(totalPlannedMins-totalSchedMins)*1000)/10:0;
     const totalTarget=eligible.reduce((s,hr)=>s+(hr.target||0),0);
     const performance=totalTarget>0?Math.round(totalGood/totalTarget*1000)/10:0;
     const quality=totalGood>0?Math.round((totalGood-totalDefects)/totalGood*1000)/10:100;
@@ -2157,12 +2271,12 @@ function Dashboard({dataVersion,master}){
 
   // OEE metrics
   const metrics=useMemo(()=>{
-    let sm=0,dtm=0,tgt=0,good=0,def=0;
+    let sm=0,dtm=0,udtm=0,tgt=0,good=0,def=0;
     filtered.forEach(r=>{
-      const avail=60-r.scheduledMins;sm+=avail;dtm+=totalDTMins(r.downtime);tgt+=r.target;good+=r.goodUnits;
+      const avail=60-r.scheduledMins;sm+=avail;dtm+=totalDTMins(r.downtime);udtm+=unschedDTMins(r.downtime);tgt+=r.target;good+=r.goodUnits;
       def+=r.defects.reduce((s,d)=>s+parseInt(d.qty||0),0);
     });
-    const run=sm-dtm,tp=good+def,a=sm>0?(run/sm)*100:0,p=run>0&&tgt>0?((tp*sm)/(run*tgt))*100:0,q=tp>0?(good/tp)*100:100;
+    const run=sm-dtm,tp=good+def,a=sm>0?((sm-udtm)/sm)*100:0,p=run>0&&tgt>0?((tp*sm)/(run*tgt))*100:0,q=tp>0?(good/tp)*100:100;
     return{a,p,q,oee:(a*p*q)/10000,good,tgt,def,dtm,sm,run};
   },[filtered]);
 
@@ -2176,13 +2290,13 @@ function Dashboard({dataVersion,master}){
   const equipMetrics=useMemo(()=>{
     const map={};
     filtered.forEach(r=>{
-      if(!map[r.equipCode])map[r.equipCode]={ec:r.equipCode,sm:0,dtm:0,tgt:0,good:0,def:0,hrs:0};
+      if(!map[r.equipCode])map[r.equipCode]={ec:r.equipCode,sm:0,dtm:0,udtm:0,tgt:0,good:0,def:0,hrs:0};
       const e=map[r.equipCode],av=60-r.scheduledMins;
-      e.sm+=av;e.dtm+=totalDTMins(r.downtime);e.tgt+=r.target;e.good+=r.goodUnits;
+      e.sm+=av;e.dtm+=totalDTMins(r.downtime);e.udtm+=unschedDTMins(r.downtime);e.tgt+=r.target;e.good+=r.goodUnits;
       e.def+=r.defects.reduce((s,d)=>s+parseInt(d.qty||0),0);e.hrs++;
     });
     return Object.values(map).map(e=>{
-      const run=e.sm-e.dtm,tp=e.good+e.def,a=e.sm>0?(run/e.sm)*100:0,p=run>0&&e.tgt>0?((tp*e.sm)/(run*e.tgt))*100:0,q=tp>0?(e.good/tp)*100:100;
+      const run=e.sm-e.dtm,tp=e.good+e.def,a=e.sm>0?((e.sm-e.udtm)/e.sm)*100:0,p=run>0&&e.tgt>0?((tp*e.sm)/(run*e.tgt))*100:0,q=tp>0?(e.good/tp)*100:100;
       const oee=(a*p*q)/10000;
       const losses=[{t:'A',v:a},{t:'P',v:p},{t:'Q',v:q}].sort((x,y)=>x.v-y.v)[0];
       return{...e,a,p,q,oee,bottleneck:losses.t};
@@ -2288,13 +2402,13 @@ function Dashboard({dataVersion,master}){
     }
     const map={};
     src.forEach(r=>{
-      if(!map[r.date])map[r.date]={date:r.date,sm:0,dtm:0,tgt:0,good:0,def:0};
+      if(!map[r.date])map[r.date]={date:r.date,sm:0,dtm:0,udtm:0,tgt:0,good:0,def:0};
       const d=map[r.date],av=60-r.scheduledMins;
-      d.sm+=av;d.dtm+=totalDTMins(r.downtime);d.tgt+=r.target;d.good+=r.goodUnits;
+      d.sm+=av;d.dtm+=totalDTMins(r.downtime);d.udtm+=unschedDTMins(r.downtime);d.tgt+=r.target;d.good+=r.goodUnits;
       d.def+=r.defects.reduce((s,x)=>s+parseInt(x.qty||0),0);
     });
     return Object.values(map).map(d=>{
-      const run=d.sm-d.dtm,tp=d.good+d.def,a=d.sm>0?(run/d.sm)*100:0,p=run>0&&d.tgt>0?((tp*d.sm)/(run*d.tgt))*100:0,q=tp>0?(d.good/tp)*100:100;
+      const run=d.sm-d.dtm,tp=d.good+d.def,a=d.sm>0?((d.sm-d.udtm)/d.sm)*100:0,p=run>0&&d.tgt>0?((tp*d.sm)/(run*d.tgt))*100:0,q=tp>0?(d.good/tp)*100:100;
       return{date:d.date,label:d.date.slice(5),oee:d.tgt>0?Math.round(d.good/d.tgt*1000)/10:0,a:Math.round(a*10)/10,p:Math.round(p*10)/10,q:Math.round(q*10)/10,good:d.good,tgt:d.tgt};
     }).sort((a,b)=>a.date.localeCompare(b.date));
   },[filtered,activePreset,allRecords,shiftFilter,equipFilter,processFilter]);
@@ -2410,15 +2524,15 @@ function Dashboard({dataVersion,master}){
     const map={};
     scoped.forEach(r=>{
       const hr=r.hourIdx;
-      if(!map[hr])map[hr]={hour:hr,sm:0,dtm:0,tgt:0,good:0,def:0};
+      if(!map[hr])map[hr]={hour:hr,sm:0,dtm:0,udtm:0,tgt:0,good:0,def:0};
       const d=map[hr],avail=60-r.scheduledMins;
-      d.sm+=avail;d.dtm+=totalDTMins(r.downtime);d.tgt+=r.target;d.good+=r.goodUnits;
+      d.sm+=avail;d.dtm+=totalDTMins(r.downtime);d.udtm+=unschedDTMins(r.downtime);d.tgt+=r.target;d.good+=r.goodUnits;
       d.def+=r.defects.reduce((s,x)=>s+parseInt(x.qty||0),0);
     });
     return Object.keys(map).sort((a,b)=>a-b).map(k=>{
       const d=map[k];
       const run=d.sm-d.dtm;
-      const a=d.sm>0?(run/d.sm)*100:0;
+      const a=d.sm>0?((d.sm-d.udtm)/d.sm)*100:0;
       const tp=d.good+d.def;
       const p=run>0&&d.tgt>0?((tp*d.sm)/(run*d.tgt))*100:0;
       const q=tp>0?(d.good/tp)*100:100;
@@ -3227,6 +3341,497 @@ function Dashboard({dataVersion,master}){
   );
 }
 // ═══════════════════════════════════════════════════════════════════════════════
+// SIX SIGMA TOOLBOX — Statistical process control & continuous improvement
+// ═══════════════════════════════════════════════════════════════════════════════
+function SixSigmaView({dataVersion,master}){
+  const {ResponsiveContainer,ComposedChart,BarChart,Bar,Line,XAxis,YAxis,CartesianGrid,Tooltip,ReferenceLine,Cell,LabelList,ScatterChart,Scatter,ZAxis,Legend}=Recharts;
+  const [tool,setTool]=useState('costbenefit');
+  const [dateFrom,setDateFrom]=useState(()=>{const d=toET(new Date());d.setDate(d.getDate()-90);return fmtDate(d);});
+  const [dateTo,setDateTo]=useState(()=>fmtDate(new Date()));
+  const [shiftFilter,setShiftFilter]=useState('all');
+  const allRecords=useMemo(()=>{
+    const records=[];
+    dataQueue.forEach(entry=>{
+      if(entry.shiftData&&entry.equipData){const sd=entry.shiftData;Object.keys(entry.equipData).forEach(ec=>{(entry.equipData[ec]||[]).forEach(hr=>{records.push({date:sd.shiftDate,shiftNum:sd.shiftNum,equipCode:ec,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});});});}
+      if(entry.equipCode&&entry.hourData&&!entry.equipData){const hr=entry.hourData;const sd=entry.shiftData||{};records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});}
+    });return dedup(records);
+  },[dataVersion]);
+  const filtered=useMemo(()=>allRecords.filter(r=>{
+    if(r.date<dateFrom||r.date>dateTo)return false;
+    if(shiftFilter!=='all'&&String(r.shiftNum)!==shiftFilter)return false;return true;
+  }),[allRecords,dateFrom,dateTo,shiftFilter]);
+
+  const tools=[
+    {key:'costbenefit',label:'Cost-Benefit'},
+    {key:'swimlane',label:'Swim Lane'},
+    {key:'normaldist',label:'Distribution'},
+    {key:'rty',label:'RTY'},
+    {key:'controlchart',label:'Control Charts'}
+  ];
+
+  return h('div',{style:{padding:'20px 24px',maxWidth:1200,margin:'0 auto'}},
+    h('div',{style:{marginBottom:16}},
+      h('h2',{style:{fontSize:22,fontWeight:900,color:'var(--jm-navy)',margin:'0 0 4px',letterSpacing:'-0.5px'}},'Six Sigma Toolbox'),
+      h('p',{style:{fontSize:12,color:'var(--jm-text-ter)',margin:0}},'Statistical process control & continuous improvement tools')),
+    h('div',{className:'ss-tool-tabs'},tools.map(t=>h('button',{key:t.key,className:'ss-tool-tab'+(tool===t.key?' active':''),onClick:()=>setTool(t.key)},t.label))),
+    h('div',{className:'ss-filter-row'},
+      h('div',null,h('label',null,'From'),h('input',{type:'date',value:dateFrom,onChange:e=>setDateFrom(e.target.value)})),
+      h('div',null,h('label',null,'To'),h('input',{type:'date',value:dateTo,onChange:e=>setDateTo(e.target.value)})),
+      h('div',null,h('label',null,'Shift'),h('select',{value:shiftFilter,onChange:e=>setShiftFilter(e.target.value)},h('option',{value:'all'},'All Shifts'),h('option',{value:'1'},'1st'),h('option',{value:'2'},'2nd'),h('option',{value:'3'},'3rd')))),
+    h('div',{key:tool,className:'ss-tool-content'},
+      tool==='costbenefit'&&h(SSCostBenefit),
+      tool==='swimlane'&&h(SSSwimLane,{filtered,master}),
+      tool==='normaldist'&&h(SSNormalDist,{filtered,master}),
+      tool==='rty'&&h(SSRolledYield,{filtered,master}),
+      tool==='controlchart'&&h(SSControlCharts,{filtered,master}))
+  );
+}
+
+// ── COST-BENEFIT ANALYSIS ──
+function SSCostBenefit(){
+  const [mode,setMode]=useState('input');
+  const [name,setName]=useState('');const [cost,setCost]=useState('');const [benefit,setBenefit]=useState('');
+  const [benefitType,setBenefitType]=useState('yield');const [years,setYears]=useState('3');const [rate,setRate]=useState('8');
+
+  function loadExample(){setName('Header Die Upgrade');setCost('15000');setBenefit('42000');setBenefitType('yield');setYears('3');setRate('8');setMode('input');}
+  function calculate(){
+    const c=parseFloat(cost)||0,b=parseFloat(benefit)||0,y=parseInt(years)||3,r=(parseFloat(rate)||8)/100;
+    if(c<=0||b<=0)return null;
+    const roi=(b*y-c)/c*100;const payback=c/b;
+    let npv=-c;for(let i=1;i<=y;i++)npv+=b/Math.pow(1+r,i);
+    let pvB=0;for(let i=1;i<=y;i++)pvB+=b/Math.pow(1+r,i);
+    const bcr=pvB/c;
+    return{roi,payback,npv,bcr};
+  }
+  function getVerdict(m){
+    if(m.roi>200&&m.payback<.5&&m.bcr>3)return{grade:'A+',color:'#059669',msg:'Exceptional return. This project pays for itself in under 6 months with outstanding long-term value. Strongly recommended for immediate approval.',recs:['Fast-track approval — minimal risk, maximum upside','Document as a benchmark for future project justification','Consider scaling the investment for even greater returns']};
+    if(m.roi>100&&m.payback<1&&m.bcr>2)return{grade:'A',color:'#34C759',msg:'Strong financial case. The investment recovers within a year and delivers significant returns over the analysis period.',recs:['Recommend approval with standard oversight','Monitor actual vs projected benefits quarterly','Share results with other departments for replication']};
+    if(m.roi>50&&m.payback<1.5&&m.bcr>1.5)return{grade:'B',color:'#6366F1',msg:'Good return with reasonable payback period. The benefits clearly outweigh the costs, though there may be better alternatives.',recs:['Approve if aligned with strategic priorities','Compare with competing projects for best allocation','Track benefits closely in the first year']};
+    if(m.roi>20&&m.bcr>1.2)return{grade:'C',color:'#F59E0B',msg:'Moderate return. The project is financially viable but the margin of safety is thin. Sensitivity analysis is recommended.',recs:['Proceed with caution — benefits are marginal','Identify ways to reduce cost or increase benefit before committing','Run sensitivity analysis with pessimistic assumptions']};
+    if(m.bcr>=1)return{grade:'D',color:'#F97316',msg:'Marginal. Benefits barely exceed costs. High risk that actual returns will disappoint if assumptions are optimistic.',recs:['Reconsider — explore alternatives with better economics','If proceeding, implement strong benefit tracking from day one','Consider phased implementation to limit downside risk']};
+    return{grade:'F',color:'#EF4444',msg:'Costs exceed benefits. This project destroys value over the analysis period at the given discount rate.',recs:['Do not proceed as currently scoped','Redesign the project to reduce cost or increase benefit','Consider if intangible benefits (safety, morale) justify the shortfall']};
+  }
+  const results=calculate();
+  const verdict=results?getVerdict(results):null;
+  const fmt$=v=>'$'+Math.round(v).toLocaleString();
+  const fmtPct=v=>v.toFixed(1)+'%';
+
+  return h('div',null,
+    h('div',{className:'ss-card'},
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}},
+        h('div',null,h('div',{className:'ss-card-title'},'Cost-Benefit Analysis'),h('div',{className:'ss-card-sub'},'Evaluate project investments with ROI, NPV, and payback analysis')),
+        h('div',{className:'ss-mode-toggle'},
+          h('button',{className:'ss-mode-btn'+(mode==='input'||mode==='results'?' active':''),onClick:()=>setMode('input')},'Analyze'),
+          h('button',{className:'ss-mode-btn'+(mode==='example'?' active':''),onClick:loadExample},'Example'),
+          h('button',{className:'ss-mode-btn'+(mode==='teaching'?' active':''),onClick:()=>setMode('teaching')},'Learn'))),
+      mode==='teaching'?h('div',{className:'ss-tool-content'},
+        h('div',{className:'ss-teaching'},h('h4',null,'What is Cost-Benefit Analysis?'),h('p',null,'Cost-Benefit Analysis (CBA) is a systematic approach to comparing the strengths and weaknesses of alternatives. In manufacturing, it helps decide whether a capital investment, process change, or improvement project is financially justified.')),
+        h('div',{className:'ss-teaching',style:{marginTop:10}},h('h4',null,'ROI — Return on Investment'),h('p',null,'Formula: ',h('code',null,'ROI = (Total Benefits - Cost) / Cost × 100%'),'. Measures how much profit you get per dollar invested. An ROI of 100% means you doubled your money.')),
+        h('div',{className:'ss-teaching',style:{marginTop:10}},h('h4',null,'Payback Period'),h('p',null,'Formula: ',h('code',null,'Payback = Cost / Annual Benefit'),'. How many years until the investment pays for itself. Shorter is better — under 1 year is excellent in manufacturing.')),
+        h('div',{className:'ss-teaching',style:{marginTop:10}},h('h4',null,'NPV — Net Present Value'),h('p',null,'Formula: ',h('code',null,'NPV = -Cost + Σ(Benefit / (1+r)^t)'),'. Accounts for the time value of money. A positive NPV means the project creates value. Uses a discount rate (typically 8-12% in manufacturing) to reflect that a dollar today is worth more than a dollar tomorrow.')),
+        h('div',{className:'ss-teaching',style:{marginTop:10}},h('h4',null,'BCR — Benefit-Cost Ratio'),h('p',null,'Formula: ',h('code',null,'BCR = PV of Benefits / Cost'),'. A BCR above 1.0 means benefits exceed costs. Above 2.0 is considered strong. Below 1.0 means the project destroys value.'))
+      ):h('div',null,
+        h('div',{className:'ss-input-grid'},
+          h('div',{className:'ss-input-group',style:{gridColumn:'1/-1'}},h('label',null,'Project Name'),h('input',{type:'text',value:name,onChange:e=>setName(e.target.value),placeholder:'e.g., Header Die Upgrade'})),
+          h('div',{className:'ss-input-group'},h('label',null,'Project Cost ($)'),h('input',{type:'number',value:cost,onChange:e=>setCost(e.target.value),placeholder:'15000'})),
+          h('div',{className:'ss-input-group'},h('label',null,'Expected Annual Benefit ($)'),h('input',{type:'number',value:benefit,onChange:e=>setBenefit(e.target.value),placeholder:'42000'})),
+          h('div',{className:'ss-input-group'},h('label',null,'Benefit Type'),h('select',{value:benefitType,onChange:e=>setBenefitType(e.target.value)},h('option',{value:'yield'},'Yield Improvement'),h('option',{value:'downtime'},'Downtime Reduction'),h('option',{value:'scrap'},'Scrap Reduction'),h('option',{value:'throughput'},'Throughput Increase'))),
+          h('div',{className:'ss-input-group'},h('label',null,'Time Horizon (years)'),h('input',{type:'number',value:years,onChange:e=>setYears(e.target.value),min:1,max:10})),
+          h('div',{className:'ss-input-group'},h('label',null,'Discount Rate (%)'),h('input',{type:'number',value:rate,onChange:e=>setRate(e.target.value),min:0,max:30}))),
+        results&&h('div',{style:{marginTop:10}},
+          h('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:12}},
+            h('div',{className:'ss-result-card',style:{borderTopColor:verdict.color}},h('div',{className:'ss-result-label'},'Return on Investment'),h('div',{className:'ss-result-value',style:{color:verdict.color}},fmtPct(results.roi)),h('div',{className:'ss-result-sub'},'over '+years+' years')),
+            h('div',{className:'ss-result-card',style:{borderTopColor:results.payback<=1?'#34C759':results.payback<=2?'#F59E0B':'#EF4444'}},h('div',{className:'ss-result-label'},'Payback Period'),h('div',{className:'ss-result-value'},results.payback.toFixed(1)),h('div',{className:'ss-result-sub'},'years to recover')),
+            h('div',{className:'ss-result-card',style:{borderTopColor:results.npv>0?'#34C759':'#EF4444'}},h('div',{className:'ss-result-label'},'Net Present Value'),h('div',{className:'ss-result-value',style:{color:results.npv>0?'#059669':'#EF4444'}},fmt$(results.npv)),h('div',{className:'ss-result-sub'},'at '+rate+'% discount')),
+            h('div',{className:'ss-result-card',style:{borderTopColor:results.bcr>=2?'#34C759':results.bcr>=1?'#F59E0B':'#EF4444'}},h('div',{className:'ss-result-label'},'Benefit-Cost Ratio'),h('div',{className:'ss-result-value'},results.bcr.toFixed(2)+'x'),h('div',{className:'ss-result-sub'},results.bcr>=1?'benefits exceed costs':'costs exceed benefits'))),
+          h('div',{className:'ss-verdict',style:{borderLeftColor:verdict.color}},
+            h('div',{style:{display:'flex',alignItems:'center',gap:14}},
+              h('div',{className:'ss-verdict-grade',style:{color:verdict.color}},verdict.grade),
+              h('div',null,h('div',{style:{fontWeight:700,color:'var(--jm-text)',fontSize:14}},'Project Verdict'),h('div',{className:'ss-verdict-msg'},verdict.msg))),
+            h('ul',{className:'ss-verdict-recs'},verdict.recs.map((r,i)=>h('li',{key:i},r))))
+        )))
+  );
+}
+
+// ── SWIM LANE FLOWCHART ──
+function SSSwimLane({filtered,master}){
+  const [selProd,setSelProd]=useState('bolt-804');
+  const [viewMode,setViewMode]=useState('swimlane');
+  const fp=FINISHED_PRODUCTS.find(p=>p.id===selProd);
+  const allEquipCodes=[...new Set(Object.values(fp?fp.equipGroups:{}).flat())];
+  const laneData=useMemo(()=>{
+    if(!fp)return{lanes:[],equipTotals:{}};
+    const equipTotals={};
+    filtered.forEach(r=>{if(fp.productFilter(r.productCode)){equipTotals[r.equipCode]=(equipTotals[r.equipCode]||0)+r.goodUnits;}});
+    const lanes=fp.route.map(step=>{
+      const equips=(fp.equipGroups[step]||[]).map(ec=>({code:ec,name:getEquipName(ec),qty:equipTotals[ec]||0,active:true}));
+      const total=equips.reduce((s,e)=>s+e.qty,0);
+      return{step,equips,total};
+    });
+    return{lanes,equipTotals};
+  },[filtered,fp]);
+
+  const allEquip=getActiveEquipment(master);
+  const SIPOC_DATA={
+    Shears:{s:'Steel Mill / Coil Yard',i:'Steel coil, bar stock',o:'Cut bars to specified length',c:'Peeling'},
+    Peeling:{s:'Shears',i:'Cut bars',o:'Peeled bars (smooth surface)',c:'Threading'},
+    Threading:{s:'Peeling',i:'Peeled bars',o:'Threaded bars',c:'Heading'},
+    Heading:{s:'Threading',i:'Threaded bars',o:'Headed bars (forged head)',c:'Assembly'},
+    Assembly:{s:'Heading / Plates',i:'Headed bars, plates, washers, nuts',o:'Finished anchor bolts',c:'Shipping / Customer'},
+    Presses:{s:'Steel Supply',i:'Steel plate stock',o:'Formed plates (channel, donut, etc.)',c:'Assembly / Shipping'},
+    'Big Saw':{s:'Tubing Supply',i:'Raw tubing stock',o:'Cut tubing to length',c:'Offline Welding / Cable Lines'},
+    'Offline Welding':{s:'Big Saw',i:'Cut tubing, conduit, fittings',o:'Welded sub-assemblies',c:'Pipe Assembly'},
+    'Pipe Assembly':{s:'Offline Welding',i:'Welded sub-assemblies, components',o:'Assembled pipe units',c:'Cable Line #3'},
+    'Cable Lines':{s:'Big Saw / Pipe Assembly',i:'Cut tubing or pipe assemblies, strand',o:'Finished cable bolts',c:'Shipping / Customer'}
+  };
+  const LANE_COLORS=['#3B82F6','#8B5CF6','#EC4899','#F59E0B','#10B981','#6366F1','#EF4444','#14B8A6'];
+
+  return h('div',null,
+    h('div',{className:'ss-card'},
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'start',flexWrap:'wrap',gap:12,marginBottom:14}},
+        h('div',null,h('div',{className:'ss-card-title'},'Swim Lane Flowchart'),h('div',{className:'ss-card-sub'},'Product flow through process areas with production quantities')),
+        h('div',{style:{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}},
+          h('select',{className:'form-select',style:{height:36,fontSize:13,minWidth:180},value:selProd,onChange:e=>setSelProd(e.target.value)},
+            h('optgroup',{label:'Bolts'},FINISHED_PRODUCTS.filter(p=>p.category==='Bolts').map(p=>h('option',{key:p.id,value:p.id},p.name))),
+            h('optgroup',{label:'Plates'},FINISHED_PRODUCTS.filter(p=>p.category==='Plates').map(p=>h('option',{key:p.id,value:p.id},p.name))),
+            h('optgroup',{label:'Cables'},FINISHED_PRODUCTS.filter(p=>p.category==='Cables').map(p=>h('option',{key:p.id,value:p.id},p.name)))),
+          h('div',{className:'ss-mode-toggle'},
+            h('button',{className:'ss-mode-btn'+(viewMode==='swimlane'?' active':''),onClick:()=>setViewMode('swimlane')},'Swim Lane'),
+            h('button',{className:'ss-mode-btn'+(viewMode==='sipoc'?' active':''),onClick:()=>setViewMode('sipoc')},'SIPOC')))),
+      viewMode==='sipoc'&&fp?h('div',{className:'ss-tool-content'},
+        h('table',{className:'ss-sipoc-table'},
+          h('thead',null,h('tr',null,['Suppliers','Inputs','Process Step','Outputs','Customers'].map(hd=>h('th',{key:hd},hd)))),
+          h('tbody',null,fp.route.map((step,i)=>{
+            const s=SIPOC_DATA[step]||{s:'-',i:'-',o:'-',c:'-'};
+            return h('tr',{key:step},h('td',null,s.s),h('td',null,s.i),h('td',{style:{fontWeight:700,color:'var(--jm-navy)'}},step),h('td',null,s.o),h('td',null,s.c));
+          })))
+      ):viewMode==='swimlane'&&fp?h('div',{className:'ss-lane-container ss-tool-content'},
+        (()=>{
+          const lanes=laneData.lanes;const LW=900;const LANE_H=Math.max(80,...lanes.map(l=>40+l.equips.length*36));
+          const totalH=lanes.length*LANE_H+60;const LABEL_W=110;const CONTENT_W=LW-LABEL_W-40;
+          return h('svg',{viewBox:`0 0 ${LW} ${totalH}`,style:{width:'100%',minWidth:600,height:totalH,display:'block'}},
+            h('defs',null,h('marker',{id:'ss-ah',markerWidth:10,markerHeight:7,refX:9,refY:3.5,orient:'auto'},h('polygon',{points:'0 0, 10 3.5, 0 7',fill:'#1B3D6E'}))),
+            lanes.map((lane,li)=>{
+              const y=li*LANE_H+30;const color=LANE_COLORS[li%LANE_COLORS.length];
+              const eqW=Math.min(130,CONTENT_W/(lane.equips.length||1)-10);
+              return h('g',{key:lane.step},
+                h('rect',{x:0,y,width:LW,height:LANE_H-4,rx:6,fill:li%2===0?'#F8FAFC':'#FFFFFF',stroke:'#E2E8F0',strokeWidth:1}),
+                h('text',{x:14,y:y+22,fontSize:11,fontWeight:800,fill:color,textAnchor:'start',style:{textTransform:'uppercase',letterSpacing:'1px'}},lane.step),
+                h('text',{x:14,y:y+38,fontSize:10,fill:'#6B7280'},lane.total.toLocaleString()+' units'),
+                lane.equips.map((eq,ei)=>{
+                  const ex=LABEL_W+ei*(eqW+10)+10;const ey=y+10;
+                  return h('g',{key:eq.code},
+                    h('rect',{x:ex,y:ey,width:eqW,height:LANE_H-26,rx:6,fill:eq.qty>0?'#FFFFFF':'#F5F5F5',stroke:eq.qty>0?color:'#D1D5DB',strokeWidth:eq.qty>0?2:1,opacity:eq.qty>0?1:.5}),
+                    h('text',{x:ex+eqW/2,y:ey+16,fontSize:9,fontWeight:700,fill:eq.qty>0?color:'#9CA3AF',textAnchor:'middle'},eq.name.length>16?eq.name.slice(0,15)+'…':eq.name),
+                    eq.qty>0&&h('text',{x:ex+eqW/2,y:ey+32,fontSize:14,fontWeight:800,fill:'#1B3D6E',textAnchor:'middle'},eq.qty.toLocaleString()),
+                    eq.qty>0&&h('text',{x:ex+eqW/2,y:ey+44,fontSize:8,fill:'#9CA3AF',textAnchor:'middle'},'units'));
+                }),
+                li<lanes.length-1&&h('line',{x1:LW/2,y1:y+LANE_H-4,x2:LW/2,y2:y+LANE_H+26,stroke:'#1B3D6E',strokeWidth:2,markerEnd:'url(#ss-ah)'}));
+            }));
+        })()
+      ):h('div',{style:{padding:40,textAlign:'center',color:'var(--jm-text-ter)'}},'Select a product to view the flow'))
+  );
+}
+
+// ── NORMAL DISTRIBUTION ──
+function SSNormalDist({filtered,master}){
+  const {ResponsiveContainer,ComposedChart,Bar,Line,XAxis,YAxis,CartesianGrid,Tooltip,ReferenceLine,ScatterChart,Scatter}=Recharts;
+  const [selEquip,setSelEquip]=useState('');const [selProd,setSelProd]=useState('');const [selOp,setSelOp]=useState('');
+  const [view,setView]=useState('distribution');
+  const allEquip=getActiveEquipment(master).sort((a,b)=>a.name.localeCompare(b.name));
+  const products=useMemo(()=>selEquip?getEquipProducts(selEquip,master):[]  ,[selEquip,master]);
+  const operators=useMemo(()=>{
+    const set=new Set();filtered.forEach(r=>{if(r.equipCode===selEquip&&r.productCode===selProd)(r.operators||[]).forEach(op=>set.add(op));});return[...set].sort();
+  },[filtered,selEquip,selProd]);
+  const dailyData=useMemo(()=>{
+    const map={};
+    filtered.forEach(r=>{
+      if(r.equipCode!==selEquip||r.productCode!==selProd)return;
+      if(selOp&&!(r.operators||[]).includes(selOp))return;
+      if(!map[r.date])map[r.date]=0;map[r.date]+=r.goodUnits;
+    });
+    return Object.entries(map).sort(([a],[b])=>a.localeCompare(b)).map(([d,v])=>v);
+  },[filtered,selEquip,selProd,selOp]);
+  const stats=useMemo(()=>{
+    if(dailyData.length<3)return null;
+    const m=ssMean(dailyData),s=ssStdDev(dailyData),sk=ssSkewness(dailyData),ku=ssKurtosis(dailyData),q=ssQuartiles(dailyData);
+    const ucl=m+3*s,lcl=Math.max(m-3*s,0);
+    const zVal=s>0?(dailyData[dailyData.length-1]-m)/s:0;
+    return{mean:m,stdDev:s,skewness:sk,kurtosis:ku,...q,ucl,lcl,n:dailyData.length,zVal,zPct:ssNormalCDF(zVal)*100};
+  },[dailyData]);
+  const histogram=useMemo(()=>{
+    if(!stats||dailyData.length<3)return[];
+    const binCount=Math.min(20,Math.max(5,Math.ceil(Math.sqrt(dailyData.length))));
+    const mn=stats.min,mx=stats.max,range=mx-mn||1,bw=range/binCount;
+    const bins=Array.from({length:binCount},(_,i)=>({x:Math.round(mn+i*bw+bw/2),count:0}));
+    dailyData.forEach(v=>{let bi=Math.min(Math.floor((v-mn)/bw),binCount-1);if(bi<0)bi=0;bins[bi].count++;});
+    const peak=Math.max(...bins.map(b=>b.count));
+    bins.forEach(b=>{const z=(b.x-stats.mean)/stats.stdDev;b.normal=peak*Math.exp(-z*z/2);});
+    return bins;
+  },[dailyData,stats]);
+  const qqData=useMemo(()=>{
+    if(dailyData.length<5)return[];
+    const sorted=[...dailyData].sort((a,b)=>a-b);
+    return sorted.map((v,i)=>{const p=(i+0.5)/sorted.length;return{theoretical:ssNormalPPF(p)*stats.stdDev+stats.mean,observed:v};});
+  },[dailyData,stats]);
+  const bivData=useMemo(()=>{
+    if(!selEquip||!selProd)return[];
+    const map={};
+    filtered.forEach(r=>{
+      if(r.equipCode!==selEquip||r.productCode!==selProd)return;
+      (r.operators||[]).forEach(op=>{
+        const key=r.date+'_'+r.shiftNum+'_'+op;
+        if(!map[key])map[key]={op,date:r.date,shift:r.shiftNum,output:0};
+        map[key].output+=r.goodUnits;
+      });
+    });
+    return Object.values(map);
+  },[filtered,selEquip,selProd]);
+  function skewnessExplain(sk){
+    if(Math.abs(sk)<0.5)return{dir:'approximately symmetric',meaning:'Production output is evenly distributed around the mean. This is ideal — it suggests a stable, predictable process.',rec:'The process is well-centered. Focus on reducing spread (std dev) to tighten consistency.'};
+    if(sk>0)return{dir:'right-skewed (positive)',meaning:'Most days produce below the mean, with occasional high-output days pulling the average up. This often indicates the process has a natural ceiling with occasional peak performance.',rec:'Investigate what enables high-output days and try to make those conditions the norm. The median may be a better scheduling target than the mean.'};
+    return{dir:'left-skewed (negative)',meaning:'Most days produce above the mean, but occasional low-output days drag the average down. This often indicates intermittent disruptions (downtime, material issues).',rec:'Focus on eliminating the root causes of low-output days. The process capability is there — the issue is consistency.'};
+  }
+
+  return h('div',null,
+    h('div',{className:'ss-card'},
+      h('div',{className:'ss-card-title'},'Normal Distribution Analysis'),
+      h('div',{className:'ss-card-sub'},'Statistical distribution of daily production output with normality testing'),
+      h('div',{className:'ss-filter-row'},
+        h('div',null,h('label',null,'Equipment'),h('select',{value:selEquip,onChange:e=>{setSelEquip(e.target.value);setSelProd('');setSelOp('');}},h('option',{value:''},'Select...'),allEquip.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name)))),
+        h('div',null,h('label',null,'Product'),h('select',{value:selProd,onChange:e=>{setSelProd(e.target.value);setSelOp('');}},h('option',{value:''},'Select...'),products.map(pc=>h('option',{key:pc,value:pc},getProductName(pc))))),
+        h('div',null,h('label',null,'Operator (optional)'),h('select',{value:selOp,onChange:e=>setSelOp(e.target.value)},h('option',{value:''},'All Operators'),operators.map(op=>h('option',{key:op,value:op},op))))),
+      selEquip&&selProd&&h('div',{className:'ss-mode-toggle',style:{marginTop:8}},
+        h('button',{className:'ss-mode-btn'+(view==='distribution'?' active':''),onClick:()=>setView('distribution')},'Distribution'),
+        h('button',{className:'ss-mode-btn'+(view==='qqplot'?' active':''),onClick:()=>setView('qqplot')},'Q-Q Plot'),
+        h('button',{className:'ss-mode-btn'+(view==='bivariate'?' active':''),onClick:()=>setView('bivariate')},'Bivariate')),
+      !selEquip||!selProd?h('div',{style:{padding:40,textAlign:'center',color:'var(--jm-text-ter)'}},'Select equipment and product to analyze'):
+      dailyData.length<3?h('div',{style:{padding:40,textAlign:'center',color:'var(--jm-text-ter)'}},'Not enough data (need at least 3 daily observations)'):
+      h('div',{className:'ss-tool-content'},
+        view==='distribution'&&stats&&h('div',null,
+          h(ResponsiveContainer,{width:'100%',height:300},
+            h(ComposedChart,{data:histogram,margin:{top:20,right:20,bottom:5,left:20}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
+              h(XAxis,{dataKey:'x',tick:{fontSize:11},label:{value:'Daily Output',position:'insideBottom',offset:-2,style:{fontSize:11,fill:'#6B7280'}}}),
+              h(YAxis,{tick:{fontSize:11},label:{value:'Frequency',angle:-90,position:'insideLeft',style:{fontSize:11,fill:'#6B7280'}}}),
+              h(Tooltip,{formatter:(v,n)=>[typeof v==='number'?v.toFixed(1):v,n==='count'?'Frequency':'Normal Fit']}),
+              h(Bar,{dataKey:'count',fill:'#3B82F6',opacity:.6,radius:[3,3,0,0]}),
+              h(Line,{dataKey:'normal',stroke:'#EF4444',strokeWidth:2,dot:false,type:'monotone',strokeDasharray:'5 3'}),
+              h(ReferenceLine,{x:Math.round(stats.mean),stroke:'#1B3D6E',strokeWidth:2,strokeDasharray:'4 4',label:{value:'μ',position:'top',fill:'#1B3D6E',fontSize:12,fontWeight:700}}),
+              h(ReferenceLine,{x:Math.round(stats.ucl),stroke:'#EF4444',strokeDasharray:'3 3',label:{value:'UCL',position:'top',fill:'#EF4444',fontSize:10}}),
+              stats.lcl>0&&h(ReferenceLine,{x:Math.round(stats.lcl),stroke:'#EF4444',strokeDasharray:'3 3',label:{value:'LCL',position:'top',fill:'#EF4444',fontSize:10}}))),
+          h('div',{className:'ss-stat-grid'},
+            [['Mean',stats.mean.toFixed(1),'units'],['Std Dev',stats.stdDev.toFixed(1),'σ'],['UCL (μ+3σ)',stats.ucl.toFixed(0),''],['LCL (μ-3σ)',Math.max(stats.lcl,0).toFixed(0),''],
+             ['Min',stats.min,''],['Max',stats.max,''],['Q1 (25%)',stats.q1.toFixed(0),''],['Median',stats.q2.toFixed(0),''],['Q3 (75%)',stats.q3.toFixed(0),''],['IQR',stats.iqr.toFixed(0),''],
+             ['Skewness',stats.skewness.toFixed(3),''],['Kurtosis',stats.kurtosis.toFixed(3),''],['Z-Score (latest)',stats.zVal.toFixed(2),''],['Percentile',stats.zPct.toFixed(1),'%'],['n',stats.n,'days']
+            ].map(([l,v,u])=>h('div',{key:l,className:'ss-stat-box'},h('div',{className:'ss-stat-label'},l),h('div',{className:'ss-stat-value'},v),u&&h('div',{className:'ss-stat-unit'},u)))),
+          (()=>{const sk=skewnessExplain(stats.skewness);return h('div',{className:'ss-explanation'},
+            h('h4',null,'Skewness: ',sk.dir),
+            h('p',null,h('strong',null,'What this means: '),sk.meaning),
+            h('p',{style:{marginTop:6}},h('strong',null,'Recommendation: '),sk.rec));})()
+        ),
+        view==='qqplot'&&stats&&h('div',null,
+          h(ResponsiveContainer,{width:'100%',height:320},
+            h(ScatterChart,{margin:{top:20,right:20,bottom:30,left:20}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3'}),
+              h(XAxis,{dataKey:'theoretical',type:'number',name:'Theoretical',tick:{fontSize:11},label:{value:'Theoretical Quantiles',position:'insideBottom',offset:-10,style:{fontSize:11,fill:'#6B7280'}}}),
+              h(YAxis,{dataKey:'observed',type:'number',name:'Observed',tick:{fontSize:11},label:{value:'Observed Values',angle:-90,position:'insideLeft',style:{fontSize:11,fill:'#6B7280'}}}),
+              h(Tooltip,{formatter:(v)=>[v.toFixed(1)]}),
+              h(Scatter,{data:qqData,fill:'#3B82F6',r:3}),
+              h(ReferenceLine,{segment:[{x:qqData[0]?.theoretical||0,y:qqData[0]?.theoretical||0},{x:qqData[qqData.length-1]?.theoretical||0,y:qqData[qqData.length-1]?.theoretical||0}],stroke:'#EF4444',strokeWidth:1.5,strokeDasharray:'5 3'}))),
+          h('div',{className:'ss-explanation'},
+            h('h4',null,'What is a Q-Q (Quantile-Quantile) Plot?'),
+            h('p',null,'A Q-Q plot compares your data against a perfect normal distribution. Each dot plots an observed value (Y-axis) against where it ',h('em',null,'should'),' fall if the data were perfectly normal (X-axis). The red dashed line represents a perfect fit.'),
+            h('p',{style:{marginTop:6}},h('strong',null,'Reading this chart: '),'Points close to the red line = good normal fit. Points curving away at the tails indicate heavy or light tails. S-shaped deviation suggests skewness.'),
+            h('p',{style:{marginTop:6}},h('strong',null,'Your data: '),Math.abs(stats.skewness)<0.5?'The data follows a reasonably normal distribution. Statistical control limits and process capability indices are reliable.':stats.skewness>0?'The data shows right-skew — the upper tail deviates from normal. Consider log-transformation or use non-parametric methods for more accurate analysis.':'The data shows left-skew — the lower tail deviates from normal. This may affect the reliability of standard control limit calculations.'))
+        ),
+        view==='bivariate'&&h('div',null,
+          bivData.length<5?h('div',{style:{padding:40,textAlign:'center',color:'var(--jm-text-ter)'}},'Not enough operator data for bivariate analysis'):
+          (()=>{
+            const ops=[...new Set(bivData.map(d=>d.op))].sort();
+            const outputs=bivData.map(d=>d.output);const mn=Math.min(...outputs),mx=Math.max(...outputs);
+            const cellW=Math.min(28,Math.max(16,600/(20))),rows=ops.length,cols=20;
+            const range=mx-mn||1,bw=range/cols;
+            const grid=Array.from({length:rows},()=>Array(cols).fill(0));
+            bivData.forEach(d=>{const ri=ops.indexOf(d.op);let ci=Math.floor((d.output-mn)/bw);if(ci>=cols)ci=cols-1;if(ci<0)ci=0;grid[ri][ci]++;});
+            const maxCount=Math.max(1,...grid.flat());
+            const svgW=100+cols*cellW;const svgH=40+rows*cellW;
+            return h('div',null,
+              h('div',{className:'ss-lane-container'},
+                h('svg',{viewBox:`0 0 ${svgW} ${svgH}`,style:{width:'100%',minWidth:400,display:'block'}},
+                  Array.from({length:cols},(_, ci)=>h('text',{key:'xl'+ci,x:100+ci*cellW+cellW/2,y:svgH-2,fontSize:7,fill:'#9CA3AF',textAnchor:'middle'},Math.round(mn+ci*bw))),
+                  ops.map((op,ri)=>h('g',{key:op},
+                    h('text',{x:96,y:30+ri*cellW+cellW/2+3,fontSize:8,fill:'#374151',textAnchor:'end'},op.split(',')[0]),
+                    Array.from({length:cols},(_,ci)=>{
+                      const v=grid[ri][ci];const intensity=v/maxCount;
+                      return h('rect',{key:ci,className:'ss-heatmap-cell',x:100+ci*cellW,y:30+ri*cellW,width:cellW-1,height:cellW-1,rx:2,fill:v===0?'#F8FAFC':`rgba(27,61,110,${.1+intensity*.9})`,title:op+': '+v+' shifts'});
+                    }))))),
+              h('div',{className:'ss-explanation'},
+                h('h4',null,'Bivariate Normal Density — Output × Operator'),
+                h('p',null,'This heatmap shows the joint distribution of production output (X-axis) and operator (Y-axis). Darker cells indicate more frequent output levels for that operator.'),
+                h('p',{style:{marginTop:6}},h('strong',null,'How to use this: '),'Look for operators with tightly clustered dark zones (consistent) vs. scattered patterns (variable). Operators with dark zones shifted left may need training or support. Operators with wide distributions might be running more product variety.')));
+          })()
+        ))
+    )
+  );
+}
+
+// ── ROLLED THROUGHPUT YIELD ──
+function SSRolledYield({filtered,master}){
+  const [selProd,setSelProd]=useState('bolt-804');
+  const fp=FINISHED_PRODUCTS.find(p=>p.id===selProd);
+  const yieldData=useMemo(()=>{
+    if(!fp)return[];
+    return fp.route.map(step=>{
+      const equips=fp.equipGroups[step]||[];
+      let good=0,def=0;
+      filtered.forEach(r=>{
+        if(!equips.includes(r.equipCode))return;
+        if(!fp.productFilter(r.productCode))return;
+        good+=r.goodUnits;
+        def+=r.defects.reduce((s,d)=>s+parseInt(d.qty||0),0);
+      });
+      const total=good+def;const yld=total>0?good/total:1;
+      return{step,good,def,total,yield:yld,yieldPct:(yld*100).toFixed(2)};
+    });
+  },[filtered,fp]);
+  const rty=yieldData.length>0?yieldData.reduce((prod,s)=>prod*s.yield,1):0;
+  const rtyPct=(rty*100).toFixed(2);
+  const rtyColor=rty>=.95?'#059669':rty>=.90?'#F59E0B':'#EF4444';
+  const arrowSvg=h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round',style:{width:28,height:28}},h('line',{x1:5,y1:12,x2:19,y2:12}),h('polyline',{points:'14 7 19 12 14 17'}));
+
+  return h('div',null,
+    h('div',{className:'ss-card'},
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'start',flexWrap:'wrap',gap:12,marginBottom:14}},
+        h('div',null,h('div',{className:'ss-card-title'},'Rolled Throughput Yield'),h('div',{className:'ss-card-sub'},'Probability of a unit passing through ALL process steps defect-free')),
+        h('select',{className:'form-select',style:{height:36,fontSize:13,minWidth:180},value:selProd,onChange:e=>setSelProd(e.target.value)},
+          h('optgroup',{label:'Bolts'},FINISHED_PRODUCTS.filter(p=>p.category==='Bolts').map(p=>h('option',{key:p.id,value:p.id},p.name))),
+          h('optgroup',{label:'Plates'},FINISHED_PRODUCTS.filter(p=>p.category==='Plates').map(p=>h('option',{key:p.id,value:p.id},p.name))),
+          h('optgroup',{label:'Cables'},FINISHED_PRODUCTS.filter(p=>p.category==='Cables').map(p=>h('option',{key:p.id,value:p.id},p.name))))),
+      yieldData.length>0&&h('div',null,
+        h('div',{className:'ss-rty-flow'},
+          yieldData.map((s,i)=>[
+            h('div',{key:s.step,className:'ss-rty-box',style:{borderColor:parseFloat(s.yieldPct)>=95?'#059669':parseFloat(s.yieldPct)>=90?'#F59E0B':'#EF4444'}},
+              h('div',{className:'ss-rty-name'},s.step),
+              h('div',{className:'ss-rty-yield',style:{color:parseFloat(s.yieldPct)>=95?'#059669':parseFloat(s.yieldPct)>=90?'#F59E0B':'#EF4444'}},s.yieldPct+'%'),
+              h('div',{className:'ss-rty-units'},s.good.toLocaleString()+' / '+s.total.toLocaleString())),
+            i<yieldData.length-1&&h('div',{key:'a'+i,className:'ss-rty-arrow'},arrowSvg)
+          ]).flat().filter(Boolean)),
+        h('div',{style:{textAlign:'center',margin:'8px 0 4px',fontSize:12,color:'var(--jm-text-ter)'}},
+          yieldData.map((s,i)=>s.yieldPct+'%'+(i<yieldData.length-1?' × ':'')).join('')+' ='),
+        h('div',{className:'ss-rty-total'},
+          h('div',{className:'ss-rty-total-value',style:{color:rtyColor}},rtyPct+'%'),
+          h('div',{className:'ss-rty-total-label'},'Rolled Throughput Yield')),
+        h('div',{className:'ss-explanation'},
+          h('h4',null,'What is Rolled Throughput Yield (RTY)?'),
+          h('p',null,'RTY measures the probability that a unit will pass through the ',h('em',null,'entire'),' process without any defect at any step. Unlike final yield (which only measures the end), RTY captures hidden factory waste — rework, scrap, and re-inspection that occur ',h('em',null,'between'),' steps.'),
+          h('p',{style:{marginTop:6}},h('strong',null,'Your RTY of ',rtyPct,'%: '),
+            rty>=.95?'Excellent. This process has very low hidden waste. The vast majority of units flow through without defects at any stage.':
+            rty>=.90?'Acceptable but there is room for improvement. Roughly '+(100-rty*100).toFixed(1)+'% of units encounter at least one defect somewhere in the process chain. Focus improvement efforts on the step with the lowest individual yield.':
+            rty>=.80?'Below target. Significant hidden waste exists. Over '+(100-rty*100).toFixed(0)+'% of units are touched by a defect at some stage. Prioritize the lowest-yield step for a Six Sigma improvement project.':
+            'Critical. Substantial hidden factory loss. Most units encounter at least one defect. This represents a significant cost burden in rework and scrap. Immediate investigation recommended at the lowest-yield step.')))
+    )
+  );
+}
+
+// ── CONTROL CHARTS (X-bar & MR) ──
+function SSControlCharts({filtered,master}){
+  const {ResponsiveContainer,ComposedChart,Line,XAxis,YAxis,CartesianGrid,Tooltip,ReferenceLine}=Recharts;
+  const [selEquip,setSelEquip]=useState('');const [selProd,setSelProd]=useState('');
+  const [windowSize,setWindowSize]=useState(5);const [analysisMode,setAnalysisMode]=useState(false);
+  const allEquip=getActiveEquipment(master).sort((a,b)=>a.name.localeCompare(b.name));
+  const products=useMemo(()=>selEquip?getEquipProducts(selEquip,master):[]  ,[selEquip,master]);
+  const dailyPts=useMemo(()=>{
+    const map={};
+    filtered.forEach(r=>{if(r.equipCode===selEquip&&r.productCode===selProd){if(!map[r.date])map[r.date]=0;map[r.date]+=r.goodUnits;}});
+    return Object.entries(map).sort(([a],[b])=>a.localeCompare(b)).map(([d,v])=>({date:d,label:d.slice(5),value:v}));
+  },[filtered,selEquip,selProd]);
+  const rawValues=dailyPts.map(d=>d.value);
+  const chartData=useMemo(()=>{
+    if(rawValues.length<windowSize+1)return[];
+    const ma=ssMovingAvg(rawValues,windowSize);
+    const mr=ssMovingRange(rawValues);
+    return dailyPts.map((d,i)=>({...d,ma:ma[i]!==null&&ma[i]!==undefined?Math.round(ma[i]*10)/10:null,mr:mr[i]!==null&&mr[i]!==undefined?Math.round(mr[i]*10)/10:null})).filter(d=>d.ma!==null);
+  },[rawValues,windowSize]);
+  const limits=useMemo(()=>{
+    const maVals=chartData.map(d=>d.ma).filter(v=>v!==null);
+    const mrVals=chartData.map(d=>d.mr).filter(v=>v!==null);
+    if(maVals.length<3)return null;
+    const xBarBar=ssMean(maVals);const mrBar=ssMean(mrVals.length>0?mrVals:[0]);
+    const d2=1.128;const sigma=mrBar/d2;
+    const A2Table={2:1.880,3:1.023,4:0.729,5:0.577,6:0.483,7:0.419,8:0.373,9:0.337,10:0.308};
+    const A2=A2Table[windowSize]||0.577;
+    const xUCL=xBarBar+A2*mrBar;const xLCL=xBarBar-A2*mrBar;
+    const D4=3.267;const mrUCL=D4*mrBar;
+    return{xCL:xBarBar,xUCL,xLCL,mrCL:mrBar,mrUCL,mrLCL:0,sigma};
+  },[chartData,windowSize]);
+  const violations=useMemo(()=>{
+    if(!limits||!analysisMode||chartData.length<9)return[];
+    const pts=chartData.map(d=>d.ma);const cl=limits.xCL;const s=limits.sigma;
+    const v=[];
+    pts.forEach((p,i)=>{if(p>limits.xUCL||p<limits.xLCL)v.push({rule:1,name:'Point beyond 3σ',idx:i,desc:'Point at index '+(i+1)+' is outside the control limits.',reason:'Special cause variation — investigate equipment malfunction, material change, or operator error at this point.'});});
+    for(let i=8;i<pts.length;i++){const seg=pts.slice(i-8,i+1);if(seg.every(p=>p>cl)||seg.every(p=>p<cl))v.push({rule:2,name:'9 consecutive same side',idx:i,desc:'9 consecutive points on the same side of the center line (points '+(i-7)+'–'+(i+1)+').',reason:'Process mean has shifted. Check for gradual tool wear, material lot change, or calibration drift.'});}
+    for(let i=5;i<pts.length;i++){const seg=pts.slice(i-5,i+1);let inc=true,dec=true;for(let j=1;j<seg.length;j++){if(seg[j]<=seg[j-1])inc=false;if(seg[j]>=seg[j-1])dec=false;}if(inc||dec)v.push({rule:3,name:'6 consecutive trending',idx:i,desc:'6 points in a row '+(inc?'increasing':'decreasing')+' (points '+(i-4)+'–'+(i+1)+').',reason:'Trend indicates a drifting process. Check for progressive tool wear, temperature change, or material degradation.'});}
+    const s2u=cl+2*s,s2l=cl-2*s;
+    for(let i=2;i<pts.length;i++){const seg=pts.slice(i-2,i+1);const above=seg.filter(p=>p>s2u).length;const below=seg.filter(p=>p<s2l).length;if(above>=2||below>=2)v.push({rule:5,name:'2 of 3 beyond 2σ',idx:i,desc:'2 of 3 consecutive points beyond 2σ (points '+(i-1)+'–'+(i+1)+').',reason:'Increased variability detected. Check for intermittent equipment issues or inconsistent inputs.'});}
+    const seen=new Set();return v.filter(x=>{const k=x.rule+'_'+x.idx;if(seen.has(k))return false;seen.add(k);return true;});
+  },[chartData,limits,analysisMode]);
+  const violationIndices=new Set(violations.map(v=>v.idx));
+
+  return h('div',null,
+    h('div',{className:'ss-card'},
+      h('div',{className:'ss-card-title'},'Control Charts — Moving Average & Moving Range'),
+      h('div',{className:'ss-card-sub'},'Monitor process stability with X̄ and MR charts using daily production output'),
+      h('div',{className:'ss-filter-row'},
+        h('div',null,h('label',null,'Equipment'),h('select',{value:selEquip,onChange:e=>{setSelEquip(e.target.value);setSelProd('');}},h('option',{value:''},'Select...'),allEquip.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name)))),
+        h('div',null,h('label',null,'Product'),h('select',{value:selProd,onChange:e=>setSelProd(e.target.value)},h('option',{value:''},'Select...'),products.map(pc=>h('option',{key:pc,value:pc},getProductName(pc))))),
+        h('div',null,h('label',null,'Window'),h('select',{value:windowSize,onChange:e=>setWindowSize(parseInt(e.target.value))},
+          [2,3,4,5,6,7,8,9,10].map(n=>h('option',{key:n,value:n},'n = '+n)))),
+        h('div',{style:{paddingTop:16}},h('button',{className:'btn '+(analysisMode?'btn-primary':'btn-secondary'),style:{height:36,fontSize:12},onClick:()=>setAnalysisMode(!analysisMode)},analysisMode?'Analysis ON':'Analysis OFF'))),
+      !selEquip||!selProd?h('div',{style:{padding:40,textAlign:'center',color:'var(--jm-text-ter)'}},'Select equipment and product to generate control charts'):
+      chartData.length<3?h('div',{style:{padding:40,textAlign:'center',color:'var(--jm-text-ter)'}},'Not enough data (need at least '+(windowSize+1)+' daily observations)'):
+      limits&&h('div',{className:'ss-tool-content'},
+        h('div',{style:{marginBottom:6,fontSize:12,fontWeight:700,color:'var(--jm-navy)'}},'X̄ — Moving Average (n='+windowSize+')'),
+        h(ResponsiveContainer,{width:'100%',height:240},
+          h(ComposedChart,{data:chartData,margin:{top:10,right:20,bottom:5,left:20}},
+            h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
+            h(XAxis,{dataKey:'label',tick:{fontSize:10},interval:Math.max(0,Math.floor(chartData.length/15))}),
+            h(YAxis,{tick:{fontSize:10},domain:['auto','auto']}),
+            h(Tooltip,{formatter:v=>[v?.toFixed?v.toFixed(1):v],labelFormatter:l=>'Date: '+l}),
+            h(ReferenceLine,{y:limits.xCL,stroke:'#1B3D6E',strokeWidth:1.5,label:{value:'CL: '+limits.xCL.toFixed(1),position:'right',fontSize:9,fill:'#1B3D6E'}}),
+            h(ReferenceLine,{y:limits.xUCL,stroke:'#EF4444',strokeDasharray:'4 3',label:{value:'UCL: '+limits.xUCL.toFixed(1),position:'right',fontSize:9,fill:'#EF4444'}}),
+            h(ReferenceLine,{y:limits.xLCL,stroke:'#EF4444',strokeDasharray:'4 3',label:{value:'LCL: '+limits.xLCL.toFixed(1),position:'right',fontSize:9,fill:'#EF4444'}}),
+            h(Line,{dataKey:'ma',stroke:'#3B82F6',strokeWidth:1.5,dot:d=>{const isV=violationIndices.has(d.index);return h('circle',{key:d.index,cx:d.cx,cy:d.cy,r:isV?5:2.5,fill:isV?'#EF4444':'#3B82F6',stroke:isV?'#fff':'none',strokeWidth:isV?2:0});},type:'monotone',connectNulls:true}))),
+        h('div',{style:{marginTop:16,marginBottom:6,fontSize:12,fontWeight:700,color:'var(--jm-navy)'}},'MR — Moving Range'),
+        h(ResponsiveContainer,{width:'100%',height:180},
+          h(ComposedChart,{data:chartData.filter(d=>d.mr!==null),margin:{top:10,right:20,bottom:5,left:20}},
+            h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
+            h(XAxis,{dataKey:'label',tick:{fontSize:10},interval:Math.max(0,Math.floor(chartData.length/15))}),
+            h(YAxis,{tick:{fontSize:10},domain:[0,'auto']}),
+            h(Tooltip,{formatter:v=>[v?.toFixed?v.toFixed(1):v]}),
+            h(ReferenceLine,{y:limits.mrCL,stroke:'#1B3D6E',strokeWidth:1.5,label:{value:'CL: '+limits.mrCL.toFixed(1),position:'right',fontSize:9,fill:'#1B3D6E'}}),
+            h(ReferenceLine,{y:limits.mrUCL,stroke:'#EF4444',strokeDasharray:'4 3',label:{value:'UCL: '+limits.mrUCL.toFixed(1),position:'right',fontSize:9,fill:'#EF4444'}}),
+            h(Line,{dataKey:'mr',stroke:'#8B5CF6',strokeWidth:1.5,dot:{r:2,fill:'#8B5CF6'},type:'monotone',connectNulls:true}))),
+        analysisMode&&violations.length>0&&h('div',{style:{marginTop:18}},
+          h('div',{style:{fontSize:13,fontWeight:700,color:'var(--jm-navy)',marginBottom:10}},violations.length+' Out-of-Control Signal'+(violations.length>1?'s':'')+' Detected'),
+          violations.slice(0,10).map((v,i)=>h('div',{key:i,className:'ss-violation-card'},
+            h('div',{className:'ss-violation-rule'},'Rule '+v.rule+': '+v.name),
+            h('div',{className:'ss-violation-desc'},v.desc),
+            h('div',{className:'ss-violation-reason'},'Possible cause: '+v.reason)))),
+        analysisMode&&violations.length===0&&h('div',{className:'ss-explanation',style:{background:'#F0FDF4',borderColor:'#86EFAC'}},
+          h('h4',{style:{color:'#166534'}},'Process In Control'),
+          h('p',{style:{color:'#15803D'}},'No Nelson rule violations detected. The process appears stable and predictable within the current control limits.')),
+        h('div',{className:'ss-explanation',style:{marginTop:16}},
+          h('h4',null,'What are X̄ and MR Control Charts?'),
+          h('p',null,'The ',h('strong',null,'X̄ (X-bar) chart'),' plots the moving average of daily output over a window of ',windowSize,' observations. It detects shifts in the process mean — whether the process center is drifting.'),
+          h('p',{style:{marginTop:6}},h('strong',null,'The MR (Moving Range) chart'),' plots the absolute difference between consecutive moving averages. It detects changes in process variability — whether the process is becoming more or less consistent.'),
+          h('p',{style:{marginTop:6}},'Together, they form a complete picture: the X̄ chart monitors ',h('em',null,'location'),' (are we on target?) and the MR chart monitors ',h('em',null,'spread'),' (are we consistent?). Points outside the red dashed UCL/LCL lines indicate special cause variation that warrants investigation.'),
+          h('p',{style:{marginTop:6}},h('strong',null,'Control limits'),' are calculated from the data itself (not specification limits). UCL = CL + A₂×MR̄, LCL = CL - A₂×MR̄, where A₂ is a statistical constant based on the window size.')))
+    )
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ANALYTICS VIEW — Deep-dive playground for CI engineers & plant managers
 // ═══════════════════════════════════════════════════════════════════════════════
 function AnalyticsView({dataVersion,master}){
@@ -3332,16 +3937,16 @@ function AnalyticsView({dataVersion,master}){
     const eqMap={};
     filtered.forEach(r=>{
       const ec=r.equipCode;
-      if(!eqMap[ec]) eqMap[ec]={code:ec,name:(INIT_EQUIPMENT.find(e=>e.code===ec)||{}).name||ec,good:0,tgt:0,def:0,dtm:0,sm:0,hrs:0,byDate:{}};
+      if(!eqMap[ec]) eqMap[ec]={code:ec,name:(INIT_EQUIPMENT.find(e=>e.code===ec)||{}).name||ec,good:0,tgt:0,def:0,dtm:0,udtm:0,sm:0,hrs:0,byDate:{}};
       const e=eqMap[ec];const avail=60-(r.scheduledMins||0);
       e.good+=r.goodUnits;e.tgt+=r.target;e.def+=r.defects.reduce((s,x)=>s+parseInt(x.qty||0),0);
-      e.dtm+=totalDTMins(r.downtime);e.sm+=avail;e.hrs++;
-      if(!e.byDate[r.date]) e.byDate[r.date]={date:r.date,good:0,tgt:0,def:0,dtm:0,sm:0};
+      e.dtm+=totalDTMins(r.downtime);e.udtm+=unschedDTMins(r.downtime);e.sm+=avail;e.hrs++;
+      if(!e.byDate[r.date]) e.byDate[r.date]={date:r.date,good:0,tgt:0,def:0,dtm:0,udtm:0,sm:0};
       const bd=e.byDate[r.date];bd.good+=r.goodUnits;bd.tgt+=r.target;bd.def+=r.defects.reduce((s,x)=>s+parseInt(x.qty||0),0);
-      bd.dtm+=totalDTMins(r.downtime);bd.sm+=avail;
+      bd.dtm+=totalDTMins(r.downtime);bd.udtm+=unschedDTMins(r.downtime);bd.sm+=avail;
     });
     const byEq=Object.values(eqMap).map(e=>{
-      const run=e.sm-e.dtm;const tp2=e.good+e.def;const a=e.sm>0?(run/e.sm*100):0;const p=run>0&&e.tgt>0?((tp2*e.sm)/(run*e.tgt)*100):0;
+      const run=e.sm-e.dtm;const tp2=e.good+e.def;const a=e.sm>0?((e.sm-e.udtm)/e.sm*100):0;const p=run>0&&e.tgt>0?((tp2*e.sm)/(run*e.tgt)*100):0;
       const tp=e.good+e.def;const q=tp>0?(e.good/tp*100):100;const oee=(a*p*q)/10000;
       return{...e,a:Math.round(a*10)/10,p:Math.round(p*10)/10,q:Math.round(q*10)/10,oee:Math.round(oee*10)/10};
     }).sort((a,b)=>a.oee-b.oee);
@@ -3350,7 +3955,7 @@ function AnalyticsView({dataVersion,master}){
     let trend=[];let dtBreakdown=[];let defBreakdown=[];
     if(eqMap[sel]){
       trend=Object.values(eqMap[sel].byDate).map(d=>{
-        const run=d.sm-d.dtm;const tp2=d.good+d.def;const a=d.sm>0?(run/d.sm*100):0;const p=run>0&&d.tgt>0?((tp2*d.sm)/(run*d.tgt)*100):0;
+        const run=d.sm-d.dtm;const tp2=d.good+d.def;const a=d.sm>0?((d.sm-d.udtm)/d.sm*100):0;const p=run>0&&d.tgt>0?((tp2*d.sm)/(run*d.tgt)*100):0;
         const tp=d.good+d.def;const q=tp>0?(d.good/tp*100):100;const oee=(a*p*q)/10000;
         return{date:d.date,oee:Math.round(oee*10)/10,a:Math.round(a*10)/10,p:Math.round(p*10)/10,q:Math.round(q*10)/10};
       }).sort((a,b)=>a.date.localeCompare(b.date));
@@ -3373,13 +3978,13 @@ function AnalyticsView({dataVersion,master}){
     filtered.forEach(r=>{
       const eq=INIT_EQUIPMENT.find(e=>e.code===r.equipCode);if(!eq)return;
       const proc=eq.process;
-      if(!pMap[proc]) pMap[proc]={process:proc,good:0,tgt:0,def:0,dtm:0,sm:0};
+      if(!pMap[proc]) pMap[proc]={process:proc,good:0,tgt:0,def:0,dtm:0,udtm:0,sm:0};
       const p=pMap[proc];const avail=60-(r.scheduledMins||0);
       p.good+=(r.goodUnits||0);p.tgt+=(r.target||0);p.def+=(r.defects||[]).reduce((s,x)=>s+parseInt(x.qty||0),0);
-      p.dtm+=totalDTMins(r.downtime||[]);p.sm+=avail;
+      p.dtm+=totalDTMins(r.downtime||[]);p.udtm+=unschedDTMins(r.downtime||[]);p.sm+=avail;
     });
     return Object.values(pMap).map(p=>{
-      const run=p.sm-p.dtm;const a=p.sm>0?(run/p.sm*100):0;const perf=p.tgt>0?(p.good/p.tgt*100):0;
+      const run=p.sm-p.dtm;const a=p.sm>0?((p.sm-p.udtm)/p.sm*100):0;const perf=p.tgt>0?(p.good/p.tgt*100):0;
       const tp=p.good+p.def;const q=tp>0?(p.good/tp*100):100;const oee=(a*perf*q)/10000;
       return{...p,a:Math.round(a*10)/10,p:Math.round(perf*10)/10,q:Math.round(q*10)/10,oee:Math.round(oee*10)/10};
     }).sort((a,b)=>b.oee-a.oee);
@@ -3447,11 +4052,11 @@ function AnalyticsView({dataVersion,master}){
       scoped=filtered.filter(r=>r.equipCode===lossScope);
     }
     if(scoped.length===0) return null;
-    let tgt=0,good=0,totalDef=0,sm=0,dtm=0;
+    let tgt=0,good=0,totalDef=0,sm=0,dtm=0,udtm=0;
     const dtLosses={};const defLosses={};
     scoped.forEach(r=>{
       const avail=60-(r.scheduledMins||0);
-      tgt+=(r.target||0);good+=(r.goodUnits||0);sm+=avail;dtm+=totalDTMins(r.downtime||[]);
+      tgt+=(r.target||0);good+=(r.goodUnits||0);sm+=avail;dtm+=totalDTMins(r.downtime||[]);udtm+=unschedDTMins(r.downtime||[]);
       (r.downtime||[]).forEach(d=>{
         const mins=parseInt(d.mins||0);const lostU=avail>0?(mins/avail)*(r.target||0):0;
         const nm=DT_CODES[d.dtCode]||('DT '+d.dtCode);
@@ -3483,7 +4088,7 @@ function AnalyticsView({dataVersion,master}){
       {name:'Performance Loss',units:Math.round(perfU),pct:tgt>0?Math.round(perfU/tgt*1000)/10:0,type:'performance',equip:[]},
       {name:'Quality Loss',units:Math.round(totalDef),pct:tgt>0?Math.round(totalDef/tgt*1000)/10:0,type:'quality',equip:[]}
     ].filter(l=>l.pct>0).sort((a,b)=>b.pct-a.pct);
-    const run=sm-dtm;const tp=good+totalDef;const a=sm>0?(run/sm*100):0;const p=run>0&&tgt>0?((tp*sm)/(run*tgt)*100):0;
+    const run=sm-dtm;const tp=good+totalDef;const a=sm>0?((sm-udtm)/sm*100):0;const p=run>0&&tgt>0?((tp*sm)/(run*tgt)*100):0;
     const q=tp>0?(good/tp*100):100;const oee=tgt>0?(good/tgt*100):0;
     const actualPct=tgt>0?Math.round(good/tgt*1000)/10:0;
     return{tgt,good:Math.round(good),def:totalDef,perfU:Math.round(perfU),byCode,byCategory,actualPct,
@@ -3913,15 +4518,15 @@ function TVView({dataVersion,master}){
       const currentProduct=lastHour?lastHour.productCode:null;
       // OEE for current shift only
       const currentShiftRecs=s2.length>0?s2:(s1.length>0?s1:[]);
-      let sm=0,dtm=0,tgt=0,good=0,def=0;
-      currentShiftRecs.forEach(r=>{const av=60-r.scheduledMins;sm+=av;dtm+=totalDTMins(r.downtime);tgt+=r.target;good+=r.goodUnits;def+=r.defects.reduce((s2x,d)=>s2x+parseInt(d.qty||0),0);});
-      const run=sm-dtm,tp=good+def,a=sm>0?(run/sm)*100:0,p=run>0&&tgt>0?((tp*sm)/(run*tgt))*100:0,q=tp>0?(good/tp)*100:100;
+      let sm=0,dtm=0,udtm=0,tgt=0,good=0,def=0;
+      currentShiftRecs.forEach(r=>{const av=60-r.scheduledMins;sm+=av;dtm+=totalDTMins(r.downtime);udtm+=unschedDTMins(r.downtime);tgt+=r.target;good+=r.goodUnits;def+=r.defects.reduce((s2x,d)=>s2x+parseInt(d.qty||0),0);});
+      const run=sm-dtm,tp=good+def,a=sm>0?((sm-udtm)/sm)*100:0,p=run>0&&tgt>0?((tp*sm)/(run*tgt))*100:0,q=tp>0?(good/tp)*100:100;
       const oee=(a*p*q)/10000;
       // Range OEE (WTD/MTD)
       const rangeEq=rangeRecords.filter(r=>r.equipCode===ec);
-      let rsm=0,rdtm=0,rtgt=0,rgood=0,rdef=0;
-      rangeEq.forEach(r=>{const av=60-r.scheduledMins;rsm+=av;rdtm+=totalDTMins(r.downtime);rtgt+=r.target;rgood+=r.goodUnits;rdef+=r.defects.reduce((s2x,d)=>s2x+parseInt(d.qty||0),0);});
-      const rrun=rsm-rdtm,rtp=rgood+rdef,ra=rsm>0?(rrun/rsm)*100:0,rp=rrun>0&&rtgt>0?((rtp*rsm)/(rrun*rtgt))*100:0,rq=rtp>0?(rgood/rtp)*100:100;
+      let rsm=0,rdtm=0,rudtm=0,rtgt=0,rgood=0,rdef=0;
+      rangeEq.forEach(r=>{const av=60-r.scheduledMins;rsm+=av;rdtm+=totalDTMins(r.downtime);rudtm+=unschedDTMins(r.downtime);rtgt+=r.target;rgood+=r.goodUnits;rdef+=r.defects.reduce((s2x,d)=>s2x+parseInt(d.qty||0),0);});
+      const rrun=rsm-rdtm,rtp=rgood+rdef,ra=rsm>0?((rsm-rudtm)/rsm)*100:0,rp=rrun>0&&rtgt>0?((rtp*rsm)/(rrun*rtgt))*100:0,rq=rtp>0?(rgood/rtp)*100:100;
       const roee=(ra*rp*rq)/10000;
       // Current shift downtime pareto (today only)
       const dtMap={};todayEq.forEach(r=>{r.downtime.forEach(d=>{const c=d.dtCode;if(!c)return;const nm=DT_CODES[c]||('Code '+c);if(!dtMap[c])dtMap[c]={code:c,name:nm,mins:0,count:0};dtMap[c].mins+=parseInt(d.mins||0);dtMap[c].count++;});});
@@ -5172,6 +5777,10 @@ function ProductionEntry({selectedEquip,shiftNum,shiftHrs,equipData,onUpdateEqui
   const [addStartHr,setAddStartHr]=useState(1);
   const [dragIdx,setDragIdx]=useState(null);
   const [dropSlot,setDropSlot]=useState(null);
+  const touchDragRef=useRef({active:false,idx:null,startX:0,el:null});
+  function handleTouchStart(e,idx){const t=e.touches[0];touchDragRef.current={active:true,idx,startX:t.clientX,el:e.currentTarget};setDragIdx(idx);}
+  function handleTouchMove(e){if(!touchDragRef.current.active)return;e.preventDefault();const t=e.touches[0];const tabs=e.currentTarget.parentElement.querySelectorAll('.equip-tab');let slot=null;tabs.forEach((tab,i)=>{const r=tab.getBoundingClientRect();if(t.clientX>=r.left&&t.clientX<=r.right){slot=t.clientX<r.left+r.width/2?i:i+1;}});if(slot!==null)setDropSlot(slot);}
+  function handleTouchEnd(){if(!touchDragRef.current.active)return;handleDrop();touchDragRef.current={active:false,idx:null,startX:0,el:null};setDragIdx(null);setDropSlot(null);}
   const availEquip=INIT_EQUIPMENT.filter(e=>e.active&&!selectedEquip.includes(e.code));
   function calcDropSlot(e,idx){
     const rect=e.currentTarget.getBoundingClientRect();
@@ -5241,6 +5850,9 @@ function ProductionEntry({selectedEquip,shiftNum,shiftHrs,equipData,onUpdateEqui
         onDragOver:e=>{e.preventDefault();e.dataTransfer.dropEffect='move';setDropSlot(calcDropSlot(e,idx));},
         onDrop:e=>{e.preventDefault();handleDrop();},
         onDragEnd:()=>{setDragIdx(null);setDropSlot(null);},
+        onTouchStart:e=>handleTouchStart(e,idx),
+        onTouchMove:e=>handleTouchMove(e),
+        onTouchEnd:()=>handleTouchEnd(),
         onClick:()=>setActiveTab(ec)},
         getEquipName(ec),
         hrs.length<shn&&h('span',{style:{fontSize:10,color:activeTab===ec?'rgba(255,255,255,0.7)':'var(--jm-text-ter)',marginLeft:2}},'(Hr ',hrs[0]?hrs[0].hourIdx:'?','\u2013',hrs[hrs.length-1]?hrs[hrs.length-1].hourIdx:'?',')'),
@@ -5679,6 +6291,7 @@ function App({authUser,onLogout}){
       h('div',{className:'sidebar-logo',onClick:()=>setScreen('dashboard')},'JMOS'),
       h('div',{className:'sidebar-nav'},
         h('button',{className:'sidebar-btn'+(screen==='dashboard'?' active':''),onClick:()=>setScreen('dashboard'),title:'Dashboard'},h(Icon.dashboard)),
+        h('button',{className:'sidebar-btn'+(screen==='sixsigma'?' active':''),onClick:()=>setScreen('sixsigma'),title:'Six Sigma Toolbox'},h(Icon.sixsigma)),
         h('button',{className:'sidebar-btn'+(screen==='entry'?' active':''),onClick:()=>setScreen('entry'),title:'Enter Data'},h(Icon.clipboard)),
         h('button',{className:'sidebar-btn'+(screen==='tv'?' active':''),onClick:()=>setScreen('tv'),title:'TV Display'},h(Icon.tv)),
         (authUser.role==='admin'||authUser.role==='supervisor')&&h('button',{className:'sidebar-btn'+(screen==='analytics'?' active':''),onClick:()=>setScreen('analytics'),title:'Analytics'},h(Icon.analytics)),
@@ -5720,6 +6333,7 @@ function App({authUser,onLogout}){
     // Main content
     h('div',{className:'content'},
       screen==='dashboard'&&h(Dashboard,{dataVersion,master}),
+      screen==='sixsigma'&&h(SixSigmaView,{dataVersion,master}),
       screen==='analytics'&&(authUser.role==='admin'||authUser.role==='supervisor')&&h(AnalyticsView,{dataVersion,master}),
       screen==='tv'&&h(TVView,{dataVersion,master}),
       screen==='admin'&&(authUser.role==='admin'||authUser.role==='supervisor')&&h(AdminPanel,{master,onUpdate:u=>setMaster(m=>({...m,...u})),onDataChange:()=>setDataVersion(v=>v+1),authUser}),
