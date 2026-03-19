@@ -1317,26 +1317,31 @@ RESPONSE STYLE:
   // ═══════════════════════════════════════════════════════════════════════
 
   // ── MYSQL CONNECTION ──
-  async function initMySQL() {
+  async function initMySQL(retryCount = 0) {
     const mysqlHost = process.env.MYSQL_HOST || '10.114.77.205';
     const mysqlUser = process.env.MYSQL_USER || 'powerBI';
     const mysqlPass = process.env.MYSQL_PASSWORD || 'ignitionData';
     const mysqlDb   = process.env.MYSQL_DATABASE || 'JMWVL2';
     try {
       const mysql = require('mysql2/promise');
+      if (mysqlPool) { try { await mysqlPool.end(); } catch(e) {} }
       mysqlPool = await mysql.createPool({
         host: mysqlHost, user: mysqlUser, password: mysqlPass, database: mysqlDb,
         port: parseInt(process.env.MYSQL_PORT || '3306'),
-        connectionLimit: 5, connectTimeout: 10000, waitForConnections: true
+        connectionLimit: 5, connectTimeout: 15000, waitForConnections: true
       });
       const [test] = await mysqlPool.query('SELECT 1');
-      console.log('MySQL connected to ' + mysqlHost + '/' + mysqlDb);
+      console.log('MySQL connected to ' + mysqlHost + ':' + (process.env.MYSQL_PORT || '3306') + '/' + mysqlDb);
       // Start background cache refresh
       refreshMySQLCache();
       setInterval(() => refreshMySQLCache(), MYSQL_CACHE_TTL);
     } catch (err) {
-      console.warn('MySQL connection failed (app continues with manual data only):', err.message);
+      console.warn('MySQL connection failed (attempt ' + (retryCount + 1) + '):', err.message);
       mysqlPool = null;
+      // Retry every 60s up to 10 times, then every 5 min forever
+      const delay = retryCount < 10 ? 60000 : 300000;
+      console.log('Will retry MySQL connection in ' + (delay / 1000) + 's...');
+      setTimeout(() => initMySQL(retryCount + 1), delay);
     }
   }
 
