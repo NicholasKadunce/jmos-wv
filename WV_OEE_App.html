@@ -1161,6 +1161,94 @@ input[type=number]{-moz-appearance:textfield}
 .ss-heatmap-cell{transition:opacity .2s}
 .ss-heatmap-cell:hover{opacity:.8;stroke:#1B3D6E;stroke-width:1}
 @media(max-width:768px){.ss-input-grid{grid-template-columns:1fr}.ss-stat-grid{grid-template-columns:repeat(2,1fr)}.ss-rty-flow{flex-direction:column}.ss-rty-arrow{transform:rotate(90deg)}.ss-filter-row{flex-direction:column}.ss-filter-row select,.ss-filter-row input{min-width:100%}}
+
+/* ── Shift Command Center ── */
+@keyframes sccFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sccPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0)}}
+.scc-wrap{padding:16px 20px;max-width:1200px;margin:0 auto;animation:sccFadeIn .3s ease-out}
+.scc-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.scc-header h2{font-size:20px;font-weight:900;color:var(--jm-navy);margin:0;letter-spacing:-.5px;display:flex;align-items:center;gap:8px}
+.scc-header h2 .scc-shift-badge{font-size:12px;font-weight:700;background:var(--jm-navy);color:#fff;padding:3px 10px;border-radius:20px}
+.scc-mode-tabs{display:flex;gap:2px;background:var(--jm-bg);border-radius:10px;padding:3px}
+.scc-mode-tab{padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;background:transparent;color:var(--jm-text-sec);font-family:inherit}
+.scc-mode-tab:hover{background:rgba(27,61,110,.06)}
+.scc-mode-tab.active{background:var(--jm-navy);color:#fff;box-shadow:0 2px 8px rgba(27,61,110,.2)}
+.scc-section{margin-bottom:20px;animation:sccFadeIn .35s ease-out both}
+.scc-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px}
+.scc-section-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--jm-text-ter);display:flex;align-items:center;gap:8px}
+.scc-section-title svg{width:16px;height:16px}
+.scc-pending-badge{font-size:11px;font-weight:700;background:#FEF3C7;color:#92400E;padding:2px 10px;border-radius:20px;animation:sccPulse 2s ease-in-out infinite}
+.scc-equip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.scc-equip-card{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:var(--radius-md);padding:14px 16px;transition:all .2s;cursor:default;position:relative;overflow:hidden}
+.scc-equip-card.has-pending{border-color:#F59E0B}
+.scc-equip-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.scc-equip-name{font-size:13px;font-weight:700;color:var(--jm-text)}
+.scc-equip-auto-badge{font-size:9px;font-weight:700;background:linear-gradient(135deg,#3B82F6,#6366F1);color:#fff;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px}
+.scc-equip-bar{height:6px;background:var(--jm-bg);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.scc-equip-bar-fill{height:100%;border-radius:3px;transition:width .5s ease-out}
+.scc-equip-stats{display:flex;gap:12px;font-size:11px;color:var(--jm-text-sec)}
+.scc-equip-stats strong{color:var(--jm-text);font-weight:700}
+.scc-equip-pending{font-size:10px;color:#D97706;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px}
+.scc-equip-ops{font-size:10px;color:var(--jm-text-ter);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* DT Classification Queue */
+.scc-dt-queue{display:flex;flex-direction:column;gap:8px}
+.scc-dt-card{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:var(--radius-md);padding:14px 16px;animation:sccFadeIn .3s ease-out both;transition:all .2s}
+.scc-dt-card.classified{border-color:#10B981;background:rgba(16,185,129,.03)}
+.scc-dt-card.unclassified{border-color:#F59E0B;border-left:4px solid #F59E0B}
+.scc-dt-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.scc-dt-equip{font-size:12px;font-weight:700;color:var(--jm-text)}
+.scc-dt-time{font-size:11px;color:var(--jm-text-sec);font-variant-numeric:tabular-nums}
+.scc-dt-duration{font-size:18px;font-weight:800;color:var(--jm-navy);letter-spacing:-1px}
+.scc-dt-duration small{font-size:11px;font-weight:600;color:var(--jm-text-ter);margin-left:2px}
+.scc-dt-quick-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.scc-dt-quick-btn{padding:6px 14px;border:1.5px solid var(--jm-border);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--jm-surface);color:var(--jm-text-sec);font-family:inherit}
+.scc-dt-quick-btn:hover{border-color:var(--jm-navy);color:var(--jm-navy);background:rgba(27,61,110,.04)}
+.scc-dt-quick-btn.selected{background:var(--jm-navy);color:#fff;border-color:var(--jm-navy)}
+.scc-dt-more-btn{padding:6px 14px;border:1.5px dashed var(--jm-border);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;background:transparent;color:var(--jm-text-ter);font-family:inherit}
+.scc-dt-batch-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--jm-bg);border-radius:var(--radius-md);margin-bottom:10px}
+.scc-dt-batch-bar select{height:32px;border:1.5px solid var(--jm-border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;flex:1;max-width:200px}
+.scc-dt-batch-bar button{padding:7px 16px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+.scc-dt-apply-btn{background:var(--jm-navy);color:#fff}
+.scc-dt-apply-btn:hover{background:#14305A}
+.scc-dt-classified-check{color:#10B981;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
+
+/* Quick Defect Reporter */
+.scc-defect-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border:none;box-shadow:0 4px 16px rgba(239,68,68,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:100;font-size:22px;font-weight:700}
+.scc-defect-fab:hover{transform:scale(1.08);box-shadow:0 6px 20px rgba(239,68,68,.5)}
+.scc-defect-modal{position:fixed;bottom:90px;right:24px;width:320px;background:var(--jm-surface);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(0,0,0,.2);z-index:100;animation:sccFadeIn .2s ease-out;overflow:hidden}
+.scc-defect-modal-head{background:var(--jm-navy);color:#fff;padding:14px 18px;font-size:14px;font-weight:700}
+.scc-defect-modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.scc-defect-modal-body select,.scc-defect-modal-body input{height:38px;border:1.5px solid var(--jm-border);border-radius:8px;padding:0 12px;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box}
+.scc-defect-submit{width:100%;padding:10px;border:none;border-radius:8px;background:var(--jm-navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.scc-defect-submit:hover{background:#14305A}
+
+/* Operator assignment */
+.scc-op-panel{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px}
+.scc-op-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--jm-bg)}
+.scc-op-row:last-child{border-bottom:none}
+.scc-op-name{font-size:12px;font-weight:600;color:var(--jm-text);flex:1}
+.scc-op-equip{font-size:11px;color:var(--jm-text-sec);background:var(--jm-bg);padding:3px 8px;border-radius:12px}
+.scc-op-move-btn{padding:4px 10px;border:1px solid var(--jm-border);border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:var(--jm-surface);color:var(--jm-text-sec);font-family:inherit;transition:all .15s}
+.scc-op-move-btn:hover{border-color:var(--jm-navy);color:var(--jm-navy)}
+
+/* Manual equipment mini-cards */
+.scc-manual-card{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:var(--radius-md);padding:12px 14px;cursor:pointer;transition:all .2s}
+.scc-manual-card:hover{border-color:var(--jm-navy);box-shadow:var(--shadow-sm)}
+.scc-manual-card.done{border-color:#10B981;background:rgba(16,185,129,.03)}
+.scc-manual-status{font-size:10px;font-weight:600;display:flex;align-items:center;gap:4px}
+.scc-manual-status.needs{color:#D97706}
+.scc-manual-status.complete{color:#10B981}
+
+@media(max-width:768px){
+  .scc-wrap{padding:12px 14px}
+  .scc-equip-grid{grid-template-columns:1fr}
+  .scc-header{flex-direction:column;align-items:flex-start}
+  .scc-defect-modal{right:12px;left:12px;width:auto;bottom:80px}
+  .scc-defect-fab{bottom:16px;right:16px;width:48px;height:48px}
+  .scc-dt-quick-btns{gap:4px}
+  .scc-dt-quick-btn{padding:5px 10px;font-size:10px}
+}
 .login-card{position:relative;z-index:1;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-radius:24px;padding:48px 40px 40px;width:100%;max-width:400px;box-shadow:0 25px 80px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.05),inset 0 1px 0 rgba(255,255,255,.8);text-align:center;animation:login-fade-in .6s ease-out}
 .login-logo{height:56px;margin-bottom:16px;filter:drop-shadow(0 2px 8px rgba(27,61,110,.15))}
 .login-title{font-size:32px;font-weight:900;color:var(--jm-navy);margin:0 0 2px;letter-spacing:2px}
@@ -1229,29 +1317,29 @@ const Icon={
 let INIT_EMPLOYEES=[];
 const INIT_OPERATORS=['ADAMS, JOSHUA L','BAYLOR, MORGAN','BIGGINS, CHRISTOPHER','BISHOFF, KEVIN','BOLYARD, MINGO','BORN, JEFFREY','BOWERS, ANTHONY','BOYLEN, CARL (RICKY)','CALE, WILLIAM','CASINO, MICHAEL','CASTEEL, PAYTON','DALTON, VERNON','DEAVERS, JAMES','DEAVERS, LUKE','DEAVERS, TYLER','DEGLER, GREGORY','DESANTIS, RODNEY (RUBBER)','DURR, WYATT','EVERLY, DAVID','FEARER, TRACY','GABLE, JOSH','GRIBBLE, ANTHONY','HARDESTY, BRIAN','HART, DEREK','HASKIELL, RICKY','HATCH, RODNEY','HAWKINS, JEREMY','HAYNES, CHRISTOPHER','HENLINE, GLEN','HERSHMAN, GIDEON','HERSHMAN, TRAVIS','HERSHMAN, WALKER','JOHNSON, ROBERT','KELLEY, CHRISTOPHER','KESNER, DAKOTA','KINSLEY, TERRY','KISNER, MARTY','KOSIK, ERIC','LONG, TONY','LONG, TONY JR','MACE, JUSTIN','MARKLEY, LEE','MARSH, QUENTIN','MAY, JAMES','MCCROBIE, ZACHARY','MCDONALD, JOHN','MCROBIE, ADAM','MENEAR, JERAMIAH','MORELAND, HAYDEN','MURRAY, RYAN','POLING, JAMES','PYLES, RONALD','RIFFLE, GEORGE','SHAFFER, ROY','SISLER, DAKOTA','SMITH, BYRON','SMITH, MATTHEW','STEMPLE, NICK','STEMPLE, RYAN','STOCKDALE, JUSTIN','STRAHIN, DARREN','STRAHIN, TRAVIS','SUMMERS, CASEY','SYPOLT, BRADLEY','TEETS, ALLEN','TEETS, SCOTT','THOMAS, JUNIOR(SKIP)','TRENUM, MATTHEW','TURNER, CODY','WEAVER, KOBE','WELCH, CARL','WHITE, WILLIAM','WILFONG, JAMES','WOLFE, GRANT','YANKOVICH, RYAN','ZEIGLER, TYLER'];
 const INIT_EQUIPMENT=[
-  {code:'WV-SHEAR-AS1',name:'Autoshear #1',process:'Shears',active:true},
-  {code:'WV-SHEAR-AS2',name:'Autoshear #2',process:'Shears',active:true},
-  {code:'WV-PRESS-400',name:'400 Press',process:'Presses',active:true},
-  {code:'WV-PRESS-500A',name:'500A Press',process:'Presses',active:true},
-  {code:'WV-PRESS-500B',name:'500B Press',process:'Presses',active:true},
+  {code:'WV-SHEAR-AS1',name:'Autoshear #1',process:'Shears',active:true,autoData:true},
+  {code:'WV-SHEAR-AS2',name:'Autoshear #2',process:'Shears',active:true,autoData:true},
+  {code:'WV-PRESS-400',name:'400 Press',process:'Presses',active:true,autoData:true},
+  {code:'WV-PRESS-500A',name:'500A Press',process:'Presses',active:true,autoData:true},
+  {code:'WV-PRESS-500B',name:'500B Press',process:'Presses',active:true,autoData:true},
   {code:'WV-HEAD-H1',name:'Header #1',process:'Headers',active:true},
-  {code:'WV-HEAD-H2',name:'Header #2',process:'Headers',active:true},
+  {code:'WV-HEAD-H2',name:'Header #2',process:'Headers',active:true,autoData:true},
   {code:'WV-HEAD-H3',name:'Header #3',process:'Headers',active:true},
   {code:'WV-HEAD-AUTO',name:'Auto Header',process:'Headers',active:true},
-  {code:'WV-THREAD-T1',name:'Threader #1',process:'Threaders',active:true},
-  {code:'WV-THREAD-T2',name:'Threader #2',process:'Threaders',active:true},
-  {code:'WV-THREAD-AT',name:'Autothreader',process:'Threaders',active:true},
-  {code:'WV-PEEL-MAN',name:'Manual Peeler',process:'Peeling',active:true},
-  {code:'WV-PEEL-AUTO',name:'AutoPeeler',process:'Peeling',active:true},
-  {code:'WV-PEEL-SWAG',name:'Swager',process:'Peeling',active:true},
+  {code:'WV-THREAD-T1',name:'Threader #1',process:'Threaders',active:true,autoData:true},
+  {code:'WV-THREAD-T2',name:'Threader #2',process:'Threaders',active:true,autoData:true},
+  {code:'WV-THREAD-AT',name:'Autothreader',process:'Threaders',active:true,autoData:true},
+  {code:'WV-PEEL-MAN',name:'Manual Peeler',process:'Peeling',active:true,autoData:true},
+  {code:'WV-PEEL-AUTO',name:'AutoPeeler',process:'Peeling',active:true,autoData:true},
+  {code:'WV-PEEL-SWAG',name:'Swager',process:'Peeling',active:true,autoData:true},
   {code:'WV-ASSY-A1',name:'Assembly #1',process:'Assembly',active:true},
   {code:'WV-ASSY-A2',name:'Assembly #2',process:'Assembly',active:true},
   {code:'WV-ASSY-A3',name:'Assembly #3',process:'Assembly',active:true},
   {code:'WV-ASSY-A4',name:'Assembly #4',process:'Assembly',active:true},
-  {code:'WV-CABLE-C1',name:'Cable Line #1',process:'Cable Lines',active:true},
-  {code:'WV-CABLE-C2',name:'Cable Line #2',process:'Cable Lines',active:true},
-  {code:'WV-CABLE-C3',name:'Cable Line #3',process:'Cable Lines',active:true},
-  {code:'WV-CABLE-C4',name:'Cable Line #4',process:'Cable Lines',active:true},
+  {code:'WV-CABLE-C1',name:'Cable Line #1',process:'Cable Lines',active:true,autoData:true},
+  {code:'WV-CABLE-C2',name:'Cable Line #2',process:'Cable Lines',active:true,autoData:true},
+  {code:'WV-CABLE-C3',name:'Cable Line #3',process:'Cable Lines',active:true,autoData:true},
+  {code:'WV-CABLE-C4',name:'Cable Line #4',process:'Cable Lines',active:true,autoData:true},
   {code:'WV-MISC-BIGSAW',name:'Big Saw',process:'Misc Equipment',active:true},
   {code:'WV-MISC-TIELINE',name:'Tie Line',process:'Misc Equipment',active:true},
   {code:'WV-MISC-OFFWELD',name:'Offline Welding',process:'Misc Equipment',active:true},
@@ -1498,6 +1586,9 @@ const STORAGE_CONFIG={
   localKey:'oee_production_data',
   masterKey:'oee_master_data'
 };
+
+// Global MySQL merged records cache (written by AppWrapper, read by Dashboard/Analytics/etc.)
+let _mysqlMergedRecords=[];
 
 const Storage={
   _cache:[],
@@ -1843,6 +1934,34 @@ const API={
   },
   async declineBDR(id,declinedBy,reason){
     const r=await fetch('/api/bdr/'+id+'/decline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({declinedBy,reason})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  // MySQL automated data
+  async mysqlStatus(){const r=await fetch('/api/mysql/status');if(!r.ok)return{connected:false};return r.json();},
+  async mysqlProduction(date){const r=await fetch('/api/mysql/production?date='+date);if(!r.ok)return null;return r.json();},
+  async mysqlDowntime(date){const r=await fetch('/api/mysql/downtime?date='+date);if(!r.ok)return null;return r.json();},
+  async mysqlMerged(date){const r=await fetch('/api/mysql/merged?date='+date);if(!r.ok)return null;return r.json();},
+  async mysqlClassifyDT(mysqlEventId,equipCode,dtCode,subItem,shiftDate,classifiedBy){
+    const r=await fetch('/api/mysql/classify-downtime',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mysqlEventId,equipCode,dtCode,subItem,shiftDate,classifiedBy})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  async mysqlClassifyDTBatch(events){
+    const r=await fetch('/api/mysql/classify-downtime/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({events})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  async mysqlReportDefect(data){
+    const r=await fetch('/api/mysql/report-defect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  async mysqlGetDefects(date,shift){const url='/api/mysql/defects?date='+date+(shift?'&shift='+shift:'');const r=await fetch(url);if(!r.ok)return{defects:[]};return r.json();},
+  async mysqlAssignOperator(data){
+    const r=await fetch('/api/mysql/operator-assign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  async mysqlGetOperators(date,shift){const url='/api/mysql/operators?date='+date+(shift?'&shift='+shift:'');const r=await fetch(url);if(!r.ok)return{assignments:[]};return r.json();},
+  async mysqlMoveOperator(data){
+    const r=await fetch('/api/mysql/operator-move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
     const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
   }
 };
@@ -2302,6 +2421,17 @@ function Dashboard({dataVersion,master}){
         const hr=entry.hourData;
         const sd=entry.shiftData||{};
         records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
+      }
+    });
+    // Merge MySQL automated records (auto equipment only — don't duplicate manual entries)
+    const manualKeys=new Set(records.map(r=>r.date+'|'+r.shiftNum+'|'+r.equipCode+'|'+r.hourIdx));
+    (_mysqlMergedRecords||[]).forEach(mr=>{
+      const key=mr.date+'|'+mr.shiftNum+'|'+mr.equipCode+'|'+mr.hourIdx;
+      if(!manualKeys.has(key)){
+        records.push({date:mr.date,shiftNum:mr.shiftNum,equipCode:mr.equipCode,hourIdx:mr.hourIdx,
+          productCode:mr.productCode||'',scheduledMins:mr.scheduledMins||0,target:mr.target||0,
+          goodUnits:parseInt(mr.goodUnits)||0,downtime:mr.downtime||[],defects:mr.defects||[],
+          operators:mr.operators||[],autoData:true});
       }
     });
     return dedup(records);
@@ -3436,6 +3566,355 @@ function Dashboard({dataVersion,master}){
       )
   );
 }
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHIFT COMMAND CENTER — Automated + Manual hybrid data entry
+// ═══════════════════════════════════════════════════════════════════════════════
+function isAutoEquip(code){const eq=INIT_EQUIPMENT.find(e=>e.code===code);return eq&&eq.autoData;}
+
+function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEquip,onAddEquip,onRemoveHoursFrom,onReorderEquip,onSubmit,operators}){
+  const [mode,setMode]=useState('overview'); // overview, classify, defects, operators, manual
+  const [mysqlStatus,setMysqlStatus]=useState(null);
+  const [autoProduction,setAutoProduction]=useState(null);
+  const [autoDowntime,setAutoDowntime]=useState(null);
+  const [defectOpen,setDefectOpen]=useState(false);
+  const [defectEquip,setDefectEquip]=useState('');
+  const [defectCode,setDefectCode]=useState('');
+  const [defectQty,setDefectQty]=useState('1');
+  const [opAssignments,setOpAssignments]=useState([]);
+  const [dtFilter,setDtFilter]=useState('unclassified'); // all, unclassified, classified
+  const [batchCode,setBatchCode]=useState('');
+  const [batchEquip,setBatchEquip]=useState('all');
+
+  const today=shiftData.shiftDate||fmtDate(toET(new Date()));
+  const shiftNum=shiftData.shiftNum||'1';
+
+  const autoEquip=useMemo(()=>INIT_EQUIPMENT.filter(e=>e.active&&e.autoData),[]);
+  const manualEquip=useMemo(()=>selectedEquip.filter(c=>!isAutoEquip(c)),[selectedEquip]);
+
+  // Fetch MySQL data
+  useEffect(()=>{
+    let cancelled=false;
+    async function load(){
+      try{
+        const [status,prod,dt,ops]=await Promise.all([
+          API.mysqlStatus(),
+          API.mysqlProduction(today),
+          API.mysqlDowntime(today),
+          API.mysqlGetOperators(today,shiftNum)
+        ]);
+        if(cancelled)return;
+        setMysqlStatus(status);
+        setAutoProduction(prod);
+        setAutoDowntime(dt);
+        setOpAssignments(ops.assignments||[]);
+      }catch(e){console.warn('MySQL fetch error:',e);}
+    }
+    load();
+    const iv=setInterval(load,30000); // Refresh every 30s
+    return()=>{cancelled=true;clearInterval(iv);};
+  },[today,shiftNum]);
+
+  // Auto equipment summary
+  const autoSummary=useMemo(()=>{
+    if(!autoProduction||!autoProduction.equipment)return[];
+    return autoEquip.map(eq=>{
+      const data=autoProduction.equipment[eq.code];
+      const totalParts=data?data.totalParts||0:0;
+      // Filter hours for current shift
+      const shiftHours=data?(data.hours||[]).filter(h=>h.shiftNum===shiftNum):[];
+      const shiftParts=shiftHours.reduce((s,h)=>s+h.goodUnits,0);
+      // Pending DT events
+      const eqDT=autoDowntime?(autoDowntime.events||[]).filter(e=>e.equipCode===eq.code&&e.shiftNum===shiftNum):[];
+      const unclassified=eqDT.filter(e=>!e.classified).length;
+      // Operators
+      const ops=opAssignments.filter(a=>a.equip_code===eq.code).map(a=>a.operator_name);
+      return{...eq,totalParts,shiftParts,dtEvents:eqDT,unclassified,operators:ops};
+    }).filter(eq=>eq.shiftParts>0||eq.dtEvents.length>0);
+  },[autoEquip,autoProduction,autoDowntime,shiftNum,opAssignments]);
+
+  const totalPending=autoSummary.reduce((s,eq)=>s+eq.unclassified,0);
+  const allDTEvents=useMemo(()=>{
+    if(!autoDowntime)return[];
+    const events=(autoDowntime.events||[]).filter(e=>e.shiftNum===shiftNum);
+    if(dtFilter==='unclassified')return events.filter(e=>!e.classified);
+    if(dtFilter==='classified')return events.filter(e=>e.classified);
+    return events;
+  },[autoDowntime,shiftNum,dtFilter]);
+
+  const filteredDT=useMemo(()=>{
+    if(batchEquip==='all')return allDTEvents;
+    return allDTEvents.filter(e=>e.equipCode===batchEquip);
+  },[allDTEvents,batchEquip]);
+
+  // Quick classify handler
+  async function classifyEvent(evt,dtCode,subItem){
+    try{
+      await API.mysqlClassifyDT(evt.id,evt.equipCode,dtCode,subItem||'',today,shiftData.enteredBy||'');
+      // Refresh downtime
+      const dt=await API.mysqlDowntime(today);
+      setAutoDowntime(dt);
+    }catch(e){console.error('Classify error:',e);}
+  }
+
+  // Batch classify
+  async function batchClassify(){
+    if(!batchCode)return;
+    const toClassify=filteredDT.filter(e=>!e.classified);
+    if(toClassify.length===0)return;
+    try{
+      await API.mysqlClassifyDTBatch(toClassify.map(e=>({
+        mysqlEventId:e.id,equipCode:e.equipCode,dtCode:parseInt(batchCode),subItem:'',
+        shiftDate:today,classifiedBy:shiftData.enteredBy||''
+      })));
+      const dt=await API.mysqlDowntime(today);
+      setAutoDowntime(dt);
+    }catch(e){console.error('Batch classify error:',e);}
+  }
+
+  // Report defect
+  async function submitDefect(){
+    if(!defectEquip||!defectCode||!defectQty)return;
+    try{
+      await API.mysqlReportDefect({equipCode:defectEquip,shiftDate:today,shiftNum,defCode:parseInt(defectCode),quantity:parseInt(defectQty),reportedBy:shiftData.enteredBy||''});
+      setDefectOpen(false);setDefectCode('');setDefectQty('1');
+      showToast('Defect reported');
+    }catch(e){console.error('Defect report error:',e);}
+  }
+
+  // Get top DT codes for quick-tap (most used codes for the equipment)
+  function getTopCodes(equipCode){
+    const eq=INIT_EQUIPMENT.find(e=>e.code===equipCode);
+    const allowed=EQUIP_DT_CODES[equipCode]||Object.keys(DT_CODES).map(Number);
+    // Show top 5 most common codes
+    return allowed.slice(0,5);
+  }
+
+  function fmtTime(isoStr){
+    if(!isoStr)return'';
+    const d=new Date(isoStr);
+    return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'});
+  }
+
+  // ── RENDER ──
+  const connected=mysqlStatus&&mysqlStatus.connected;
+
+  return h('div',{className:'scc-wrap'},
+    // Header
+    h('div',{className:'scc-header'},
+      h('h2',null,'Shift Command Center',
+        h('span',{className:'scc-shift-badge'},'Shift '+shiftNum),
+        !connected&&h('span',{style:{fontSize:10,color:'#EF4444',fontWeight:600,marginLeft:8}},'⚠ Offline')
+      ),
+      h('div',{className:'scc-mode-tabs'},
+        h('button',{className:'scc-mode-tab'+(mode==='overview'?' active':''),onClick:()=>setMode('overview')},'Overview'),
+        h('button',{className:'scc-mode-tab'+(mode==='classify'?' active':''),onClick:()=>setMode('classify')},
+          'Classify',totalPending>0&&h('span',{style:{marginLeft:6,background:'#F59E0B',color:'#fff',borderRadius:10,padding:'1px 7px',fontSize:10,fontWeight:700}},totalPending)
+        ),
+        h('button',{className:'scc-mode-tab'+(mode==='operators'?' active':''),onClick:()=>setMode('operators')},'Operators'),
+        manualEquip.length>0&&h('button',{className:'scc-mode-tab'+(mode==='manual'?' active':''),onClick:()=>setMode('manual')},'Manual Entry')
+      )
+    ),
+
+    // ── OVERVIEW MODE ──
+    mode==='overview'&&h('div',null,
+      // Automated Equipment Section
+      autoSummary.length>0&&h('div',{className:'scc-section'},
+        h('div',{className:'scc-section-header'},
+          h('div',{className:'scc-section-title'},
+            h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M13 2L3 14h9l-1 8 10-12h-9l1-8'})),
+            'Automated Equipment'
+          ),
+          totalPending>0&&h('span',{className:'scc-pending-badge'},totalPending+' event'+(totalPending!==1?'s':'')+' need classification')
+        ),
+        h('div',{className:'scc-equip-grid'},
+          autoSummary.map(eq=>{
+            const pct=eq.shiftParts>0?Math.min((eq.shiftParts/(8*150))*100,100):0; // rough gauge
+            const barColor=eq.unclassified>0?'#F59E0B':'#10B981';
+            return h('div',{key:eq.code,className:'scc-equip-card'+(eq.unclassified>0?' has-pending':'')},
+              h('div',{className:'scc-equip-card-head'},
+                h('span',{className:'scc-equip-name'},eq.name),
+                h('span',{className:'scc-equip-auto-badge'},'AUTO')
+              ),
+              h('div',{className:'scc-equip-bar'},
+                h('div',{className:'scc-equip-bar-fill',style:{width:Math.min(pct,100)+'%',background:barColor}})
+              ),
+              h('div',{className:'scc-equip-stats'},
+                h('span',null,h('strong',null,eq.shiftParts.toLocaleString()),' parts'),
+                h('span',null,h('strong',null,eq.dtEvents.length),' DT events')
+              ),
+              eq.unclassified>0&&h('div',{className:'scc-equip-pending'},
+                '⚠ ',eq.unclassified,' unclassified'
+              ),
+              eq.operators.length>0&&h('div',{className:'scc-equip-ops'},'👤 ',eq.operators.join(', '))
+            );
+          })
+        )
+      ),
+
+      // Manual Equipment Section
+      manualEquip.length>0&&h('div',{className:'scc-section',style:{animationDelay:'.1s'}},
+        h('div',{className:'scc-section-header'},
+          h('div',{className:'scc-section-title'},
+            h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'})),
+            'Manual Equipment'
+          ),
+          h('span',{style:{fontSize:11,color:'var(--jm-text-ter)'}},manualEquip.length+' selected')
+        ),
+        h('div',{className:'scc-equip-grid'},
+          manualEquip.map(code=>{
+            const eq=INIT_EQUIPMENT.find(e=>e.code===code);
+            const hrs=equipData[code]||[];
+            const submitted=hrs.filter(h=>h.submitted).length;
+            const total=hrs.length;
+            const done=total>0&&submitted===total;
+            return h('div',{key:code,className:'scc-manual-card'+(done?' done':''),onClick:()=>setMode('manual')},
+              h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between'}},
+                h('span',{style:{fontSize:13,fontWeight:700,color:'var(--jm-text)'}},eq?eq.name:code),
+                h('span',{className:'scc-manual-status '+(done?'complete':'needs')},
+                  done?'✓ Complete':'○ '+submitted+'/'+total+' hrs'
+                )
+              )
+            );
+          })
+        )
+      )
+    ),
+
+    // ── CLASSIFY MODE ──
+    mode==='classify'&&h('div',null,
+      h('div',{className:'scc-section'},
+        h('div',{className:'scc-section-header'},
+          h('div',{className:'scc-section-title'},'Downtime Classification Queue'),
+          h('div',{style:{display:'flex',gap:6}},
+            ['unclassified','classified','all'].map(f=>
+              h('button',{key:f,className:'scc-mode-tab'+(dtFilter===f?' active':''),onClick:()=>setDtFilter(f),style:{padding:'4px 10px',fontSize:11}},
+                f.charAt(0).toUpperCase()+f.slice(1)
+              )
+            )
+          )
+        ),
+
+        // Batch classify bar
+        filteredDT.filter(e=>!e.classified).length>1&&h('div',{className:'scc-dt-batch-bar'},
+          h('span',{style:{fontSize:12,fontWeight:700,color:'var(--jm-text)',whiteSpace:'nowrap'}},'Batch: '),
+          h('select',{value:batchEquip,onChange:e=>setBatchEquip(e.target.value)},
+            h('option',{value:'all'},'All Equipment'),
+            ...autoEquip.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name))
+          ),
+          h('select',{value:batchCode,onChange:e=>setBatchCode(e.target.value)},
+            h('option',{value:''},'Select code...'),
+            ...Object.entries(DT_CODES).map(([k,v])=>h('option',{key:k,value:k},v))
+          ),
+          h('button',{className:'scc-dt-apply-btn',onClick:batchClassify,disabled:!batchCode},
+            'Apply to ',filteredDT.filter(e=>!e.classified).length,' events'
+          )
+        ),
+
+        // Event cards
+        h('div',{className:'scc-dt-queue'},
+          filteredDT.length===0&&h('div',{style:{textAlign:'center',padding:40,color:'var(--jm-text-ter)',fontSize:13}},
+            dtFilter==='unclassified'?'✓ All downtime events classified!':'No events found'
+          ),
+          filteredDT.map((evt,i)=>{
+            const topCodes=getTopCodes(evt.equipCode);
+            const eqName=(INIT_EQUIPMENT.find(e=>e.code===evt.equipCode)||{}).name||evt.equipCode;
+            return h('div',{key:evt.id,className:'scc-dt-card '+(evt.classified?'classified':'unclassified'),style:{animationDelay:(i*.05)+'s'}},
+              h('div',{className:'scc-dt-card-head'},
+                h('div',null,
+                  h('div',{className:'scc-dt-equip'},eqName),
+                  h('div',{className:'scc-dt-time'},fmtTime(evt.startTime),' → ',fmtTime(evt.endTime))
+                ),
+                h('div',{style:{textAlign:'right'}},
+                  h('div',{className:'scc-dt-duration'},evt.durationMins,h('small',null,' min')),
+                  evt.classified&&h('div',{className:'scc-dt-classified-check'},'✓ ',DT_CODES[evt.dtCode]||'Code '+evt.dtCode)
+                )
+              ),
+              !evt.classified&&h('div',{className:'scc-dt-quick-btns'},
+                topCodes.map(code=>
+                  h('button',{key:code,className:'scc-dt-quick-btn',onClick:()=>classifyEvent(evt,code)},DT_CODES[code])
+                ),
+                h('button',{className:'scc-dt-more-btn',onClick:()=>{
+                  const code=prompt('Enter DT code number (1-'+Object.keys(DT_CODES).length+'):\n'+Object.entries(DT_CODES).map(([k,v])=>k+' = '+v).join('\n'));
+                  if(code&&DT_CODES[parseInt(code)])classifyEvent(evt,parseInt(code));
+                }},'More...')
+              )
+            );
+          })
+        )
+      )
+    ),
+
+    // ── OPERATORS MODE ──
+    mode==='operators'&&h('div',null,
+      h('div',{className:'scc-section'},
+        h('div',{className:'scc-section-title',style:{marginBottom:14}},'Operator Assignments'),
+        h('div',{className:'scc-op-panel'},
+          h('div',{style:{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}},
+            h('select',{id:'scc-op-name',style:{height:36,border:'1.5px solid var(--jm-border)',borderRadius:8,padding:'0 10px',fontSize:12,fontFamily:'inherit',flex:1,minWidth:180}},
+              h('option',{value:''},'Select operator...'),
+              ...(master.operators||INIT_OPERATORS).map(op=>h('option',{key:op,value:op},op))
+            ),
+            h('select',{id:'scc-op-equip',style:{height:36,border:'1.5px solid var(--jm-border)',borderRadius:8,padding:'0 10px',fontSize:12,fontFamily:'inherit',flex:1,minWidth:160}},
+              h('option',{value:''},'Select equipment...'),
+              ...autoEquip.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name)),
+              ...manualEquip.map(code=>{const eq=INIT_EQUIPMENT.find(e=>e.code===code);return h('option',{key:code,value:code},eq?eq.name:code);})
+            ),
+            h('button',{style:{height:36,padding:'0 16px',border:'none',borderRadius:8,background:'var(--jm-navy)',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'},onClick:async()=>{
+              const name=document.getElementById('scc-op-name').value;
+              const equip=document.getElementById('scc-op-equip').value;
+              if(!name||!equip)return;
+              await API.mysqlAssignOperator({shiftDate:today,shiftNum,equipCode:equip,operatorName:name,assignedBy:shiftData.enteredBy||''});
+              const ops=await API.mysqlGetOperators(today,shiftNum);
+              setOpAssignments(ops.assignments||[]);
+              showToast(name.split(',')[0]+' → '+(INIT_EQUIPMENT.find(e=>e.code===equip)||{}).name);
+            }},'Assign')
+          ),
+          opAssignments.length===0&&h('div',{style:{textAlign:'center',padding:20,color:'var(--jm-text-ter)',fontSize:12}},'No operators assigned yet. Assign operators to equipment above.'),
+          opAssignments.map(a=>{
+            const eqName=(INIT_EQUIPMENT.find(e=>e.code===a.equip_code)||{}).name||a.equip_code;
+            return h('div',{key:a.equip_code+'-'+a.operator_name,className:'scc-op-row'},
+              h('span',{className:'scc-op-name'},a.operator_name),
+              h('span',{className:'scc-op-equip'},eqName),
+              a.start_hour&&h('span',{style:{fontSize:10,color:'var(--jm-text-ter)'}},'Hr '+a.start_hour+(a.end_hour?'-'+a.end_hour:'+'))
+            );
+          })
+        )
+      )
+    ),
+
+    // ── MANUAL ENTRY MODE — delegates to existing ProductionEntry ──
+    mode==='manual'&&manualEquip.length>0&&h(ProductionEntry,{
+      selectedEquip:manualEquip,shiftNum,shiftHrs:shiftData.shiftHrs,equipData,
+      onUpdateEquip,onAddEquip,onRemoveHoursFrom,onReorderEquip,
+      onBack:()=>setMode('overview'),onNext:()=>setMode('overview'),
+      operators:master.operators,master
+    }),
+    mode==='manual'&&manualEquip.length===0&&h('div',{style:{textAlign:'center',padding:40,color:'var(--jm-text-ter)'}},'No manual equipment selected. Go to Step 2 to add equipment.'),
+
+    // ── FLOATING DEFECT BUTTON ──
+    connected&&h('button',{className:'scc-defect-fab',onClick:()=>setDefectOpen(!defectOpen),title:'Report Defect'},'!'),
+    defectOpen&&h('div',{className:'scc-defect-modal'},
+      h('div',{className:'scc-defect-modal-head'},'Quick Report Defect'),
+      h('div',{className:'scc-defect-modal-body'},
+        h('select',{value:defectEquip,onChange:e=>setDefectEquip(e.target.value)},
+          h('option',{value:''},'Equipment...'),
+          ...autoEquip.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name))
+        ),
+        h('select',{value:defectCode,onChange:e=>setDefectCode(e.target.value)},
+          h('option',{value:''},'Defect type...'),
+          ...Object.entries(DEF_CODES).map(([k,v])=>{
+            if(!defectEquip)return h('option',{key:k,value:k},v);
+            const allowed=EQUIP_DEF_CODES[defectEquip]||Object.keys(DEF_CODES).map(Number);
+            return allowed.includes(parseInt(k))?h('option',{key:k,value:k},v):null;
+          }).filter(Boolean)
+        ),
+        h('input',{type:'number',value:defectQty,onChange:e=>setDefectQty(e.target.value),placeholder:'Quantity',min:1}),
+        h('button',{className:'scc-defect-submit',onClick:submitDefect,disabled:!defectEquip||!defectCode},'Report Defect')
+      )
+    )
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIX SIGMA TOOLBOX — Statistical process control & continuous improvement
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -5849,18 +6328,27 @@ function App({authUser,onLogout}){
   // Fetch data from server on mount and auto-poll for live updates
   const fetchServerData=useCallback(()=>{
     if(!navigator.onLine)return;
+    // Fetch manual data from PostgreSQL
     API.fetchData().then(serverData=>{
       if(serverData&&serverData.length>0){
         const oldLen=Storage._cache.length;
         const oldLast=oldLen>0?JSON.stringify(Storage._cache[oldLen-1]):'';
         Storage._cache.length=0;
         serverData.forEach(d=>Storage._cache.push(d));
-        // Only bump version if data actually changed
         if(serverData.length!==oldLen||JSON.stringify(serverData[serverData.length-1])!==oldLast){
           setDataVersion(v=>v+1);
         }
       }
     }).catch(e=>console.warn('Could not fetch server data:',e));
+    // Fetch automated MySQL data (production + downtime from JMWVL2)
+    const today=fmtDate(toET(new Date()));
+    API.mysqlMerged(today).then(data=>{
+      if(data&&data.records){
+        const oldLen=_mysqlMergedRecords.length;
+        _mysqlMergedRecords=data.records;
+        if(data.records.length!==oldLen)setDataVersion(v=>v+1);
+      }
+    }).catch(()=>{}); // Silently fail if MySQL unavailable
   },[]);
   useEffect(()=>{
     fetchServerData();
@@ -6005,7 +6493,8 @@ function App({authUser,onLogout}){
     setSelectedEquip(p=>{const arr=[...p];const [item]=arr.splice(fromIdx,1);arr.splice(toIdx,0,item);return arr;});
   }
 
-  const stepNames=['Shift Setup','Equipment','Production Data','Review'];
+  const hasAutoEquip=useMemo(()=>INIT_EQUIPMENT.some(e=>e.active&&e.autoData),[]);
+  const stepNames=hasAutoEquip?['Shift Setup','Equipment','Command Center','Review']:['Shift Setup','Equipment','Production Data','Review'];
 
   return h(ConfirmProvider,null,
     h('div',{className:'app-layout'},
@@ -6068,7 +6557,7 @@ function App({authUser,onLogout}){
         }).flat()),
         step===1&&h(ShiftSetup,{data:shiftData,supervisors:master.supervisors,onChange:setShiftData,onNext:()=>setStep(2)}),
         step===2&&h(EquipmentSelect,{selected:selectedEquip,onToggle:toggleEquip,onBack:()=>setStep(1),onNext:handleEquipNext,master}),
-        step===3&&h(ProductionEntry,{selectedEquip,shiftNum:shiftData.shiftNum,shiftHrs:shiftData.shiftHrs,equipData,onUpdateEquip:handleUpdateEquip,onAddEquip:handleAddEquip,onRemoveHoursFrom:handleRemoveHoursFrom,onReorderEquip:handleReorderEquip,onBack:()=>setStep(2),onNext:()=>setStep(4),operators:master.operators,master}),
+        step===3&&(hasAutoEquip?h(ShiftCommandCenter,{master,shiftData,selectedEquip,equipData,onUpdateEquip:handleUpdateEquip,onAddEquip:handleAddEquip,onRemoveHoursFrom:handleRemoveHoursFrom,onReorderEquip:handleReorderEquip,onSubmit:handleSubmit,operators:master.operators}):h(ProductionEntry,{selectedEquip,shiftNum:shiftData.shiftNum,shiftHrs:shiftData.shiftHrs,equipData,onUpdateEquip:handleUpdateEquip,onAddEquip:handleAddEquip,onRemoveHoursFrom:handleRemoveHoursFrom,onReorderEquip:handleReorderEquip,onBack:()=>setStep(2),onNext:()=>setStep(4),operators:master.operators,master})),
         step===4&&h(ReviewSubmit,{shiftData,selectedEquip,equipData,onBack:()=>setStep(3),onSubmit:handleSubmit})
       ),
       // BDR Notification Panel

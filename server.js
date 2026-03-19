@@ -16,6 +16,50 @@ app.use(express.urlencoded({ extended: true }));
 
 // ── DATABASE (deferred until start) ──
 let pool = null;
+let mysqlPool = null;
+
+// ── MYSQL EQUIPMENT MAPPING ──
+const MYSQL_EQUIP_MAP = {
+  'WV-SHEAR-AS1':  { prodId: 'WVSHEAR1',     schedId: 'WV_Shear_1' },
+  'WV-SHEAR-AS2':  { prodId: 'WVSHEAR2',     schedId: 'WV_Shear_2' },
+  'WV-PRESS-400':  { prodId: 'WVPRESS1',     schedId: 'WV_Press_1' },
+  'WV-PRESS-500A': { prodId: 'WVPRESS2',     schedId: 'WV_Press_2' },
+  'WV-PRESS-500B': { prodId: 'WVPRESS3',     schedId: 'WV_Press_3' },
+  'WV-HEAD-H2':    { prodId: 'WVHEADER2',    schedId: 'WV_Header_2' },
+  'WV-THREAD-T1':  { prodId: 'WVTHREADER1',  schedId: 'WV_Threader_1' },
+  'WV-THREAD-T2':  { prodId: 'WVTHREADER2',  schedId: 'WV_Threader_2' },
+  'WV-THREAD-AT':  { prodId: 'WVTHREADER3',  schedId: 'WV_Threader_3' },
+  'WV-PEEL-MAN':   { prodId: 'WVPEELER1',    schedId: 'WV_Peeler_1' },
+  'WV-PEEL-AUTO':  { prodId: 'WVAUTOPEELER', schedId: 'WV_Auto_Peeler' },
+  'WV-PEEL-SWAG':  { prodId: 'WVSWAGER3',    schedId: 'WV_Swager_3' },
+  'WV-CABLE-C1':   { prodId: 'WVCABLE1',     schedId: 'WV_Cable_1' },
+  'WV-CABLE-C2':   { prodId: 'WVCABLE2',     schedId: 'WV_Cable_2' },
+  'WV-CABLE-C3':   { prodId: 'WVCABLE3',     schedId: 'WV_Cable_3' },
+  'WV-CABLE-C4':   { prodId: 'WVCABLE4',     schedId: 'WV_Cable_4' },
+};
+
+// Reverse lookup: MySQL prodId → app equipCode
+const MYSQL_REVERSE_MAP = {};
+for (const [appCode, ids] of Object.entries(MYSQL_EQUIP_MAP)) {
+  MYSQL_REVERSE_MAP[ids.prodId] = appCode;
+}
+
+// Per-equipment downtime thresholds in minutes (gaps shorter than this are normal cycle gaps)
+const MYSQL_DT_THRESHOLDS = {
+  'WV-PRESS-400': 2, 'WV-PRESS-500A': 2, 'WV-PRESS-500B': 2,
+  'WV-PEEL-AUTO': 2, 'WV-PEEL-MAN': 2,
+  'WV-SHEAR-AS1': 2, 'WV-SHEAR-AS2': 2,
+  'WV-CABLE-C1': 5, 'WV-CABLE-C2': 5, 'WV-CABLE-C4': 5,
+  'WV-CABLE-C3': 3,
+  _default: 3
+};
+function getDTThreshold(equipCode) {
+  return MYSQL_DT_THRESHOLDS[equipCode] || MYSQL_DT_THRESHOLDS._default;
+}
+
+// ── MYSQL CACHE ──
+const mysqlCache = { production: null, downtime: null, lastRefresh: 0, refreshing: false };
+const MYSQL_CACHE_TTL = 60000; // 60 seconds
 
 // ── INIT DATABASE TABLES ──
 async function initDB() {
@@ -124,6 +168,50 @@ async function initDB() {
       ALTER TABLE bdr_records ADD COLUMN IF NOT EXISTS quality NUMERIC(5,1) DEFAULT 0;
       ALTER TABLE bdr_records ADD COLUMN IF NOT EXISTS oee NUMERIC(5,1) DEFAULT 0;
     END $$;
+
+    -- MySQL downtime classification storage
+    CREATE TABLE IF NOT EXISTS downtime_classifications (
+      id SERIAL PRIMARY KEY,
+      mysql_event_id BIGINT NOT NULL UNIQUE,
+      equip_code VARCHAR(50) NOT NULL,
+      shift_date VARCHAR(10),
+      dt_code INTEGER NOT NULL,
+      sub_item VARCHAR(100),
+      classified_by VARCHAR(100),
+      classified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_dt_class_event ON downtime_classifications(mysql_event_id);
+    CREATE INDEX IF NOT EXISTS idx_dt_class_equip ON downtime_classifications(equip_code, shift_date);
+
+    -- Operator shift assignments (smart assignment with timeline)
+    CREATE TABLE IF NOT EXISTS operator_assignments (
+      id SERIAL PRIMARY KEY,
+      shift_date VARCHAR(10) NOT NULL,
+      shift_num VARCHAR(2) NOT NULL,
+      equip_code VARCHAR(50) NOT NULL,
+      operator_name VARCHAR(100) NOT NULL,
+      start_hour INTEGER DEFAULT 1,
+      end_hour INTEGER,
+      assigned_by VARCHAR(100),
+      assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(shift_date, shift_num, equip_code, operator_name)
+    );
+    CREATE INDEX IF NOT EXISTS idx_op_assign_shift ON operator_assignments(shift_date, shift_num);
+
+    -- Auto-equipment defect reports (quick-report anytime)
+    CREATE TABLE IF NOT EXISTS auto_defect_reports (
+      id SERIAL PRIMARY KEY,
+      equip_code VARCHAR(50) NOT NULL,
+      shift_date VARCHAR(10) NOT NULL,
+      shift_num VARCHAR(2) NOT NULL,
+      reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      def_code INTEGER NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 1,
+      hour_idx INTEGER,
+      reported_by VARCHAR(100),
+      notes TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_auto_def_shift ON auto_defect_reports(equip_code, shift_date);
   `);
 
   // One-time migration: reassign Pipe Assembly records from Landis to new Pipe Assembly equipment
@@ -1223,6 +1311,467 @@ RESPONSE STYLE:
       console.error('Daily report scheduler error:', err);
     }
   }, 30 * 60 * 1000); // Check every 30 minutes
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // MYSQL INTEGRATION — Automated production & downtime from JMWVL2
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ── MYSQL CONNECTION ──
+  async function initMySQL() {
+    const mysqlHost = process.env.MYSQL_HOST || '10.114.77.205';
+    const mysqlUser = process.env.MYSQL_USER || 'powerBI';
+    const mysqlPass = process.env.MYSQL_PASSWORD || 'ignitionData';
+    const mysqlDb   = process.env.MYSQL_DATABASE || 'JMWVL2';
+    try {
+      const mysql = require('mysql2/promise');
+      mysqlPool = await mysql.createPool({
+        host: mysqlHost, user: mysqlUser, password: mysqlPass, database: mysqlDb,
+        port: parseInt(process.env.MYSQL_PORT || '3306'),
+        connectionLimit: 5, connectTimeout: 10000, waitForConnections: true
+      });
+      const [test] = await mysqlPool.query('SELECT 1');
+      console.log('MySQL connected to ' + mysqlHost + '/' + mysqlDb);
+      // Start background cache refresh
+      refreshMySQLCache();
+      setInterval(() => refreshMySQLCache(), MYSQL_CACHE_TTL);
+    } catch (err) {
+      console.warn('MySQL connection failed (app continues with manual data only):', err.message);
+      mysqlPool = null;
+    }
+  }
+
+  // ── CACHE REFRESH — queries MySQL once per minute, serves all clients from cache ──
+  async function refreshMySQLCache() {
+    if (!mysqlPool || mysqlCache.refreshing) return;
+    mysqlCache.refreshing = true;
+    try {
+      const now = new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' }));
+      const today = now.toISOString().slice(0, 10);
+      const yesterday = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
+
+      // Get all MySQL production IDs
+      const prodIds = Object.values(MYSQL_EQUIP_MAP).map(m => m.prodId);
+
+      // Production: fetch today + yesterday (for 3rd shift overlap)
+      const [prodRows] = await mysqlPool.query(
+        'SELECT MachineID, ProductionDate, PartsProduced FROM ProductionRecording WHERE MachineID IN (?) AND ProductionDate >= ? ORDER BY MachineID, ProductionDate',
+        [prodIds, yesterday + ' 00:00:00']
+      );
+
+      // Build hourly production per machine per date
+      const prodByMachine = {};
+      for (const row of prodRows) {
+        const mid = row.MachineID;
+        if (!prodByMachine[mid]) prodByMachine[mid] = [];
+        prodByMachine[mid].push({ ts: new Date(row.ProductionDate), parts: row.PartsProduced });
+      }
+
+      // Aggregate into hourly buckets (each hour = count of parts produced in that window)
+      const hourlyProduction = {};
+      for (const [mid, records] of Object.entries(prodByMachine)) {
+        const appCode = MYSQL_REVERSE_MAP[mid];
+        if (!appCode) continue;
+        hourlyProduction[appCode] = {};
+
+        // Group records by date
+        const byDate = {};
+        for (const r of records) {
+          const d = r.ts.toISOString().slice(0, 10);
+          if (!byDate[d]) byDate[d] = [];
+          byDate[d].push(r);
+        }
+
+        for (const [date, dayRecords] of Object.entries(byDate)) {
+          // PartsProduced is cumulative, resets at midnight
+          // Each record = one part produced at that timestamp
+          // Hourly output = count of records whose timestamp falls within each hour window
+          const hourBuckets = {};
+          for (const r of dayRecords) {
+            const hour = r.ts.getHours(); // 0-23
+            if (!hourBuckets[hour]) hourBuckets[hour] = 0;
+            hourBuckets[hour]++;
+          }
+          // Also track the cumulative max for verification
+          const maxParts = dayRecords.length > 0 ? Math.max(...dayRecords.map(r => r.parts)) : 0;
+          hourlyProduction[appCode][date] = { hourBuckets, totalParts: maxParts };
+        }
+      }
+
+      // Downtime: fetch today + yesterday
+      const [dtRows] = await mysqlPool.query(
+        'SELECT DowntimeSeqNbr, MachineID, StartTime, EndTime, DowntimeCode, DowntimeDesc FROM DowntimeTracking WHERE MachineID IN (?) AND StartTime >= ? ORDER BY MachineID, StartTime',
+        [prodIds, yesterday + ' 00:00:00']
+      );
+
+      // Map and filter downtime events
+      const downtimeEvents = [];
+      for (const row of dtRows) {
+        const appCode = MYSQL_REVERSE_MAP[row.MachineID];
+        if (!appCode) continue;
+        const start = new Date(row.StartTime);
+        const end = row.EndTime ? new Date(row.EndTime) : null;
+        if (!end) continue; // Skip open-ended events (still in progress)
+        const durationMins = Math.round((end - start) / 60000);
+        const threshold = getDTThreshold(appCode);
+        if (durationMins < threshold) continue; // Below threshold — normal cycle gap
+        downtimeEvents.push({
+          id: row.DowntimeSeqNbr,
+          equipCode: appCode,
+          date: start.toISOString().slice(0, 10),
+          startTime: start.toISOString(),
+          endTime: end.toISOString(),
+          startHour: start.getHours(),
+          durationMins,
+          mysqlCode: row.DowntimeCode || null,
+          mysqlDesc: row.DowntimeDesc || null,
+          classified: false, dtCode: null, subItem: null
+        });
+      }
+
+      // Fetch existing classifications from PostgreSQL
+      if (downtimeEvents.length > 0) {
+        const eventIds = downtimeEvents.map(e => e.id);
+        const { rows: classifications } = await pool.query(
+          'SELECT mysql_event_id, dt_code, sub_item, classified_by FROM downtime_classifications WHERE mysql_event_id = ANY($1)',
+          [eventIds]
+        );
+        const classMap = {};
+        for (const c of classifications) classMap[c.mysql_event_id] = c;
+        for (const evt of downtimeEvents) {
+          if (classMap[evt.id]) {
+            evt.classified = true;
+            evt.dtCode = classMap[evt.id].dt_code;
+            evt.subItem = classMap[evt.id].sub_item || null;
+            evt.classifiedBy = classMap[evt.id].classified_by || null;
+          }
+        }
+      }
+
+      mysqlCache.production = hourlyProduction;
+      mysqlCache.downtime = downtimeEvents;
+      mysqlCache.lastRefresh = Date.now();
+    } catch (err) {
+      console.error('MySQL cache refresh error:', err.message);
+    } finally {
+      mysqlCache.refreshing = false;
+    }
+  }
+
+  // Helper: convert clock hour (0-23) + date to shift info
+  function getShiftForHour(date, clockHour) {
+    // Shift 1: 5am-1pm (hours 5-12), Shift 2: 1pm-9pm (hours 13-20), Shift 3: 9pm-5am (hours 21-23,0-4)
+    // Return shift number and hourIdx (1-based within shift)
+    if (clockHour >= 5 && clockHour <= 12) return { shiftNum: '1', hourIdx: clockHour - 4 }; // 5am=hr1, 12pm=hr8
+    if (clockHour >= 13 && clockHour <= 20) return { shiftNum: '2', hourIdx: clockHour - 12 }; // 1pm=hr1, 8pm=hr8
+    // 3rd shift: 9pm(21)=hr1 through 4am(4)=hr8
+    if (clockHour >= 21) return { shiftNum: '3', hourIdx: clockHour - 20 }; // 9pm=hr1, 11pm=hr3
+    return { shiftNum: '3', hourIdx: clockHour + 4 }; // 12am=hr4, 4am=hr8
+  }
+
+  // ── API: MySQL status ──
+  app.get('/api/mysql/status', (req, res) => {
+    res.json({
+      connected: !!mysqlPool,
+      cacheAge: mysqlCache.lastRefresh ? Date.now() - mysqlCache.lastRefresh : null,
+      equipCount: Object.keys(MYSQL_EQUIP_MAP).length,
+      cachedProductionDates: mysqlCache.production ? Object.keys(Object.values(mysqlCache.production)[0] || {}) : [],
+      cachedDowntimeEvents: mysqlCache.downtime ? mysqlCache.downtime.length : 0
+    });
+  });
+
+  // ── API: Hourly production from MySQL ──
+  app.get('/api/mysql/production', (req, res) => {
+    if (!mysqlPool) return res.status(503).json({ error: 'MySQL not connected' });
+    const date = req.query.date;
+    if (!date) return res.status(400).json({ error: 'date parameter required' });
+
+    const result = {};
+    const prod = mysqlCache.production || {};
+    for (const [appCode, dateData] of Object.entries(prod)) {
+      const dayData = dateData[date];
+      if (!dayData) continue;
+      const hours = [];
+      for (const [hr, count] of Object.entries(dayData.hourBuckets)) {
+        const clockHour = parseInt(hr);
+        const { shiftNum, hourIdx } = getShiftForHour(date, clockHour);
+        hours.push({ clockHour, shiftNum, hourIdx, goodUnits: count });
+      }
+      result[appCode] = { hours, totalParts: dayData.totalParts };
+    }
+    res.json({ date, equipment: result, cacheAge: Date.now() - mysqlCache.lastRefresh });
+  });
+
+  // ── API: Downtime events from MySQL ──
+  app.get('/api/mysql/downtime', (req, res) => {
+    if (!mysqlPool) return res.status(503).json({ error: 'MySQL not connected' });
+    const date = req.query.date;
+    if (!date) return res.status(400).json({ error: 'date parameter required' });
+
+    const events = (mysqlCache.downtime || []).filter(e => e.date === date);
+    // Add shift info to each event
+    const enriched = events.map(e => {
+      const startDt = new Date(e.startTime);
+      const { shiftNum, hourIdx } = getShiftForHour(e.date, startDt.getHours());
+      return { ...e, shiftNum, hourIdx };
+    });
+    const unclassified = enriched.filter(e => !e.classified).length;
+    res.json({ date, events: enriched, total: enriched.length, unclassified, cacheAge: Date.now() - mysqlCache.lastRefresh });
+  });
+
+  // ── API: Classify a downtime event ──
+  app.post('/api/mysql/classify-downtime', async (req, res) => {
+    try {
+      const { mysqlEventId, equipCode, dtCode, subItem, classifiedBy } = req.body;
+      if (!mysqlEventId || !equipCode || dtCode === undefined) {
+        return res.status(400).json({ error: 'mysqlEventId, equipCode, and dtCode required' });
+      }
+      const date = req.body.shiftDate || new Date().toISOString().slice(0, 10);
+      await pool.query(
+        `INSERT INTO downtime_classifications (mysql_event_id, equip_code, shift_date, dt_code, sub_item, classified_by)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (mysql_event_id) DO UPDATE SET dt_code=$4, sub_item=$5, classified_by=$6, classified_at=NOW()`,
+        [mysqlEventId, equipCode, date, dtCode, subItem || null, classifiedBy || null]
+      );
+      // Update cache immediately
+      if (mysqlCache.downtime) {
+        const evt = mysqlCache.downtime.find(e => e.id === mysqlEventId);
+        if (evt) { evt.classified = true; evt.dtCode = dtCode; evt.subItem = subItem || null; }
+      }
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('Classify downtime error:', err);
+      res.status(500).json({ error: 'Failed to classify' });
+    }
+  });
+
+  // ── API: Batch classify downtime events ──
+  app.post('/api/mysql/classify-downtime/batch', async (req, res) => {
+    try {
+      const { events } = req.body;
+      if (!Array.isArray(events) || events.length === 0) {
+        return res.status(400).json({ error: 'events array required' });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const evt of events) {
+          await client.query(
+            `INSERT INTO downtime_classifications (mysql_event_id, equip_code, shift_date, dt_code, sub_item, classified_by)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT (mysql_event_id) DO UPDATE SET dt_code=$4, sub_item=$5, classified_by=$6, classified_at=NOW()`,
+            [evt.mysqlEventId, evt.equipCode, evt.shiftDate || new Date().toISOString().slice(0, 10), evt.dtCode, evt.subItem || null, evt.classifiedBy || null]
+          );
+        }
+        await client.query('COMMIT');
+        // Update cache
+        if (mysqlCache.downtime) {
+          for (const evt of events) {
+            const cached = mysqlCache.downtime.find(e => e.id === evt.mysqlEventId);
+            if (cached) { cached.classified = true; cached.dtCode = evt.dtCode; cached.subItem = evt.subItem || null; }
+          }
+        }
+        res.json({ ok: true, classified: events.length });
+      } finally { client.release(); }
+    } catch (err) {
+      console.error('Batch classify error:', err);
+      res.status(500).json({ error: 'Batch classification failed' });
+    }
+  });
+
+  // ── API: Quick-report defect for automated equipment ──
+  app.post('/api/mysql/report-defect', async (req, res) => {
+    try {
+      const { equipCode, shiftDate, shiftNum, defCode, quantity, hourIdx, reportedBy, notes } = req.body;
+      if (!equipCode || !shiftDate || !shiftNum || defCode === undefined || !quantity) {
+        return res.status(400).json({ error: 'equipCode, shiftDate, shiftNum, defCode, quantity required' });
+      }
+      const { rows } = await pool.query(
+        `INSERT INTO auto_defect_reports (equip_code, shift_date, shift_num, def_code, quantity, hour_idx, reported_by, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+        [equipCode, shiftDate, shiftNum, defCode, quantity, hourIdx || null, reportedBy || null, notes || null]
+      );
+      res.json({ ok: true, id: rows[0].id });
+    } catch (err) {
+      console.error('Report defect error:', err);
+      res.status(500).json({ error: 'Failed to report defect' });
+    }
+  });
+
+  // ── API: Get defect reports for a shift ──
+  app.get('/api/mysql/defects', async (req, res) => {
+    try {
+      const { date, shift } = req.query;
+      if (!date) return res.status(400).json({ error: 'date parameter required' });
+      let q = 'SELECT * FROM auto_defect_reports WHERE shift_date = $1';
+      const params = [date];
+      if (shift) { q += ' AND shift_num = $2'; params.push(shift); }
+      q += ' ORDER BY reported_at DESC';
+      const { rows } = await pool.query(q, params);
+      res.json({ defects: rows });
+    } catch (err) {
+      console.error('Get defects error:', err);
+      res.status(500).json({ error: 'Failed to get defects' });
+    }
+  });
+
+  // ── API: Operator assignments ──
+  app.post('/api/mysql/operator-assign', async (req, res) => {
+    try {
+      const { shiftDate, shiftNum, equipCode, operatorName, startHour, endHour, assignedBy } = req.body;
+      if (!shiftDate || !shiftNum || !equipCode || !operatorName) {
+        return res.status(400).json({ error: 'shiftDate, shiftNum, equipCode, operatorName required' });
+      }
+      await pool.query(
+        `INSERT INTO operator_assignments (shift_date, shift_num, equip_code, operator_name, start_hour, end_hour, assigned_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (shift_date, shift_num, equip_code, operator_name)
+         DO UPDATE SET start_hour=$5, end_hour=$6, assigned_by=$7, assigned_at=NOW()`,
+        [shiftDate, shiftNum, equipCode, operatorName, startHour || 1, endHour || null, assignedBy || null]
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('Operator assign error:', err);
+      res.status(500).json({ error: 'Failed to assign operator' });
+    }
+  });
+
+  // ── API: Get operator assignments for a shift ──
+  app.get('/api/mysql/operators', async (req, res) => {
+    try {
+      const { date, shift } = req.query;
+      if (!date) return res.status(400).json({ error: 'date parameter required' });
+      let q = 'SELECT * FROM operator_assignments WHERE shift_date = $1';
+      const params = [date];
+      if (shift) { q += ' AND shift_num = $2'; params.push(shift); }
+      q += ' ORDER BY equip_code, operator_name';
+      const { rows } = await pool.query(q, params);
+      res.json({ assignments: rows });
+    } catch (err) {
+      console.error('Get operators error:', err);
+      res.status(500).json({ error: 'Failed to get operators' });
+    }
+  });
+
+  // ── API: Move operator between equipment ──
+  app.post('/api/mysql/operator-move', async (req, res) => {
+    try {
+      const { shiftDate, shiftNum, operatorName, fromEquip, toEquip, atHour, movedBy } = req.body;
+      if (!shiftDate || !shiftNum || !operatorName || !fromEquip || !toEquip || !atHour) {
+        return res.status(400).json({ error: 'All fields required' });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        // End the old assignment at the move hour
+        await client.query(
+          `UPDATE operator_assignments SET end_hour = $1
+           WHERE shift_date = $2 AND shift_num = $3 AND equip_code = $4 AND operator_name = $5 AND end_hour IS NULL`,
+          [atHour - 1, shiftDate, shiftNum, fromEquip, operatorName]
+        );
+        // Create new assignment on the target equipment
+        await client.query(
+          `INSERT INTO operator_assignments (shift_date, shift_num, equip_code, operator_name, start_hour, assigned_by)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (shift_date, shift_num, equip_code, operator_name)
+           DO UPDATE SET start_hour = $5, end_hour = NULL, assigned_by = $6, assigned_at = NOW()`,
+          [shiftDate, shiftNum, toEquip, operatorName, atHour, movedBy || null]
+        );
+        await client.query('COMMIT');
+        res.json({ ok: true });
+      } finally { client.release(); }
+    } catch (err) {
+      console.error('Operator move error:', err);
+      res.status(500).json({ error: 'Failed to move operator' });
+    }
+  });
+
+  // ── API: Merged records (combined production + downtime + classifications) ──
+  app.get('/api/mysql/merged', async (req, res) => {
+    if (!mysqlPool) return res.status(503).json({ error: 'MySQL not connected' });
+    const date = req.query.date;
+    if (!date) return res.status(400).json({ error: 'date parameter required' });
+
+    try {
+      const prod = mysqlCache.production || {};
+      const dtEvents = (mysqlCache.downtime || []).filter(e => e.date === date);
+
+      // Get operator assignments for this date
+      const { rows: assignments } = await pool.query(
+        'SELECT * FROM operator_assignments WHERE shift_date = $1', [date]
+      );
+      // Get defect reports for this date
+      const { rows: defects } = await pool.query(
+        'SELECT * FROM auto_defect_reports WHERE shift_date = $1', [date]
+      );
+
+      // Build merged records per equipment per shift per hour
+      const records = [];
+      for (const [appCode, dateData] of Object.entries(prod)) {
+        const dayData = dateData[date];
+        if (!dayData) continue;
+
+        for (const [hrStr, count] of Object.entries(dayData.hourBuckets)) {
+          const clockHour = parseInt(hrStr);
+          if (count === 0) continue; // Skip hours with no production records at all
+          const { shiftNum, hourIdx } = getShiftForHour(date, clockHour);
+
+          // Downtime events for this equipment + hour
+          const hourDT = dtEvents.filter(e => e.equipCode === appCode && e.startHour === clockHour);
+          const dtArray = hourDT.map(e => ({
+            id: 'mysql-' + e.id,
+            mysqlEventId: e.id,
+            mins: String(e.durationMins),
+            dtCode: e.dtCode !== null ? String(e.dtCode) : '',
+            subItem: e.subItem || '',
+            startTime: e.startTime,
+            endTime: e.endTime,
+            classified: e.classified,
+            autoDetected: true
+          }));
+
+          // Operators for this equipment + shift + hour
+          const shiftOps = assignments.filter(a =>
+            a.equip_code === appCode && a.shift_num === shiftNum &&
+            a.start_hour <= hourIdx && (a.end_hour === null || a.end_hour >= hourIdx)
+          ).map(a => a.operator_name);
+
+          // Defects for this equipment + shift + hour
+          const hourDefs = defects.filter(d =>
+            d.equip_code === appCode && d.shift_num === shiftNum &&
+            (d.hour_idx === hourIdx || d.hour_idx === null)
+          ).map(d => ({
+            id: 'autodef-' + d.id,
+            qty: String(d.quantity),
+            defCode: String(d.def_code)
+          }));
+
+          // Total downtime minutes
+          const totalDTMins = dtArray.reduce((s, d) => s + parseInt(d.mins || 0), 0);
+
+          records.push({
+            date, shiftNum, equipCode: appCode, hourIdx,
+            clockHour,
+            productCode: '', // Must be set by operator
+            scheduledMins: 0,
+            target: 0, // Frontend computes from TARGET_RATES
+            goodUnits: count,
+            downtime: dtArray,
+            defects: hourDefs,
+            operators: shiftOps,
+            autoData: true,
+            totalDTMins
+          });
+        }
+      }
+      res.json({ date, records, eventCount: dtEvents.length, unclassified: dtEvents.filter(e => !e.classified).length });
+    } catch (err) {
+      console.error('Merged records error:', err);
+      res.status(500).json({ error: 'Failed to build merged records' });
+    }
+  });
+
+  // Initialize MySQL connection (non-blocking)
+  initMySQL();
 
   // ── SERVE STATIC FILES + APP (after API routes) ──
   app.use(express.static(path.join(__dirname), {
