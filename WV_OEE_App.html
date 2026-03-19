@@ -951,8 +951,42 @@ input[type=number]{-moz-appearance:textfield}
 .oee-hr-shift-btn:not(:first-child){border-left:none}
 .oee-hr-shift-btn.active{background:var(--jm-navy);color:#fff;border-color:var(--jm-navy)}
 .oee-hr-shift-btn:not(.active):hover{color:var(--jm-navy);border-color:#D1D5DB}
-@media(max-width:768px){.oee-hr-header{flex-direction:column}.oee-hr-scope-nav{width:100%}}
-@media(max-width:500px){.oee-hr-scope-nav{gap:4px}.oee-hr-scope-btn,.oee-hr-scope-select{font-size:10px;padding:4px 10px}}
+/* Hour pill selector */
+.oee-hr-pills{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.oee-hr-pill{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1.5px solid #E5E7EB;background:#fff;color:var(--jm-text-ter);cursor:pointer;transition:all .2s;white-space:nowrap}
+.oee-hr-pill:hover{border-color:var(--jm-navy);color:var(--jm-navy)}
+.oee-hr-pill.active{background:var(--jm-navy);color:#fff;border-color:var(--jm-navy)}
+.oee-hr-pill-clear{font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;border:1.5px solid #E5E7EB;background:transparent;color:#9CA3AF;cursor:pointer;transition:all .2s}
+.oee-hr-pill-clear:hover{border-color:#DC2626;color:#DC2626}
+/* Hour drill-down panels */
+.hr-drill{padding:8px 16px 16px;animation:hrDrillIn .35s ease both}
+@keyframes hrDrillIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.hr-drill-proc{border:1px solid #F0F0F3;border-radius:12px;margin-bottom:8px;overflow:hidden;transition:all .25s ease;background:#fff}
+.hr-drill-proc:hover{border-color:#D1D5DB}
+.hr-drill-proc-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:background .15s}
+.hr-drill-proc-hdr:hover{background:#F9FAFB}
+.hr-drill-proc-name{font-size:13px;font-weight:700;color:var(--jm-navy);flex:1;min-width:0}
+.hr-drill-proc-oee{font-size:15px;font-weight:800;min-width:48px;text-align:right}
+.hr-drill-proc-bar{flex:1;max-width:200px;height:8px;border-radius:4px;background:#F3F4F6;overflow:hidden}
+.hr-drill-proc-bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.hr-drill-proc-stats{display:flex;gap:14px;font-size:10px;color:#9CA3AF;font-weight:500}
+.hr-drill-proc-stats span strong{color:var(--jm-text-sec);font-weight:700}
+.hr-drill-chevron{width:16px;height:16px;color:#9CA3AF;transition:transform .25s ease;flex-shrink:0}
+.hr-drill-chevron.open{transform:rotate(90deg)}
+.hr-drill-equips{border-top:1px solid #F3F4F6;animation:hrDrillIn .3s ease both}
+.hr-drill-eq{display:flex;align-items:center;gap:12px;padding:10px 16px 10px 32px;border-bottom:1px solid #FAFAFA;transition:background .15s}
+.hr-drill-eq:last-child{border-bottom:none}
+.hr-drill-eq:hover{background:#FAFBFC}
+.hr-drill-eq-name{font-size:12px;font-weight:600;color:var(--jm-text-sec);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hr-drill-eq-oee{font-size:13px;font-weight:800;min-width:44px;text-align:right}
+.hr-drill-eq-bar{flex:1;max-width:140px;height:6px;border-radius:3px;background:#F3F4F6;overflow:hidden}
+.hr-drill-eq-bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.hr-drill-eq-stats{display:flex;gap:10px;font-size:9px;color:#B0B8C4;font-weight:500}
+.hr-drill-eq-stats span strong{color:var(--jm-text-sec);font-weight:700}
+.hr-drill-prod-row{display:flex;align-items:center;gap:10px;padding:10px 16px 10px 32px;border-bottom:1px solid #FAFAFA}
+.hr-drill-prod-row:last-child{border-bottom:none}
+@media(max-width:768px){.oee-hr-header{flex-direction:column}.oee-hr-pills{width:100%}}
+@media(max-width:500px){.oee-hr-pills{gap:3px}.oee-hr-pill{font-size:9px;padding:3px 8px}}
 .equip-loss-bar{display:flex;height:10px;border-radius:3px;overflow:hidden;background:var(--jm-border-light)}
 .equip-focus-list{padding:0 16px 16px}
 .equip-focus-hdr{display:flex;align-items:center;gap:12px;padding:4px 0 8px;border-bottom:2px solid #E5E7EB}
@@ -2235,8 +2269,10 @@ function Dashboard({dataVersion,master}){
   const [drillDown,setDrillDown]=useState(null);
   const [opView,setOpView]=useState('topBottom'); // 'topBottom','all' // null, 'oee', 'a', 'p', 'q'
   const [activePreset,setActivePreset]=useState('yesterday');
-  const [oeeScope,setOeeScope]=useState('plant'); // 'plant', process name, or equip code
-  const [oeeScopeType,setOeeScopeType]=useState('plant'); // 'plant','process','equip'
+  const [oeeScope,setOeeScope]=useState('plant');
+  const [oeeScopeType,setOeeScopeType]=useState('plant');
+  const [selectedHour,setSelectedHour]=useState(null);
+  const [expandedProcess,setExpandedProcess]=useState(null);
 
   // Gather submitted data
   const allRecords=useMemo(()=>{
@@ -2513,16 +2549,10 @@ function Dashboard({dataVersion,master}){
       byCode,byCategory,actualPct,totalLossPct:totalTarget>0?Math.round((totalTarget-totalGood)/totalTarget*1000)/10:0};
   },[filtered]);
 
-  // Hourly OEE data — computed per hour across filtered records, with scope + shift drill-down
+  // Hourly OEE data — always plant-level aggregate per hour
   const hourlyOEE=useMemo(()=>{
-    let scoped=filtered;
-    if(oeeScopeType==='process'){
-      scoped=filtered.filter(r=>{const eq=INIT_EQUIPMENT.find(e=>e.code===r.equipCode);return eq&&eq.process===oeeScope;});
-    }else if(oeeScopeType==='equip'){
-      scoped=filtered.filter(r=>r.equipCode===oeeScope);
-    }
     const map={};
-    scoped.forEach(r=>{
+    filtered.forEach(r=>{
       const hr=r.hourIdx;
       if(!map[hr])map[hr]={hour:hr,sm:0,dtm:0,udtm:0,tgt:0,good:0,def:0};
       const d=map[hr],avail=60-r.scheduledMins;
@@ -2537,25 +2567,41 @@ function Dashboard({dataVersion,master}){
       const p=run>0&&d.tgt>0?((tp*d.sm)/(run*d.tgt))*100:0;
       const q=tp>0?(d.good/tp)*100:100;
       const oee=d.tgt>0?(d.good/d.tgt)*100:0;
-      return{hour:'Hr '+d.hour,oee:Math.round(oee*10)/10,a:Math.round(a*10)/10,p:Math.round(p*10)/10,q:Math.round(q*10)/10,good:d.good,tgt:d.tgt};
+      return{hour:'Hr '+d.hour,hourIdx:d.hour,oee:Math.round(oee*10)/10,a:Math.round(a*10)/10,p:Math.round(p*10)/10,q:Math.round(q*10)/10,good:d.good,tgt:d.tgt};
     });
-  },[filtered,oeeScope,oeeScopeType]);
+  },[filtered]);
 
-  // Scope label for the OEE/hr chart
-  const oeeScopeLabel=useMemo(()=>{
-    if(oeeScopeType==='plant') return 'WV Bolt Plant';
-    if(oeeScopeType==='process') return oeeScope;
-    const eq=INIT_EQUIPMENT.find(e=>e.code===oeeScope);
-    return eq?eq.name:oeeScope;
-  },[oeeScope,oeeScopeType]);
-
-  // Equipment list for the scope selector grouped by process
-  const scopeEquipByProcess=useMemo(()=>{
-    const map={};
-    const activeEq=getActiveEquipment(master);
-    activeEq.forEach(eq=>{if(!map[eq.process])map[eq.process]=[];map[eq.process].push(eq);});
-    return map;
-  },[master]);
+  // Drill-down data: per-process (and per-equipment) for a selected hour
+  const hourDrillData=useMemo(()=>{
+    if(selectedHour===null)return null;
+    const hourRecs=filtered.filter(r=>r.hourIdx===selectedHour);
+    const procMap={};
+    hourRecs.forEach(r=>{
+      const eq=INIT_EQUIPMENT.find(e=>e.code===r.equipCode);if(!eq)return;
+      const proc=eq.process;
+      if(!procMap[proc])procMap[proc]={process:proc,sm:0,dtm:0,udtm:0,tgt:0,good:0,def:0,equips:{}};
+      const pd=procMap[proc],avail=60-r.scheduledMins;
+      pd.sm+=avail;pd.dtm+=totalDTMins(r.downtime);pd.udtm+=unschedDTMins(r.downtime);pd.tgt+=r.target;pd.good+=r.goodUnits;
+      pd.def+=r.defects.reduce((s,x)=>s+parseInt(x.qty||0),0);
+      if(!pd.equips[r.equipCode])pd.equips[r.equipCode]={code:r.equipCode,name:eq.name,sm:0,dtm:0,udtm:0,tgt:0,good:0,def:0};
+      const ed=pd.equips[r.equipCode];
+      ed.sm+=avail;ed.dtm+=totalDTMins(r.downtime);ed.udtm+=unschedDTMins(r.downtime);ed.tgt+=r.target;ed.good+=r.goodUnits;
+      ed.def+=r.defects.reduce((s,x)=>s+parseInt(x.qty||0),0);
+    });
+    function calc(d){
+      const run=d.sm-d.dtm;
+      const a=d.sm>0?((d.sm-d.udtm)/d.sm)*100:0;
+      const tp=d.good+d.def;
+      const p=run>0&&d.tgt>0?((tp*d.sm)/(run*d.tgt))*100:0;
+      const q=tp>0?(d.good/tp)*100:100;
+      const oee=d.tgt>0?(d.good/d.tgt)*100:0;
+      return{oee:Math.round(oee*10)/10,a:Math.round(a*10)/10,p:Math.round(p*10)/10,q:Math.round(q*10)/10,good:d.good,tgt:d.tgt};
+    }
+    return Object.values(procMap).map(pd=>({
+      process:pd.process,...calc(pd),
+      equipment:Object.values(pd.equips).map(ed=>({code:ed.code,name:ed.name,...calc(ed)})).sort((a,b)=>b.oee-a.oee)
+    })).sort((a,b)=>b.good-a.good);
+  },[filtered,selectedHour]);
 
   // Date presets
   function setPreset(key){
@@ -2796,127 +2842,162 @@ function Dashboard({dataVersion,master}){
           h('div',{className:'oee-hr-header-left'},
             h('div',{className:'dash-card-title'},h(Icon.chart),' ',hourlyMode==='oee'?'OEE by Hour':'Production by Hour'),
             h('div',{style:{display:'flex',alignItems:'center',gap:8}},
-              h('div',{className:'oee-hr-scope-label'},oeeScopeLabel),
+              h('div',{className:'oee-hr-scope-label'},selectedHour!==null?'Hour '+selectedHour+' — Process Breakdown':'WV Bolt Plant — Click a bar or select an hour'),
               h('div',{className:'dash-shift-toggle',style:{marginLeft:8}},
                 h('button',{className:'dash-shift-btn'+(hourlyMode==='oee'?' active':''),onClick:()=>setHourlyMode('oee'),style:{fontSize:10,padding:'2px 8px'}},'OEE'),
                 h('button',{className:'dash-shift-btn'+(hourlyMode==='production'?' active':''),onClick:()=>setHourlyMode('production'),style:{fontSize:10,padding:'2px 8px'}},'Production')
               )
             )
           ),
-          h('div',{className:'oee-hr-scope-nav'},
-            h('button',{className:'oee-hr-scope-btn'+(oeeScopeType==='plant'?' active':''),onClick:()=>{setOeeScopeType('plant');setOeeScope('plant');}},'Plant'),
-            h('div',{className:'oee-hr-scope-dd'},
-              h('select',{className:'oee-hr-scope-select',value:oeeScopeType==='process'?oeeScope:'',onChange:e=>{if(e.target.value){setOeeScopeType('process');setOeeScope(e.target.value);}}},
-                h('option',{value:'',disabled:true},'Process'),
-                processes.map(p=>h('option',{key:p,value:p},p))
-              )
-            ),
-            h('div',{className:'oee-hr-scope-dd'},
-              h('select',{className:'oee-hr-scope-select',value:oeeScopeType==='equip'?oeeScope:'',onChange:e=>{if(e.target.value){setOeeScopeType('equip');setOeeScope(e.target.value);}}},
-                h('option',{value:'',disabled:true},'Equipment'),
-                Object.keys(scopeEquipByProcess).sort().map(proc=>
-                  h('optgroup',{key:proc,label:proc},
-                    scopeEquipByProcess[proc].map(eq=>h('option',{key:eq.code,value:eq.code},eq.name))
-                  )
-                )
-              )
-            )
+          h('div',{className:'oee-hr-pills'},
+            selectedHour!==null&&h('button',{className:'oee-hr-pill-clear',onClick:()=>{setSelectedHour(null);setExpandedProcess(null);},title:'Back to chart view'},'\u2190 All Hours'),
+            hourlyOEE.map(d=>h('button',{key:d.hourIdx,className:'oee-hr-pill'+(selectedHour===d.hourIdx?' active':''),onClick:()=>{setSelectedHour(selectedHour===d.hourIdx?null:d.hourIdx);setExpandedProcess(null);}},d.hour))
           )
         ),
-        hourlyOEE.length>0?h('div',{className:'oee-hr-chart-wrap'},
-          hourlyMode==='oee'?h(React.Fragment,null,
-            h(ResponsiveContainer,{width:'100%',height:280},
-              h(ComposedChart,{data:hourlyOEE,margin:{top:24,right:10,bottom:4,left:-5}},
-                h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
-                h(XAxis,{dataKey:'hour',tick:{fontSize:11,fill:'#9CA3AF'},axisLine:{stroke:'#E5E7EB'},tickLine:false}),
-                h(YAxis,{domain:[d=>{const floor=Math.floor(d/10)*10;return Math.max(0,Math.min(floor,floor-((d-floor<5)?10:0)));},d=>{return Math.ceil((d+5)/10)*10;}],allowDataOverflow:false,tick:{fontSize:11,fill:'#9CA3AF'},axisLine:false,tickLine:false,tickFormatter:v=>v+'%'}),
-                h(Tooltip,{cursor:{fill:'rgba(27,61,110,0.03)'},
-                  content:function(tp){
-                    if(!tp.active||!tp.payload||!tp.payload.length)return null;
-                    const d=tp.payload[0].payload;
-                    return h('div',{style:{background:'#fff',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.1)',padding:'12px 16px',fontSize:12,lineHeight:'22px',minWidth:160}},
-                      h('div',{style:{fontWeight:700,color:'#1B3D6E',fontSize:13,marginBottom:6}},d.hour),
-                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'OEE'),h('span',{style:{fontWeight:700,color:'#1B3D6E'}},d.oee+'%')),
-                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Availability'),h('span',{style:{fontWeight:600}},d.a+'%')),
-                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Performance'),h('span',{style:{fontWeight:600}},d.p+'%')),
-                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Quality'),h('span',{style:{fontWeight:600}},d.q+'%')),
-                      h('div',{style:{borderTop:'1px solid #F0F0F3',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Output'),h('span',{style:{fontWeight:600}},d.good.toLocaleString()+' / '+d.tgt.toLocaleString()))
-                    );
-                  }
-                }),
-                h(ReferenceLine,{y:90,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'UCL',position:'insideTopLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
-                h(ReferenceLine,{y:80,stroke:'#9CA3AF',strokeDasharray:'6 4',strokeWidth:1.5,label:{value:'80%',position:'insideBottomLeft',fill:'#6B7280',fontSize:9,fontWeight:600,offset:2}}),
-                h(ReferenceLine,{y:70,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'LCL',position:'insideBottomLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
-                h(Bar,{dataKey:'oee',name:'OEE',radius:[4,4,0,0],barSize:window.innerWidth<600?18:30,isAnimationActive:true,animationDuration:600},
-                  ...hourlyOEE.map((d,i)=>h(Cell,{key:'c'+i,fill:d.oee<70?'#DC2626':d.oee<80?'#F59E0B':'#1B3D6E'})),
-                  h(LabelList,{dataKey:'oee',position:'top',content:props=>{
-                    const{x,y,width,value,index}=props;
-                    if(typeof index==='undefined'||!hourlyOEE[index])return null;
-                    const d=hourlyOEE[index];
-                    const cx=(x||0)+(width||0)/2;
-                    const isBad=d.oee<70;
-                    const isMobile=window.innerWidth<600;
-                    const manyBars=hourlyOEE.length>6;
-                    if(isMobile&&manyBars){
-                      return h('g',{key:'l'+index},
-                        h('text',{x:cx,y:y-2,textAnchor:'end',fontSize:7,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280',transform:'rotate(-45 '+cx+' '+(y-2)+')'},value+'%')
+        hourlyOEE.length>0?h('div',null,
+          selectedHour===null?h('div',{className:'oee-hr-chart-wrap'},
+            hourlyMode==='oee'?h(React.Fragment,null,
+              h(ResponsiveContainer,{width:'100%',height:280},
+                h(ComposedChart,{data:hourlyOEE,margin:{top:24,right:10,bottom:4,left:-5},onClick:function(e){if(e&&e.activePayload&&e.activePayload[0]){const d=e.activePayload[0].payload;setSelectedHour(d.hourIdx);setExpandedProcess(null);}}},
+                  h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
+                  h(XAxis,{dataKey:'hour',tick:{fontSize:11,fill:'#9CA3AF'},axisLine:{stroke:'#E5E7EB'},tickLine:false}),
+                  h(YAxis,{domain:[d=>{const floor=Math.floor(d/10)*10;return Math.max(0,Math.min(floor,floor-((d-floor<5)?10:0)));},d=>{return Math.ceil((d+5)/10)*10;}],allowDataOverflow:false,tick:{fontSize:11,fill:'#9CA3AF'},axisLine:false,tickLine:false,tickFormatter:v=>v+'%'}),
+                  h(Tooltip,{cursor:{fill:'rgba(27,61,110,0.06)'},
+                    content:function(tp){
+                      if(!tp.active||!tp.payload||!tp.payload.length)return null;
+                      const d=tp.payload[0].payload;
+                      return h('div',{style:{background:'#fff',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.1)',padding:'12px 16px',fontSize:12,lineHeight:'22px',minWidth:160}},
+                        h('div',{style:{fontWeight:700,color:'#1B3D6E',fontSize:13,marginBottom:6}},d.hour),
+                        h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'OEE'),h('span',{style:{fontWeight:700,color:'#1B3D6E'}},d.oee+'%')),
+                        h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Availability'),h('span',{style:{fontWeight:600}},d.a+'%')),
+                        h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Performance'),h('span',{style:{fontWeight:600}},d.p+'%')),
+                        h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Quality'),h('span',{style:{fontWeight:600}},d.q+'%')),
+                        h('div',{style:{borderTop:'1px solid #F0F0F3',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Output'),h('span',{style:{fontWeight:600}},d.good.toLocaleString()+' / '+d.tgt.toLocaleString())),
+                        h('div',{style:{fontSize:10,color:'#9CA3AF',marginTop:4,textAlign:'center',fontStyle:'italic'}},'Click to drill in')
                       );
                     }
-                    return h('g',{key:'l'+index},
-                      h('text',{x:cx,y:y-(isMobile?4:6),textAnchor:'middle',fontSize:isMobile?9:11,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280'},value+'%')
-                    );
-                  }})
+                  }),
+                  h(ReferenceLine,{y:90,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'UCL',position:'insideTopLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
+                  h(ReferenceLine,{y:80,stroke:'#9CA3AF',strokeDasharray:'6 4',strokeWidth:1.5,label:{value:'80%',position:'insideBottomLeft',fill:'#6B7280',fontSize:9,fontWeight:600,offset:2}}),
+                  h(ReferenceLine,{y:70,stroke:'#D1D5DB',strokeDasharray:'4 3',strokeWidth:1,label:{value:'LCL',position:'insideBottomLeft',fill:'#9CA3AF',fontSize:8,fontWeight:500,offset:2}}),
+                  h(Bar,{dataKey:'oee',name:'OEE',radius:[4,4,0,0],barSize:window.innerWidth<600?18:30,isAnimationActive:true,animationDuration:600,style:{cursor:'pointer'}},
+                    ...hourlyOEE.map((d,i)=>h(Cell,{key:'c'+i,fill:d.oee<70?'#DC2626':d.oee<80?'#F59E0B':'#1B3D6E'})),
+                    h(LabelList,{dataKey:'oee',position:'top',content:props=>{
+                      const{x,y,width,value,index}=props;
+                      if(typeof index==='undefined'||!hourlyOEE[index])return null;
+                      const d=hourlyOEE[index];
+                      const cx=(x||0)+(width||0)/2;
+                      const isBad=d.oee<70;
+                      const isMobile=window.innerWidth<600;
+                      const manyBars=hourlyOEE.length>6;
+                      if(isMobile&&manyBars){
+                        return h('g',{key:'l'+index},
+                          h('text',{x:cx,y:y-2,textAnchor:'end',fontSize:7,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280',transform:'rotate(-45 '+cx+' '+(y-2)+')'},value+'%')
+                        );
+                      }
+                      return h('g',{key:'l'+index},
+                        h('text',{x:cx,y:y-(isMobile?4:6),textAnchor:'middle',fontSize:isMobile?9:11,fontWeight:isBad?700:600,fill:isBad?'#DC2626':'#6B7280'},value+'%')
+                      );
+                    }})
+                  )
                 )
+              ),
+              h('div',{className:'oee-hr-legend'},
+                h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#1B3D6E'}}),'On Target'),
+                h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#F59E0B'}}),'Below Target'),
+                h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#DC2626'}}),'Critical'),
+                h('span',{className:'oee-hr-legend-item'},h('span',{style:{width:14,height:0,borderTop:'1.5px dashed #9CA3AF',display:'inline-block',verticalAlign:'middle',marginRight:5}}),'Control')
               )
-            ),
-            h('div',{className:'oee-hr-legend'},
-              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#1B3D6E'}}),'On Target'),
-              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#F59E0B'}}),'Below Target'),
-              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#DC2626'}}),'Critical'),
-              h('span',{className:'oee-hr-legend-item'},h('span',{style:{width:14,height:0,borderTop:'1.5px dashed #9CA3AF',display:'inline-block',verticalAlign:'middle',marginRight:5}}),'Control')
-            )
-          ):h(React.Fragment,null,
-            h(ResponsiveContainer,{width:'100%',height:280},
-              h(ComposedChart,{data:hourlyOEE,margin:{top:24,right:10,bottom:4,left:5}},
-                h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
-                h(XAxis,{dataKey:'hour',tick:{fontSize:11,fill:'#9CA3AF'},axisLine:{stroke:'#E5E7EB'},tickLine:false}),
-                h(YAxis,{tick:{fontSize:11,fill:'#9CA3AF'},axisLine:false,tickLine:false,tickFormatter:v=>v.toLocaleString()}),
-                h(Tooltip,{cursor:{fill:'rgba(27,61,110,0.03)'},
-                  content:function(tp){
-                    if(!tp.active||!tp.payload||!tp.payload.length)return null;
-                    const d=tp.payload[0].payload;
-                    const pct=d.tgt>0?Math.round(d.good/d.tgt*100):0;
-                    return h('div',{style:{background:'#fff',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.1)',padding:'12px 16px',fontSize:12,lineHeight:'22px',minWidth:160}},
-                      h('div',{style:{fontWeight:700,color:'#1B3D6E',fontSize:13,marginBottom:6}},d.hour),
-                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Good Units'),h('span',{style:{fontWeight:700,color:'#059669'}},d.good.toLocaleString())),
-                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Target'),h('span',{style:{fontWeight:600,color:'#1B3D6E'}},d.tgt.toLocaleString())),
-                      h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'% of Target'),h('span',{style:{fontWeight:700,color:pct>=100?'#059669':pct>=80?'#F59E0B':'#DC2626'}},pct+'%'))
-                    );
-                  }
-                }),
-                h(Bar,{dataKey:'tgt',name:'Target',radius:[4,4,0,0],barSize:window.innerWidth<600?14:24,fill:'#E5E7EB',isAnimationActive:true,animationDuration:600}),
-                h(Bar,{dataKey:'good',name:'Good Units',radius:[4,4,0,0],barSize:window.innerWidth<600?14:24,isAnimationActive:true,animationDuration:600},
-                  ...hourlyOEE.map((d,i)=>{const pct=d.tgt>0?d.good/d.tgt*100:0;return h(Cell,{key:'c'+i,fill:pct>=100?'#059669':pct>=80?'#F59E0B':'#DC2626'});}),
-                  h(LabelList,{dataKey:'good',position:'top',content:props=>{
-                    const{x,y,width,value,index}=props;
-                    if(typeof index==='undefined'||!hourlyOEE[index])return null;
-                    const cx=(x||0)+(width||0)/2;
-                    const isMobile=window.innerWidth<600;
-                    var _dk=document.documentElement.getAttribute('data-theme')==='dark';
-                    return h('g',{key:'l'+index},
-                      h('text',{x:cx,y:y-(isMobile?3:5),textAnchor:'middle',fontSize:isMobile?8:10,fontWeight:600,fill:_dk?'#E2E8F0':'#374151'},typeof value==='number'?value.toLocaleString():value)
-                    );
-                  }})
+            ):h(React.Fragment,null,
+              h(ResponsiveContainer,{width:'100%',height:280},
+                h(ComposedChart,{data:hourlyOEE,margin:{top:24,right:10,bottom:4,left:5},onClick:function(e){if(e&&e.activePayload&&e.activePayload[0]){const d=e.activePayload[0].payload;setSelectedHour(d.hourIdx);setExpandedProcess(null);}}},
+                  h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#F0F0F3',vertical:false}),
+                  h(XAxis,{dataKey:'hour',tick:{fontSize:11,fill:'#9CA3AF'},axisLine:{stroke:'#E5E7EB'},tickLine:false}),
+                  h(YAxis,{tick:{fontSize:11,fill:'#9CA3AF'},axisLine:false,tickLine:false,tickFormatter:v=>v.toLocaleString()}),
+                  h(Tooltip,{cursor:{fill:'rgba(27,61,110,0.06)'},
+                    content:function(tp){
+                      if(!tp.active||!tp.payload||!tp.payload.length)return null;
+                      const d=tp.payload[0].payload;
+                      const pct=d.tgt>0?Math.round(d.good/d.tgt*100):0;
+                      return h('div',{style:{background:'#fff',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.1)',padding:'12px 16px',fontSize:12,lineHeight:'22px',minWidth:160}},
+                        h('div',{style:{fontWeight:700,color:'#1B3D6E',fontSize:13,marginBottom:6}},d.hour),
+                        h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Good Units'),h('span',{style:{fontWeight:700,color:'#059669'}},d.good.toLocaleString())),
+                        h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'Target'),h('span',{style:{fontWeight:600,color:'#1B3D6E'}},d.tgt.toLocaleString())),
+                        h('div',{style:{display:'flex',justifyContent:'space-between',gap:20}},h('span',{style:{color:'#6B7280'}},'% of Target'),h('span',{style:{fontWeight:700,color:pct>=100?'#059669':pct>=80?'#F59E0B':'#DC2626'}},pct+'%')),
+                        h('div',{style:{fontSize:10,color:'#9CA3AF',marginTop:4,textAlign:'center',fontStyle:'italic'}},'Click to drill in')
+                      );
+                    }
+                  }),
+                  h(Bar,{dataKey:'tgt',name:'Target',radius:[4,4,0,0],barSize:window.innerWidth<600?14:24,fill:'#E5E7EB',isAnimationActive:true,animationDuration:600}),
+                  h(Bar,{dataKey:'good',name:'Good Units',radius:[4,4,0,0],barSize:window.innerWidth<600?14:24,isAnimationActive:true,animationDuration:600,style:{cursor:'pointer'}},
+                    ...hourlyOEE.map((d,i)=>{const pct=d.tgt>0?d.good/d.tgt*100:0;return h(Cell,{key:'c'+i,fill:pct>=100?'#059669':pct>=80?'#F59E0B':'#DC2626'});}),
+                    h(LabelList,{dataKey:'good',position:'top',content:props=>{
+                      const{x,y,width,value,index}=props;
+                      if(typeof index==='undefined'||!hourlyOEE[index])return null;
+                      const cx=(x||0)+(width||0)/2;
+                      const isMobile=window.innerWidth<600;
+                      var _dk=document.documentElement.getAttribute('data-theme')==='dark';
+                      return h('g',{key:'l'+index},
+                        h('text',{x:cx,y:y-(isMobile?3:5),textAnchor:'middle',fontSize:isMobile?8:10,fontWeight:600,fill:_dk?'#E2E8F0':'#374151'},typeof value==='number'?value.toLocaleString():value)
+                      );
+                    }})
+                  )
                 )
+              ),
+              h('div',{className:'oee-hr-legend'},
+                h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#059669'}}),'At/Above Target'),
+                h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#F59E0B'}}),'Below Target'),
+                h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#DC2626'}}),'Critical'),
+                h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#E5E7EB'}}),'Target')
               )
-            ),
-            h('div',{className:'oee-hr-legend'},
-              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#059669'}}),'At/Above Target'),
-              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#F59E0B'}}),'Below Target'),
-              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#DC2626'}}),'Critical'),
-              h('span',{className:'oee-hr-legend-item'},h('span',{className:'oee-hr-legend-dot',style:{background:'#E5E7EB'}}),'Target')
             )
-          )
+          ):hourDrillData&&hourDrillData.length>0?h('div',{className:'hr-drill',key:'drill-'+selectedHour},
+            hourDrillData.map(proc=>{
+              const isOEE=hourlyMode==='oee';
+              const val=isOEE?proc.oee:proc.good;
+              const maxVal=isOEE?100:Math.max(...hourDrillData.map(p=>p.good),1);
+              const barPct=isOEE?Math.min(val,100):(maxVal>0?val/maxVal*100:0);
+              const color=isOEE?(val>=85?'#1B3D6E':val>=60?'#F59E0B':'#DC2626'):(proc.tgt>0&&proc.good>=proc.tgt?'#059669':proc.tgt>0&&proc.good>=proc.tgt*0.8?'#F59E0B':'#DC2626');
+              const isExp=expandedProcess===proc.process;
+              return h('div',{key:proc.process,className:'hr-drill-proc'},
+                h('div',{className:'hr-drill-proc-hdr',onClick:()=>setExpandedProcess(isExp?null:proc.process)},
+                  h('svg',{className:'hr-drill-chevron'+(isExp?' open':''),viewBox:'0 0 16 16',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M6 4l4 4-4 4'})),
+                  h('div',{className:'hr-drill-proc-name'},proc.process),
+                  h('div',{className:'hr-drill-proc-stats'},
+                    isOEE?h(React.Fragment,null,
+                      h('span',null,'A: ',h('strong',null,proc.a+'%')),
+                      h('span',null,'P: ',h('strong',null,proc.p+'%')),
+                      h('span',null,'Q: ',h('strong',null,proc.q+'%'))
+                    ):h(React.Fragment,null,
+                      h('span',null,h('strong',null,proc.good.toLocaleString()),' / ',proc.tgt.toLocaleString())
+                    )
+                  ),
+                  h('div',{className:'hr-drill-proc-bar'},h('div',{className:'hr-drill-proc-bar-fill',style:{width:barPct+'%',background:color}})),
+                  h('div',{className:'hr-drill-proc-oee',style:{color}},isOEE?val+'%':proc.good.toLocaleString())
+                ),
+                isExp&&proc.equipment.length>0&&h('div',{className:'hr-drill-equips'},
+                  proc.equipment.map(eq=>{
+                    const eVal=isOEE?eq.oee:eq.good;
+                    const eMax=isOEE?100:Math.max(...proc.equipment.map(e=>e.good),1);
+                    const ePct=isOEE?Math.min(eVal,100):(eMax>0?eVal/eMax*100:0);
+                    const eColor=isOEE?(eVal>=85?'#1B3D6E':eVal>=60?'#F59E0B':'#DC2626'):(eq.tgt>0&&eq.good>=eq.tgt?'#059669':eq.tgt>0&&eq.good>=eq.tgt*0.8?'#F59E0B':'#DC2626');
+                    return h('div',{key:eq.code,className:'hr-drill-eq'},
+                      h('div',{className:'hr-drill-eq-name'},eq.name),
+                      h('div',{className:'hr-drill-eq-stats'},
+                        isOEE?h(React.Fragment,null,
+                          h('span',null,'A: ',h('strong',null,eq.a+'%')),
+                          h('span',null,'P: ',h('strong',null,eq.p+'%')),
+                          h('span',null,'Q: ',h('strong',null,eq.q+'%'))
+                        ):h('span',null,h('strong',null,eq.good.toLocaleString()),' / ',eq.tgt.toLocaleString())
+                      ),
+                      h('div',{className:'hr-drill-eq-bar'},h('div',{className:'hr-drill-eq-bar-fill',style:{width:ePct+'%',background:eColor}})),
+                      h('div',{className:'hr-drill-eq-oee',style:{color:eColor}},isOEE?eVal+'%':eq.good.toLocaleString())
+                    );
+                  })
+                )
+              );
+            })
+          ):h('div',{className:'hr-drill'},h('div',{style:{textAlign:'center',padding:24,color:'#9CA3AF',fontSize:13}},'No data for this hour'))
         ):h('div',{className:'dash-empty'},h(Icon.chart),h('p',{style:{marginTop:8}},hourlyMode==='oee'?'OEE hourly data appears after shift entry':'Production hourly data appears after shift entry')),
         hasData&&h(AskAI,{section:'OEE by Hour',context:()=>buildFullContext('OEE by Hour'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
       ),
