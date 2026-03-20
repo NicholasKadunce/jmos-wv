@@ -7,7 +7,7 @@ const sharp = require('sharp');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust Railway's proxy for secure cookies
+// Trust reverse proxy (Azure App Service / Railway) for secure cookies
 app.set('trust proxy', 1);
 
 // ── MIDDLEWARE ──
@@ -310,6 +310,88 @@ async function initDB() {
     );
     console.log('Default admin user created (username: admin, password: admin123)');
     console.log('IMPORTANT: Change this password after first login!');
+  }
+
+  // ── Seed target rates on fresh database ──
+  const { rows: rateRows } = await pool.query('SELECT COUNT(*) as cnt FROM target_rates');
+  if (parseInt(rateRows[0].cnt) === 0) {
+    console.log('Seeding default target rates...');
+    const defaultRates = {
+      'WV-SHEAR-AS1_P-SH1-001':1000,'WV-SHEAR-AS1_P-SH1-002':1115,'WV-SHEAR-AS1_P-SH1-003':1010,
+      'WV-SHEAR-AS1_P-SH1-004':905,'WV-SHEAR-AS1_P-SH1-005':695,'WV-SHEAR-AS1_P-SH1-006':595,
+      'WV-SHEAR-AS1_P-SH1-007':635,'WV-SHEAR-AS1_P-SH1-008':395,'WV-SHEAR-AS1_P-SH1-009':595,
+      'WV-SHEAR-AS1_P-SH1-010':640,'WV-SHEAR-AS1_P-SH1-011':725,'WV-SHEAR-AS1_P-SH1-012':355,
+      'WV-SHEAR-AS1_P-SH1-013':355,'WV-SHEAR-AS1_P-SH1-014':150,'WV-SHEAR-AS1_P-SH1-015':100,
+      'WV-SHEAR-AS1_P-SH1-016':275,'WV-SHEAR-AS1_P-SH1-017':275,'WV-SHEAR-AS1_P-SH1-018':200,
+      'WV-SHEAR-AS2_P-SH2-001':1000,'WV-SHEAR-AS2_P-SH2-002':1115,'WV-SHEAR-AS2_P-SH2-003':1010,
+      'WV-SHEAR-AS2_P-SH2-004':905,'WV-SHEAR-AS2_P-SH2-005':695,'WV-SHEAR-AS2_P-SH2-006':970,
+      'WV-SHEAR-AS2_P-SH2-007':640,'WV-SHEAR-AS2_P-SH2-008':570,'WV-SHEAR-AS2_P-SH2-009':970,
+      'WV-SHEAR-AS2_P-SH2-010':635,'WV-SHEAR-AS2_P-SH2-011':395,'WV-SHEAR-AS2_P-SH2-012':595,
+      'WV-SHEAR-AS2_P-SH2-013':640,'WV-SHEAR-AS2_P-SH2-014':725,'WV-SHEAR-AS2_P-SH2-015':355,
+      'WV-SHEAR-AS2_P-SH2-016':275,'WV-SHEAR-AS2_P-SH2-017':275,'WV-SHEAR-AS2_P-SH2-018':200,
+      'WV-HEAD-H1_P-HD1-001':550,'WV-HEAD-H1_P-HD1-002':600,'WV-HEAD-H1_P-HD1-003':510,
+      'WV-HEAD-H1_P-HD1-004':550,'WV-HEAD-H1_P-HD1-005':525,
+      'WV-HEAD-H2_P-HD2-001':450,'WV-HEAD-H2_P-HD2-002':450,'WV-HEAD-H2_P-HD2-003':375,'WV-HEAD-H2_P-HD2-004':325,
+      'WV-HEAD-H3_P-HD3-001':525,'WV-HEAD-H3_P-HD3-002':575,'WV-HEAD-H3_P-HD3-003':485,
+      'WV-HEAD-H3_P-HD3-004':525,'WV-HEAD-H3_P-HD3-005':500,'WV-HEAD-H3_P-HD3-006':575,
+      'WV-HEAD-H3_P-HD3-007':550,'WV-HEAD-H3_P-HD3-008':525,'WV-HEAD-H3_P-HD3-009':550,
+      'WV-PEEL-SWAG_P-SWG-001':250,'WV-PEEL-SWAG_P-SWG-002':175,'WV-PEEL-SWAG_P-SWG-003':100,'WV-PEEL-SWAG_P-SWG-004':225,
+      'WV-PEEL-AUTO_P-APL-001':400,'WV-PEEL-AUTO_P-APL-002':280,
+      'WV-PEEL-MAN_P-MPL-001':280,'WV-PEEL-MAN_P-MPL-002':200,
+      'WV-THREAD-AT_P-ATH-001':900,'WV-THREAD-AT_P-ATH-002':900,'WV-THREAD-AT_P-ATH-003':425,'WV-THREAD-AT_P-ATH-004':850,
+      'WV-THREAD-T1_P-TR1-001':600,'WV-THREAD-T1_P-TR1-002':500,'WV-THREAD-T1_P-TR1-003':225,
+      'WV-THREAD-T2_P-TR2-001':500,'WV-THREAD-T2_P-TR2-002':425,'WV-THREAD-T2_P-TR2-003':350,'WV-THREAD-T2_P-TR2-004':150,
+      'WV-MISC-LANDISASSM_P-LND-001':75,'WV-MISC-LANDISASSM_P-LND-002':75,'WV-MISC-LANDISASSM_P-LND-003':115,'WV-MISC-LANDISASSM_P-LND-004':125,
+      'WV-PRESS-400_P-P40-001':800,'WV-PRESS-400_P-P40-002':725,'WV-PRESS-400_P-P40-003':850,
+      'WV-PRESS-400_P-P40-004':625,'WV-PRESS-400_P-P40-005':1000,
+      'WV-PRESS-500A_P-P5A-001':1000,'WV-PRESS-500A_P-P5A-002':850,'WV-PRESS-500A_P-P5A-003':900,
+      'WV-PRESS-500A_P-P5A-004':650,'WV-PRESS-500A_P-P5A-005':550,'WV-PRESS-500A_P-P5A-006':650,
+      'WV-PRESS-500A_P-P5A-007':575,'WV-PRESS-500A_P-P5A-008':500,
+      'WV-PRESS-500B_P-P5B-001':825,
+      'WV-CABLE-C1_P-CBL-001':33,'WV-CABLE-C2_P-CBL-001':33,'WV-CABLE-C3_P-CBL-001':33,'WV-CABLE-C4_P-CBL-001':33,
+      'WV-CABLE-C1_P-CBL-002':50,'WV-CABLE-C2_P-CBL-002':50,'WV-CABLE-C3_P-CBL-002':50,'WV-CABLE-C4_P-CBL-002':50,
+      'WV-CABLE-C1_P-CBL-003':55,'WV-CABLE-C2_P-CBL-003':55,'WV-CABLE-C3_P-CBL-003':55,'WV-CABLE-C4_P-CBL-003':55,
+      'WV-CABLE-C1_P-CBL-004':50,'WV-CABLE-C2_P-CBL-004':50,'WV-CABLE-C3_P-CBL-004':50,'WV-CABLE-C4_P-CBL-004':50,
+      'WV-CABLE-C1_P-CBL-005':45,'WV-CABLE-C2_P-CBL-005':45,'WV-CABLE-C3_P-CBL-005':45,'WV-CABLE-C4_P-CBL-005':45,
+      'WV-CABLE-C1_P-CBL-006':45,'WV-CABLE-C2_P-CBL-006':45,'WV-CABLE-C3_P-CBL-006':45,'WV-CABLE-C4_P-CBL-006':45,
+      'WV-CABLE-C1_P-CBL-007':50,'WV-CABLE-C2_P-CBL-007':50,'WV-CABLE-C3_P-CBL-007':50,'WV-CABLE-C4_P-CBL-007':50,
+      'WV-CABLE-C1_P-CBL-008':45,'WV-CABLE-C2_P-CBL-008':45,'WV-CABLE-C3_P-CBL-008':45,'WV-CABLE-C4_P-CBL-008':45,
+      'WV-CABLE-C1_P-CBL-009':42,'WV-CABLE-C2_P-CBL-009':42,'WV-CABLE-C3_P-CBL-009':42,'WV-CABLE-C4_P-CBL-009':42,
+      'WV-CABLE-C1_P-CBL-010':40,'WV-CABLE-C2_P-CBL-010':40,'WV-CABLE-C3_P-CBL-010':40,'WV-CABLE-C4_P-CBL-010':40,
+      'WV-CABLE-C1_P-CBL-011':38,'WV-CABLE-C2_P-CBL-011':38,'WV-CABLE-C3_P-CBL-011':38,'WV-CABLE-C4_P-CBL-011':38,
+      'WV-CABLE-C1_P-CBL-012':35,'WV-CABLE-C2_P-CBL-012':35,'WV-CABLE-C3_P-CBL-012':35,'WV-CABLE-C4_P-CBL-012':35,
+      'WV-CABLE-C1_P-CBL-013':30,'WV-CABLE-C2_P-CBL-013':30,'WV-CABLE-C3_P-CBL-013':30,'WV-CABLE-C4_P-CBL-013':30,
+      'WV-CABLE-C1_P-CBL-014':48,'WV-CABLE-C2_P-CBL-014':48,'WV-CABLE-C3_P-CBL-014':48,'WV-CABLE-C4_P-CBL-014':48,
+      'WV-CABLE-C1_P-CBL-015':45,'WV-CABLE-C2_P-CBL-015':45,'WV-CABLE-C3_P-CBL-015':45,'WV-CABLE-C4_P-CBL-015':45,
+      'WV-CABLE-C1_P-CBL-016':40,'WV-CABLE-C2_P-CBL-016':40,'WV-CABLE-C3_P-CBL-016':40,'WV-CABLE-C4_P-CBL-016':40,
+      'WV-CABLE-C1_P-CBL-017':35,'WV-CABLE-C2_P-CBL-017':35,'WV-CABLE-C3_P-CBL-017':35,'WV-CABLE-C4_P-CBL-017':35,
+      'WV-ASSY-A1_P-ASY-001':500,'WV-ASSY-A2_P-ASY-001':500,'WV-ASSY-A3_P-ASY-001':500,'WV-ASSY-A4_P-ASY-001':500,
+      'WV-ASSY-A1_P-ASY-002':667,'WV-ASSY-A2_P-ASY-002':667,'WV-ASSY-A3_P-ASY-002':667,'WV-ASSY-A4_P-ASY-002':667,
+      'WV-ASSY-A1_P-ASY-003':425,'WV-ASSY-A2_P-ASY-003':425,'WV-ASSY-A3_P-ASY-003':425,'WV-ASSY-A4_P-ASY-003':425,
+      'WV-ASSY-A1_P-ASY-004':600,'WV-ASSY-A2_P-ASY-004':600,'WV-ASSY-A3_P-ASY-004':600,'WV-ASSY-A4_P-ASY-004':600,
+      'WV-ASSY-A1_P-ASY-005':450,'WV-ASSY-A2_P-ASY-005':450,'WV-ASSY-A3_P-ASY-005':450,'WV-ASSY-A4_P-ASY-005':450,
+      'WV-ASSY-A1_P-ASY-006':400,'WV-ASSY-A2_P-ASY-006':400,'WV-ASSY-A3_P-ASY-006':400,'WV-ASSY-A4_P-ASY-006':400,
+      'WV-ASSY-A1_P-ASY-007':300,'WV-ASSY-A2_P-ASY-007':300,'WV-ASSY-A3_P-ASY-007':300,'WV-ASSY-A4_P-ASY-007':300,
+      'WV-ASSY-A1_P-ASY-008':350,'WV-ASSY-A2_P-ASY-008':350,'WV-ASSY-A3_P-ASY-008':350,'WV-ASSY-A4_P-ASY-008':350,
+      'WV-ASSY-A1_P-ASY-009':200,'WV-ASSY-A2_P-ASY-009':200,'WV-ASSY-A3_P-ASY-009':200,'WV-ASSY-A4_P-ASY-009':200,
+      'WV-MISC-UNITS_P-UNT-001':400,'WV-MISC-UNITS_P-UNT-002':375,'WV-MISC-UNITS_P-UNT-003':350,
+      'WV-MISC-BIGSAW_P-SAW-001':250,'WV-MISC-BIGSAW_P-SAW-002':225,'WV-MISC-BIGSAW_P-SAW-003':800,'WV-MISC-BIGSAW_P-SAW-004':700,
+      'WV-MISC-TIELINE_P-TIE-001':60,'WV-MISC-TIELINE_P-TIE-002':50,
+      'WV-MISC-EYEBOLT_P-EYE-001':200,'WV-MISC-EYEBOLT_P-EYE-002':175,'WV-MISC-EYEBOLT_P-EYE-003':175,
+      'WV-MISC-EYEBOLT_P-EYE-004':150,'WV-MISC-EYEBOLT_P-EYE-005':150,'WV-MISC-EYEBOLT_P-EYE-006':100,
+      'WV-MISC-OFFWELD_P-WLD-001':75,'WV-MISC-OFFWELD_P-WLD-002':100,'WV-MISC-OFFWELD_P-WLD-003':125,'WV-MISC-OFFWELD_P-WLD-004':110,
+      'WV-MISC-PIPEASSY_P-PPA-001':80,'WV-MISC-PIPEASSY_P-PPA-002':75
+    };
+    const entries = Object.entries(defaultRates);
+    for (const [key, rate] of entries) {
+      const [equipCode, productCode] = key.split('_');
+      await pool.query(
+        `INSERT INTO target_rates (equip_code, product_code, rate, source) VALUES ($1, $2, $3, 'default')
+         ON CONFLICT (equip_code, product_code) DO NOTHING`,
+        [equipCode, productCode, rate]
+      );
+    }
+    console.log(`Seeded ${entries.length} default target rates`);
   }
 
   // ── Register all API routes AFTER session middleware is ready ──
@@ -854,7 +936,7 @@ function registerRoutes() {
     parts.push(`<rect x="0" y="${y}" width="${W}" height="${footH}" rx="0" fill="#f8fafc"/>`);
     parts.push(`<rect x="0" y="${y+footH-16}" width="${W}" height="16" rx="16" ry="16" fill="#f8fafc"/>`);
     parts.push(`<rect x="${pad}" y="${y}" width="${W-pad*2}" height="1" fill="#e2e8f0"/>`);
-    parts.push(`<text x="${W/2}" y="${y+22}" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">jmos-wv.up.railway.app  ·  Auto-generated daily report</text>`);
+    parts.push(`<text x="${W/2}" y="${y+22}" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="DejaVu Sans,Arial,Helvetica,sans-serif">JMOS WV  ·  Auto-generated daily report</text>`);
     y += footH;
 
     const totalH = y;
@@ -921,7 +1003,7 @@ function registerRoutes() {
       subject,
       html: `<div style="font-family:sans-serif;text-align:center;padding:16px;background:#f1f5f9">
         <p style="margin:0 0 12px;font-size:14px;color:#475569">Your daily OEE report is attached as an image.</p>
-        <p style="margin-top:12px;font-size:12px;color:#94a3b8"><a href="https://jmos-wv.up.railway.app" style="color:#1b3d6e;font-weight:600">Open JMOS Dashboard</a></p>
+        <p style="margin-top:12px;font-size:12px;color:#94a3b8"><a href="${process.env.APP_URL||'https://jmos-wv.azurewebsites.net'}" style="color:#1b3d6e;font-weight:600">Open JMOS Dashboard</a></p>
       </div>`,
       pngBuffer
     });
@@ -2588,7 +2670,7 @@ async function start() {
   if (!process.env.DATABASE_URL) {
     console.error('WARNING: DATABASE_URL not set.');
     app.get('*', (req, res) => {
-      res.status(503).send('<html><body style="font-family:sans-serif;text-align:center;padding:60px"><h1>JMOS Setup In Progress</h1><p>Database not connected yet. Add PostgreSQL in Railway and set DATABASE_URL.</p></body></html>');
+      res.status(503).send('<html><body style="font-family:sans-serif;text-align:center;padding:60px"><h1>JMOS Setup In Progress</h1><p>Database not connected yet. Set the DATABASE_URL environment variable.</p></body></html>');
     });
     return;
   }
@@ -2597,7 +2679,7 @@ async function start() {
   try {
     await initDB();
     console.log('Database initialized successfully!');
-    console.log(`App ready at https://jmos-wv.up.railway.app`);
+    console.log(`App ready at ${process.env.APP_URL||'http://localhost:'+PORT}`);
   } catch (err) {
     console.error('Database initialization failed:', err.message);
     console.error('Retrying in 5 seconds...');
