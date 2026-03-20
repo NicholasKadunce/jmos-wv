@@ -58,7 +58,7 @@ function getDTThreshold(equipCode) {
 }
 
 // ── MYSQL CACHE ──
-const mysqlCache = { production: null, downtime: null, lastRefresh: 0, refreshing: false };
+const mysqlCache = { production: null, downtime: null, timestamps: null, lastRefresh: 0, refreshing: false };
 const MYSQL_CACHE_TTL = 60000; // 60 seconds
 
 // ── INIT DATABASE TABLES ──
@@ -245,6 +245,51 @@ async function initDB() {
     );
     CREATE INDEX IF NOT EXISTS idx_auto_dt_date ON auto_downtime_log(date);
     CREATE INDEX IF NOT EXISTS idx_auto_dt_equip_date ON auto_downtime_log(equip_code, date);
+
+    -- Per-minute production counts (30-day retention for cycle time charts)
+    CREATE TABLE IF NOT EXISTS auto_production_minutes (
+      id SERIAL PRIMARY KEY,
+      date VARCHAR(10) NOT NULL,
+      equip_code VARCHAR(50) NOT NULL,
+      clock_hour INTEGER NOT NULL,
+      clock_minute INTEGER NOT NULL,
+      part_count INTEGER NOT NULL DEFAULT 0,
+      synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(date, equip_code, clock_hour, clock_minute)
+    );
+    CREATE INDEX IF NOT EXISTS idx_auto_prod_min_equip ON auto_production_minutes(equip_code, date);
+
+    -- Per-hour cycle time statistics (30-day retention)
+    CREATE TABLE IF NOT EXISTS auto_cycle_time_stats (
+      id SERIAL PRIMARY KEY,
+      date VARCHAR(10) NOT NULL,
+      equip_code VARCHAR(50) NOT NULL,
+      clock_hour INTEGER NOT NULL,
+      avg_ct NUMERIC(8,2) NOT NULL DEFAULT 0,
+      min_ct NUMERIC(8,2) NOT NULL DEFAULT 0,
+      max_ct NUMERIC(8,2) NOT NULL DEFAULT 0,
+      stddev_ct NUMERIC(8,2) NOT NULL DEFAULT 0,
+      sample_count INTEGER NOT NULL DEFAULT 0,
+      ucl NUMERIC(8,2) NOT NULL DEFAULT 0,
+      lcl NUMERIC(8,2) NOT NULL DEFAULT 0,
+      target_ct NUMERIC(8,2) NOT NULL DEFAULT 0,
+      synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(date, equip_code, clock_hour)
+    );
+    CREATE INDEX IF NOT EXISTS idx_auto_ct_stats_equip ON auto_cycle_time_stats(equip_code, date);
+
+    -- Individual cycle times (7-day retention for scatter plots)
+    CREATE TABLE IF NOT EXISTS auto_cycle_times (
+      id SERIAL PRIMARY KEY,
+      date VARCHAR(10) NOT NULL,
+      equip_code VARCHAR(50) NOT NULL,
+      clock_hour INTEGER NOT NULL,
+      ts TIMESTAMPTZ NOT NULL,
+      cycle_seconds NUMERIC(8,2) NOT NULL,
+      synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_auto_ct_equip_date ON auto_cycle_times(equip_code, date);
+    CREATE INDEX IF NOT EXISTS idx_auto_ct_date ON auto_cycle_times(date);
   `);
 
   // One-time migration: reassign Pipe Assembly records from Landis to new Pipe Assembly equipment
@@ -1396,7 +1441,7 @@ RESPONSE STYLE:
         [prodIds, yesterday + ' 00:00:00']
       );
 
-      // Build hourly production per machine per date
+      // Build hourly production per machine per date + raw timestamps for cycle time
       const prodByMachine = {};
       for (const row of prodRows) {
         const mid = row.MachineID;
@@ -1404,12 +1449,14 @@ RESPONSE STYLE:
         prodByMachine[mid].push({ ts: new Date(row.ProductionDate), parts: row.PartsProduced });
       }
 
-      // Aggregate into hourly buckets (each hour = count of parts produced in that window)
+      // Aggregate into hourly buckets + minute buckets + raw timestamps
       const hourlyProduction = {};
+      const rawTimestamps = {}; // {appCode: {date: [sorted timestamps]}}
       for (const [mid, records] of Object.entries(prodByMachine)) {
         const appCode = MYSQL_REVERSE_MAP[mid];
         if (!appCode) continue;
         hourlyProduction[appCode] = {};
+        rawTimestamps[appCode] = {};
 
         // Group records by date
         const byDate = {};
@@ -1420,18 +1467,20 @@ RESPONSE STYLE:
         }
 
         for (const [date, dayRecords] of Object.entries(byDate)) {
-          // PartsProduced is cumulative, resets at midnight
           // Each record = one part produced at that timestamp
-          // Hourly output = count of records whose timestamp falls within each hour window
           const hourBuckets = {};
           for (const r of dayRecords) {
-            const hour = r.ts.getHours(); // 0-23
+            const hour = r.ts.getHours();
             if (!hourBuckets[hour]) hourBuckets[hour] = 0;
             hourBuckets[hour]++;
           }
-          // Also track the cumulative max for verification
           const maxParts = dayRecords.length > 0 ? Math.max(...dayRecords.map(r => r.parts)) : 0;
           hourlyProduction[appCode][date] = { hourBuckets, totalParts: maxParts };
+
+          // Store sorted raw timestamps for cycle time computation
+          rawTimestamps[appCode][date] = dayRecords
+            .map(r => r.ts)
+            .sort((a, b) => a - b);
         }
       }
 
@@ -1487,11 +1536,22 @@ RESPONSE STYLE:
 
       mysqlCache.production = hourlyProduction;
       mysqlCache.downtime = downtimeEvents;
+      mysqlCache.timestamps = rawTimestamps;
       mysqlCache.lastRefresh = Date.now();
 
       // ── Persist to PostgreSQL for historical access ──
       persistToPostgres(hourlyProduction, downtimeEvents).catch(e =>
         console.warn('PG persist warning:', e.message)
+      );
+
+      // ── Persist cycle time data to PostgreSQL ──
+      persistCycleTimeData(rawTimestamps, downtimeEvents).catch(e =>
+        console.warn('PG cycle time persist warning:', e.message)
+      );
+
+      // ── Cleanup old cycle time data (30-day retention) ──
+      cleanupOldCycleData().catch(e =>
+        console.warn('Cycle data cleanup warning:', e.message)
       );
     } catch (err) {
       console.error('MySQL cache refresh error:', err.message);
@@ -1554,6 +1614,146 @@ RESPONSE STYLE:
     if (prodRows.length > 0 || downtimeEvents.length > 0) {
       console.log(`PG sync: ${prodRows.length} prod rows, ${downtimeEvents.length} DT events persisted`);
     }
+  }
+
+  // ── Compute cycle times from raw timestamps, filtering out downtime gaps ──
+  function computeCycleTimes(timestamps, equipCode, downtimeEvents) {
+    if (!timestamps || timestamps.length < 2) return [];
+    const threshold = getDTThreshold(equipCode) * 60; // convert minutes to seconds
+    const cycleTimes = [];
+    for (let i = 1; i < timestamps.length; i++) {
+      const gap = (timestamps[i] - timestamps[i - 1]) / 1000; // seconds
+      if (gap <= 0) continue;
+      if (gap > threshold) continue; // Skip downtime gaps
+      cycleTimes.push({ ts: timestamps[i], seconds: gap });
+    }
+    return cycleTimes;
+  }
+
+  // ── Compute stats from an array of cycle time values ──
+  function computeCTStats(cycleTimes) {
+    if (!cycleTimes || cycleTimes.length === 0) return null;
+    const vals = cycleTimes.map(c => c.seconds);
+    const n = vals.length;
+    const avg = vals.reduce((s, v) => s + v, 0) / n;
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const variance = vals.reduce((s, v) => s + (v - avg) ** 2, 0) / n;
+    const stddev = Math.sqrt(variance);
+    const ucl = avg + 3 * stddev;
+    const lcl = Math.max(0, avg - 3 * stddev);
+    return { avg, min, max, stddev, ucl, lcl, count: n };
+  }
+
+  // ── Persist per-minute counts and cycle time stats to PostgreSQL ──
+  async function persistCycleTimeData(rawTimestamps, downtimeEvents) {
+    if (!pool || !rawTimestamps) return;
+
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' }));
+    const todayStr = now.toISOString().slice(0, 10);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000).toISOString().slice(0, 10);
+
+    for (const [appCode, dateData] of Object.entries(rawTimestamps)) {
+      for (const [date, timestamps] of Object.entries(dateData)) {
+        if (timestamps.length === 0) continue;
+
+        // ── Per-minute counts ──
+        const minuteBuckets = {};
+        for (const ts of timestamps) {
+          const h = ts.getHours();
+          const m = ts.getMinutes();
+          const key = h + ':' + m;
+          if (!minuteBuckets[key]) minuteBuckets[key] = { hour: h, minute: m, count: 0 };
+          minuteBuckets[key].count++;
+        }
+
+        // Batch upsert minute data
+        const minRows = Object.values(minuteBuckets);
+        for (let i = 0; i < minRows.length; i += 50) {
+          const batch = minRows.slice(i, i + 50);
+          const values = [];
+          const placeholders = batch.map((row, idx) => {
+            const base = idx * 5;
+            values.push(date, appCode, row.hour, row.minute, row.count);
+            return `($${base+1}, $${base+2}, $${base+3}, $${base+4}, $${base+5}, NOW())`;
+          }).join(',');
+          await pool.query(
+            `INSERT INTO auto_production_minutes (date, equip_code, clock_hour, clock_minute, part_count, synced_at)
+             VALUES ${placeholders}
+             ON CONFLICT (date, equip_code, clock_hour, clock_minute)
+             DO UPDATE SET part_count = EXCLUDED.part_count, synced_at = NOW()`,
+            values
+          );
+        }
+
+        // ── Cycle times per hour ──
+        // Group timestamps by hour
+        const byHour = {};
+        for (const ts of timestamps) {
+          const h = ts.getHours();
+          if (!byHour[h]) byHour[h] = [];
+          byHour[h].push(ts);
+        }
+
+        for (const [hrStr, hourTs] of Object.entries(byHour)) {
+          const clockHour = parseInt(hrStr);
+          hourTs.sort((a, b) => a - b);
+
+          // Compute cycle times for this hour
+          const cts = computeCycleTimes(hourTs, appCode, downtimeEvents);
+          const stats = computeCTStats(cts);
+          if (!stats) continue;
+
+          // Upsert hourly stats
+          await pool.query(
+            `INSERT INTO auto_cycle_time_stats (date, equip_code, clock_hour, avg_ct, min_ct, max_ct, stddev_ct, sample_count, ucl, lcl, target_ct, synced_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, NOW())
+             ON CONFLICT (date, equip_code, clock_hour)
+             DO UPDATE SET avg_ct=EXCLUDED.avg_ct, min_ct=EXCLUDED.min_ct, max_ct=EXCLUDED.max_ct,
+                           stddev_ct=EXCLUDED.stddev_ct, sample_count=EXCLUDED.sample_count,
+                           ucl=EXCLUDED.ucl, lcl=EXCLUDED.lcl, synced_at=NOW()`,
+            [date, appCode, clockHour, stats.avg.toFixed(2), stats.min.toFixed(2), stats.max.toFixed(2),
+             stats.stddev.toFixed(2), stats.count, stats.ucl.toFixed(2), stats.lcl.toFixed(2)]
+          );
+
+          // Store individual cycle times for scatter plots (7-day retention)
+          if (date >= sevenDaysAgo && cts.length > 0) {
+            // Delete existing for this hour then re-insert (simpler than upsert for individual timestamps)
+            await pool.query(
+              'DELETE FROM auto_cycle_times WHERE date = $1 AND equip_code = $2 AND clock_hour = $3',
+              [date, appCode, clockHour]
+            );
+            // Batch insert individual cycle times
+            for (let i = 0; i < cts.length; i += 100) {
+              const batch = cts.slice(i, i + 100);
+              const values = [];
+              const placeholders = batch.map((ct, idx) => {
+                const base = idx * 5;
+                values.push(date, appCode, clockHour, ct.ts.toISOString(), ct.seconds.toFixed(2));
+                return `($${base+1}, $${base+2}, $${base+3}, $${base+4}::timestamptz, $${base+5}, NOW())`;
+              }).join(',');
+              await pool.query(
+                `INSERT INTO auto_cycle_times (date, equip_code, clock_hour, ts, cycle_seconds, synced_at)
+                 VALUES ${placeholders}`,
+                values
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // ── Cleanup old cycle time data (30-day retention for minutes/stats, 7-day for individual CTs) ──
+  async function cleanupOldCycleData() {
+    if (!pool) return;
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' }));
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000).toISOString().slice(0, 10);
+
+    await pool.query('DELETE FROM auto_production_minutes WHERE date < $1', [thirtyDaysAgo]);
+    await pool.query('DELETE FROM auto_cycle_time_stats WHERE date < $1', [thirtyDaysAgo]);
+    await pool.query('DELETE FROM auto_cycle_times WHERE date < $1', [sevenDaysAgo]);
   }
 
   // Helper: convert clock hour (0-23) + date to shift info
@@ -1979,6 +2179,249 @@ RESPONSE STYLE:
     } catch (err) {
       console.error('Merged records error:', err);
       res.status(500).json({ error: 'Failed to build merged records' });
+    }
+  });
+
+  // ── API: Cycle time data (individual cycle times + hourly stats) ──
+  // ?equip=WV-SHEAR-AS1&date=2026-03-20 → hourly stats for entire day
+  // ?equip=WV-SHEAR-AS1&date=2026-03-20&hour=8 → individual cycle times for that hour
+  app.get('/api/mysql/cycle-data', async (req, res) => {
+    try {
+      const { equip, date, hour } = req.query;
+      if (!equip || !date) return res.status(400).json({ error: 'equip and date required' });
+
+      const now = new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' }));
+      const todayStr = now.toISOString().slice(0, 10);
+      const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
+      const isLive = (date === todayStr || date === yesterdayStr) && mysqlCache.timestamps;
+
+      if (hour !== undefined) {
+        // ── Individual cycle times for a specific hour ──
+        const clockHour = parseInt(hour);
+
+        if (isLive && mysqlCache.timestamps[equip] && mysqlCache.timestamps[equip][date]) {
+          // Compute from live raw timestamps
+          const allTs = mysqlCache.timestamps[equip][date];
+          const hourTs = allTs.filter(ts => ts.getHours() === clockHour);
+          hourTs.sort((a, b) => a - b);
+          const cts = computeCycleTimes(hourTs, equip, mysqlCache.downtime || []);
+          const stats = computeCTStats(cts);
+          return res.json({
+            equip, date, clockHour, live: true,
+            cycleTimes: cts.map(c => ({ ts: c.ts.toISOString(), seconds: parseFloat(c.seconds.toFixed(2)) })),
+            stats: stats || { avg: 0, min: 0, max: 0, stddev: 0, ucl: 0, lcl: 0, count: 0 }
+          });
+        }
+
+        // Fall back to PG (individual cycle times if within 7 days, otherwise just stats)
+        const { rows: ctRows } = await pool.query(
+          'SELECT ts, cycle_seconds FROM auto_cycle_times WHERE equip_code = $1 AND date = $2 AND clock_hour = $3 ORDER BY ts',
+          [equip, date, clockHour]
+        );
+        const { rows: statsRows } = await pool.query(
+          'SELECT * FROM auto_cycle_time_stats WHERE equip_code = $1 AND date = $2 AND clock_hour = $3',
+          [equip, date, clockHour]
+        );
+        const pgStats = statsRows[0] || null;
+        return res.json({
+          equip, date, clockHour, live: false,
+          cycleTimes: ctRows.map(r => ({ ts: r.ts, seconds: parseFloat(r.cycle_seconds) })),
+          stats: pgStats ? {
+            avg: parseFloat(pgStats.avg_ct), min: parseFloat(pgStats.min_ct),
+            max: parseFloat(pgStats.max_ct), stddev: parseFloat(pgStats.stddev_ct),
+            ucl: parseFloat(pgStats.ucl), lcl: parseFloat(pgStats.lcl), count: pgStats.sample_count
+          } : { avg: 0, min: 0, max: 0, stddev: 0, ucl: 0, lcl: 0, count: 0 }
+        });
+      }
+
+      // ── Hourly stats for the entire day ──
+      if (isLive && mysqlCache.timestamps[equip] && mysqlCache.timestamps[equip][date]) {
+        // Compute from live raw timestamps
+        const allTs = mysqlCache.timestamps[equip][date];
+        const byHour = {};
+        for (const ts of allTs) {
+          const h = ts.getHours();
+          if (!byHour[h]) byHour[h] = [];
+          byHour[h].push(ts);
+        }
+        const hourlyStats = [];
+        for (const [hStr, hourTs] of Object.entries(byHour)) {
+          hourTs.sort((a, b) => a - b);
+          const cts = computeCycleTimes(hourTs, equip, mysqlCache.downtime || []);
+          const stats = computeCTStats(cts);
+          if (stats) {
+            const { shiftNum, hourIdx } = getShiftForHour(date, parseInt(hStr));
+            hourlyStats.push({
+              clockHour: parseInt(hStr), shiftNum, hourIdx,
+              avg: parseFloat(stats.avg.toFixed(2)), min: parseFloat(stats.min.toFixed(2)),
+              max: parseFloat(stats.max.toFixed(2)), stddev: parseFloat(stats.stddev.toFixed(2)),
+              ucl: parseFloat(stats.ucl.toFixed(2)), lcl: parseFloat(stats.lcl.toFixed(2)),
+              count: stats.count
+            });
+          }
+        }
+        return res.json({ equip, date, live: true, hourlyStats });
+      }
+
+      // Fall back to PG
+      const { rows } = await pool.query(
+        'SELECT * FROM auto_cycle_time_stats WHERE equip_code = $1 AND date = $2 ORDER BY clock_hour',
+        [equip, date]
+      );
+      const hourlyStats = rows.map(r => {
+        const { shiftNum, hourIdx } = getShiftForHour(date, r.clock_hour);
+        return {
+          clockHour: r.clock_hour, shiftNum, hourIdx,
+          avg: parseFloat(r.avg_ct), min: parseFloat(r.min_ct),
+          max: parseFloat(r.max_ct), stddev: parseFloat(r.stddev_ct),
+          ucl: parseFloat(r.ucl), lcl: parseFloat(r.lcl), count: r.sample_count
+        };
+      });
+      res.json({ equip, date, live: false, hourlyStats });
+    } catch (err) {
+      console.error('Cycle data error:', err);
+      res.status(500).json({ error: 'Failed to get cycle data' });
+    }
+  });
+
+  // ── API: Per-minute production data ──
+  // ?equip=WV-SHEAR-AS1&date=2026-03-20&hour=8 → per-minute counts for that hour
+  app.get('/api/mysql/minute-data', async (req, res) => {
+    try {
+      const { equip, date, hour } = req.query;
+      if (!equip || !date) return res.status(400).json({ error: 'equip and date required' });
+
+      const now = new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' }));
+      const todayStr = now.toISOString().slice(0, 10);
+      const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
+      const isLive = (date === todayStr || date === yesterdayStr) && mysqlCache.timestamps;
+
+      if (isLive && mysqlCache.timestamps[equip] && mysqlCache.timestamps[equip][date]) {
+        const allTs = mysqlCache.timestamps[equip][date];
+        let filtered = allTs;
+        if (hour !== undefined) {
+          const clockHour = parseInt(hour);
+          filtered = allTs.filter(ts => ts.getHours() === clockHour);
+        }
+        // Build minute-level counts
+        const minuteCounts = {};
+        for (const ts of filtered) {
+          const key = ts.getHours() + ':' + String(ts.getMinutes()).padStart(2, '0');
+          if (!minuteCounts[key]) minuteCounts[key] = { hour: ts.getHours(), minute: ts.getMinutes(), count: 0 };
+          minuteCounts[key].count++;
+        }
+        return res.json({
+          equip, date, live: true,
+          minutes: Object.values(minuteCounts).sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute))
+        });
+      }
+
+      // Fall back to PG
+      let q = 'SELECT clock_hour, clock_minute, part_count FROM auto_production_minutes WHERE equip_code = $1 AND date = $2';
+      const params = [equip, date];
+      if (hour !== undefined) { q += ' AND clock_hour = $3'; params.push(parseInt(hour)); }
+      q += ' ORDER BY clock_hour, clock_minute';
+      const { rows } = await pool.query(q, params);
+      res.json({
+        equip, date, live: false,
+        minutes: rows.map(r => ({ hour: r.clock_hour, minute: r.clock_minute, count: r.part_count }))
+      });
+    } catch (err) {
+      console.error('Minute data error:', err);
+      res.status(500).json({ error: 'Failed to get minute data' });
+    }
+  });
+
+  // ── API: Live status of all auto equipment (for TV Display 30s refresh) ──
+  app.get('/api/mysql/live-status', async (req, res) => {
+    try {
+      const now = new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' }));
+      const todayStr = now.toISOString().slice(0, 10);
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const { shiftNum } = getShiftForHour(todayStr, currentHour);
+
+      const equipStatus = {};
+      const prod = mysqlCache.production || {};
+      const timestamps = mysqlCache.timestamps || {};
+      const dtEvents = (mysqlCache.downtime || []).filter(e => e.date === todayStr);
+
+      for (const [appCode, ids] of Object.entries(MYSQL_EQUIP_MAP)) {
+        const dayData = prod[appCode] && prod[appCode][todayStr];
+        const equipTs = timestamps[appCode] && timestamps[appCode][todayStr];
+
+        // Current hour output
+        const currentHourOutput = dayData ? (dayData.hourBuckets[currentHour] || 0) : 0;
+
+        // Shift total output (sum hours in current shift)
+        let shiftTotal = 0;
+        if (dayData) {
+          for (const [hrStr, count] of Object.entries(dayData.hourBuckets)) {
+            const h = parseInt(hrStr);
+            const si = getShiftForHour(todayStr, h);
+            if (si.shiftNum === shiftNum) shiftTotal += count;
+          }
+        }
+
+        // Live cycle time (from last few parts of current hour)
+        let liveCT = null;
+        if (equipTs) {
+          const currentHourTs = equipTs.filter(ts => ts.getHours() === currentHour);
+          if (currentHourTs.length >= 2) {
+            currentHourTs.sort((a, b) => a - b);
+            // Get last few cycle times
+            const recentCTs = [];
+            const threshold = getDTThreshold(appCode) * 60;
+            for (let i = currentHourTs.length - 1; i > 0 && recentCTs.length < 5; i--) {
+              const gap = (currentHourTs[i] - currentHourTs[i - 1]) / 1000;
+              if (gap > 0 && gap <= threshold) recentCTs.push(gap);
+            }
+            if (recentCTs.length > 0) {
+              liveCT = parseFloat((recentCTs.reduce((s, v) => s + v, 0) / recentCTs.length).toFixed(1));
+            }
+          }
+        }
+
+        // Last part timestamp
+        let lastPartAt = null;
+        if (equipTs && equipTs.length > 0) {
+          lastPartAt = equipTs[equipTs.length - 1].toISOString();
+        }
+
+        // Active downtime (currently in progress — endTime is null or > now)
+        const activeDowntime = dtEvents.find(e =>
+          e.equipCode === appCode && !e.endTime
+        );
+        // Check if last part was long ago (machine may be down)
+        let idleSince = null;
+        if (equipTs && equipTs.length > 0) {
+          const lastTs = equipTs[equipTs.length - 1];
+          const idleSeconds = (now - lastTs) / 1000;
+          const threshold = getDTThreshold(appCode) * 60;
+          if (idleSeconds > threshold) idleSince = lastTs.toISOString();
+        }
+
+        equipStatus[appCode] = {
+          currentHourOutput, shiftTotal, liveCycleTime: liveCT,
+          lastPartAt, activeDowntime: activeDowntime ? {
+            id: activeDowntime.id, startTime: activeDowntime.startTime,
+            durationMins: activeDowntime.durationMins, mysqlDesc: activeDowntime.mysqlDesc
+          } : null,
+          idleSince,
+          shiftNum
+        };
+      }
+
+      res.json({
+        timestamp: now.toISOString(),
+        currentHour, currentMinute, shiftNum,
+        cacheAge: Date.now() - mysqlCache.lastRefresh,
+        connected: !!mysqlPool,
+        equipment: equipStatus
+      });
+    } catch (err) {
+      console.error('Live status error:', err);
+      res.status(500).json({ error: 'Failed to get live status' });
     }
   });
 

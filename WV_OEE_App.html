@@ -1281,6 +1281,38 @@ input[type=number]{-moz-appearance:textfield}
 .user-menu{position:absolute;top:100%;right:0;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);border:1px solid var(--jm-border);padding:6px;min-width:160px;z-index:999}
 .user-menu button{display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;font-size:13px;font-weight:500;color:var(--jm-text);cursor:pointer;border-radius:6px;font-family:inherit}
 .user-menu button:hover{background:var(--jm-bg)}
+
+/* ── Cycle Time & Live Monitoring ── */
+.ct-chart-wrap{background:var(--jm-card);border-radius:var(--radius-md);border:1px solid var(--jm-border);padding:16px;margin-top:8px}
+.ct-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.ct-title{font-size:14px;font-weight:700;color:var(--jm-text)}
+.ct-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-top:12px}
+.ct-stat-box{background:var(--jm-bg);border-radius:var(--radius-sm);padding:10px 12px;text-align:center;border:1px solid var(--jm-border)}
+.ct-stat-label{font-size:9px;font-weight:700;color:var(--jm-text-ter);text-transform:uppercase;letter-spacing:1px}
+.ct-stat-val{font-size:18px;font-weight:800;color:var(--jm-navy);margin-top:2px}
+.ct-stat-unit{font-size:10px;font-weight:500;color:var(--jm-text-sec)}
+.ct-back-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;border:1px solid var(--jm-border);background:var(--jm-bg);font-size:11px;font-weight:600;color:var(--jm-text-sec);cursor:pointer;font-family:inherit;transition:all .15s}
+.ct-back-btn:hover{background:var(--jm-border);color:var(--jm-text)}
+.ct-hour-nav{display:flex;align-items:center;gap:8px}
+.ct-hour-nav button{width:28px;height:28px;border-radius:50%;border:1px solid var(--jm-border);background:var(--jm-bg);cursor:pointer;font-size:14px;font-weight:700;color:var(--jm-text-sec);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ct-hour-nav button:hover{background:var(--jm-navy);color:#fff;border-color:var(--jm-navy)}
+.ct-hour-nav button:disabled{opacity:.3;cursor:not-allowed}
+.ct-hour-label{font-size:13px;font-weight:700;color:var(--jm-text);min-width:80px;text-align:center}
+.ct-live-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:#D1FAE5;color:#059669;font-size:10px;font-weight:700;letter-spacing:.5px}
+.ct-live-dot{width:6px;height:6px;border-radius:50%;background:#059669;animation:ct-pulse 1.5s ease-in-out infinite}
+@keyframes ct-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.ct-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;justify-content:center}
+.ct-legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--jm-text-sec)}
+.ct-legend-dot{width:10px;height:3px;border-radius:2px;display:inline-block}
+
+/* TV Live Status Enhancements */
+.tv-equip-header.dt-active{animation:tv-dt-pulse 2s ease-in-out infinite}
+@keyframes tv-dt-pulse{0%,100%{background:linear-gradient(135deg,#1B3D6E 0%,#234B8A 100%)}50%{background:linear-gradient(135deg,#7F1D1D 0%,#991B1B 100%)}}
+.tv-live-ct{display:flex;align-items:baseline;gap:4px;margin-top:4px}
+.tv-live-ct-val{font-size:16px;font-weight:800;color:#34C759;font-variant-numeric:tabular-nums}
+.tv-live-ct-label{font-size:8px;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px}
+.tv-idle-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:8px;background:rgba(239,68,68,.2);font-size:8px;font-weight:700;color:#FCA5A5;margin-top:2px}
+.tv-idle-dot{width:5px;height:5px;border-radius:50%;background:#EF4444;animation:ct-pulse 1.5s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -1526,6 +1558,9 @@ const EQUIP_PRODUCTS={
   'WV-MISC-OFFWELD':['P-WLD-001','P-WLD-002','P-WLD-003','P-WLD-004'],
   'WV-MISC-PIPEASSY':['P-PPA-001','P-PPA-002'],
 };
+
+// ─── Auto equipment lookup (MySQL-connected machines) ───
+const MYSQL_EQUIP_CODES=(()=>{const m={};INIT_EQUIPMENT.filter(e=>e.autoData).forEach(e=>{m[e.code]=true;});return m;})();
 
 // ─── FINISHED PRODUCT DEFINITIONS (for Swim Lane / RTY) ───
 const BOLT_EQUIP={Shears:['WV-SHEAR-AS1','WV-SHEAR-AS2'],Peeling:['WV-PEEL-MAN','WV-PEEL-AUTO','WV-PEEL-SWAG'],Threading:['WV-THREAD-T1','WV-THREAD-T2','WV-THREAD-AT'],Heading:['WV-HEAD-H1','WV-HEAD-H2','WV-HEAD-H3','WV-HEAD-AUTO'],Assembly:['WV-ASSY-A1','WV-ASSY-A2','WV-ASSY-A3','WV-ASSY-A4']};
@@ -2268,6 +2303,18 @@ const API={
   async mysqlMoveOperator(data){
     const r=await fetch('/api/mysql/operator-move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
     const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  // Cycle time & live monitoring
+  async mysqlCycleData(equip,date,hour){
+    const url='/api/mysql/cycle-data?equip='+equip+'&date='+date+(hour!==undefined?'&hour='+hour:'');
+    const r=await fetch(url);if(!r.ok)return null;return r.json();
+  },
+  async mysqlMinuteData(equip,date,hour){
+    const url='/api/mysql/minute-data?equip='+equip+'&date='+date+(hour!==undefined?'&hour='+hour:'');
+    const r=await fetch(url);if(!r.ok)return null;return r.json();
+  },
+  async mysqlLiveStatus(){
+    const r=await fetch('/api/mysql/live-status');if(!r.ok)return null;return r.json();
   }
 };
 
@@ -2709,6 +2756,7 @@ function Dashboard({dataVersion,master}){
   const [oeeScopeType,setOeeScopeType]=useState('plant');
   const [selectedHour,setSelectedHour]=useState(null);
   const [expandedProcess,setExpandedProcess]=useState(null);
+  const [cycleTimeEquip,setCycleTimeEquip]=useState(null); // {code,clockHour} for cycle time drill-down
 
   // Gather submitted data
   const allRecords=useMemo(()=>{
@@ -3452,9 +3500,16 @@ function Dashboard({dataVersion,master}){
                     const eMax=isOEE?100:Math.max(...proc.equipment.map(e=>e.good),1);
                     const ePct=isOEE?Math.min(eVal,100):(eMax>0?eVal/eMax*100:0);
                     const eColor=isOEE?(eVal>=85?'#1B3D6E':eVal>=60?'#F59E0B':'#DC2626'):(eq.tgt>0&&eq.good>=eq.tgt?'#059669':eq.tgt>0&&eq.good>=eq.tgt*0.8?'#F59E0B':'#DC2626');
+                    const isAuto=!!MYSQL_EQUIP_CODES[eq.code];
+                    // Determine clock hour for cycle time drill-down
+                    const drillClockHour=(()=>{if(selectedHour===null)return null;const hrs=filtered.filter(r=>r.hourIdx===selectedHour&&r.equipCode===eq.code);return hrs.length>0&&hrs[0].clockHour!==undefined?hrs[0].clockHour:null;})();
                     return h('div',{key:eq.code,className:'hr-drill-eq'},
-                      h('div',{className:'hr-drill-eq-name'},eq.name,
-                        eq.operators&&eq.operators.length>0&&h('span',{style:{fontSize:10,fontWeight:400,color:'#9CA3AF',marginLeft:4,display:'inline'}},' \u2014 ',eq.operators.join(', '))
+                      h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between'}},
+                        h('div',{className:'hr-drill-eq-name'},eq.name,
+                          eq.operators&&eq.operators.length>0&&h('span',{style:{fontSize:10,fontWeight:400,color:'#9CA3AF',marginLeft:4,display:'inline'}},' \u2014 ',eq.operators.join(', '))
+                        ),
+                        isAuto&&h('button',{onClick:e=>{e.stopPropagation();const ch=drillClockHour!==null?drillClockHour:(selectedHour!==null?selectedHour+4:toET(new Date()).getHours());setCycleTimeEquip({code:eq.code,clockHour:ch});},
+                          style:{padding:'2px 8px',borderRadius:12,border:'1px solid var(--jm-border)',background:'var(--jm-bg)',fontSize:9,fontWeight:700,color:'var(--jm-navy)',cursor:'pointer',whiteSpace:'nowrap',fontFamily:'inherit'}},'\u23F1 Cycle Time')
                       ),
                       h('div',{className:'hr-drill-eq-stats'},
                         isOEE?h(React.Fragment,null,
@@ -3473,6 +3528,16 @@ function Dashboard({dataVersion,master}){
           ):h('div',{className:'hr-drill'},h('div',{style:{textAlign:'center',padding:24,color:'#9CA3AF',fontSize:13}},'No data for this hour'))
         ):h('div',{className:'dash-empty'},h(Icon.chart),h('p',{style:{marginTop:8}},hourlyMode==='oee'?'OEE hourly data appears after shift entry':'Production hourly data appears after shift entry')),
         hasData&&h(AskAI,{section:'OEE by Hour',context:()=>buildFullContext('OEE by Hour'),filters:()=>({dateFrom,dateTo,shift:shiftFilter})})
+      ),
+
+      // ── CYCLE TIME DRILL-DOWN ──
+      cycleTimeEquip&&h('div',{className:'dash-card',style:{position:'relative'}},
+        h(CycleTimeChart,{
+          equipCode:cycleTimeEquip.code,
+          date:dateFrom===dateTo?dateFrom:fmtDate(toET(new Date())),
+          initialHour:cycleTimeEquip.clockHour,
+          onClose:()=>setCycleTimeEquip(null)
+        })
       ),
 
       // ── OEE/PRODUCTION TREND (multi-day) ──
@@ -5057,12 +5122,189 @@ function AnalyticsView({dataVersion,master}){
   );
 }
 
+// ── CYCLE TIME CHART COMPONENT ──
+// Shows scatter plot of cycle times for a specific equipment+date+hour
+// With UCL, LCL, avg reference lines, downtime bars, and hour navigation
+function CycleTimeChart({equipCode,date,initialHour,onClose}){
+  const {ResponsiveContainer,ScatterChart,Scatter,XAxis,YAxis,CartesianGrid,ReferenceLine,Tooltip,ComposedChart,Bar,Line,Cell}=Recharts;
+  const [clockHour,setClockHour]=useState(initialHour);
+  const [cycleData,setCycleData]=useState(null);
+  const [minuteData,setMinuteData]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [viewMode,setViewMode]=useState('scatter'); // 'scatter' or 'minute'
+  const [refreshTimer,setRefreshTimer]=useState(0);
+  const eqName=(INIT_EQUIPMENT.find(e=>e.code===equipCode)||{}).name||equipCode;
+
+  // Determine if this is a live hour (current hour of today)
+  const isLive=useMemo(()=>{
+    const now=toET(new Date());
+    return date===fmtDate(now)&&clockHour===now.getHours();
+  },[date,clockHour]);
+
+  // Fetch data
+  useEffect(()=>{
+    let cancelled=false;
+    setLoading(true);
+    Promise.all([
+      API.mysqlCycleData(equipCode,date,clockHour),
+      API.mysqlMinuteData(equipCode,date,clockHour)
+    ]).then(([cd,md])=>{
+      if(cancelled)return;
+      setCycleData(cd);
+      setMinuteData(md);
+      setLoading(false);
+    }).catch(()=>{if(!cancelled)setLoading(false);});
+    return()=>{cancelled=true;};
+  },[equipCode,date,clockHour,refreshTimer]);
+
+  // Auto-refresh every 30s if live
+  useEffect(()=>{
+    if(!isLive)return;
+    const iv=setInterval(()=>setRefreshTimer(t=>t+1),30000);
+    return()=>clearInterval(iv);
+  },[isLive]);
+
+  // Build scatter data from cycle times
+  const scatterData=useMemo(()=>{
+    if(!cycleData||!cycleData.cycleTimes)return[];
+    return cycleData.cycleTimes.map((ct,i)=>{
+      const t=new Date(ct.ts);
+      const minSec=t.getMinutes()*60+t.getSeconds();
+      return{x:minSec,y:ct.seconds,ts:ct.ts,label:String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')};
+    });
+  },[cycleData]);
+
+  // Build minute bar data
+  const minuteBarData=useMemo(()=>{
+    if(!minuteData||!minuteData.minutes)return[];
+    return minuteData.minutes.map(m=>({minute:String(m.minute).padStart(2,'0'),count:m.count}));
+  },[minuteData]);
+
+  const stats=cycleData&&cycleData.stats?cycleData.stats:{avg:0,min:0,max:0,stddev:0,ucl:0,lcl:0,count:0};
+  const {shiftNum,hourIdx}=getShiftForClockHour(clockHour);
+
+  // Hour navigation
+  function prevHour(){if(clockHour>0)setClockHour(clockHour-1);}
+  function nextHour(){if(clockHour<23)setClockHour(clockHour+1);}
+
+  // Format clock hour display
+  function fmtHour(h){
+    const ampm=h>=12?'PM':'AM';
+    const h12=h===0?12:h>12?h-12:h;
+    return h12+':00 '+ampm;
+  }
+
+  return h('div',{className:'ct-chart-wrap'},
+    h('div',{className:'ct-header'},
+      h('div',{style:{display:'flex',alignItems:'center',gap:12}},
+        h('button',{className:'ct-back-btn',onClick:onClose},'\u2190 Back'),
+        h('div',null,
+          h('div',{className:'ct-title'},eqName,' — Cycle Time'),
+          h('div',{style:{fontSize:11,color:'var(--jm-text-sec)'}},date,' • Shift ',shiftNum,' • Hour ',hourIdx)
+        )
+      ),
+      h('div',{style:{display:'flex',alignItems:'center',gap:12}},
+        isLive&&h('div',{className:'ct-live-badge'},h('span',{className:'ct-live-dot'}),'LIVE'),
+        h('div',{className:'ct-hour-nav'},
+          h('button',{onClick:prevHour,disabled:clockHour<=0},'\u2039'),
+          h('div',{className:'ct-hour-label'},fmtHour(clockHour)),
+          h('button',{onClick:nextHour,disabled:clockHour>=23},'\u203A')
+        ),
+        h('div',{className:'dash-shift-toggle'},
+          h('button',{className:'dash-shift-btn'+(viewMode==='scatter'?' active':''),onClick:()=>setViewMode('scatter'),style:{fontSize:10,padding:'2px 8px'}},'Cycle Time'),
+          h('button',{className:'dash-shift-btn'+(viewMode==='minute'?' active':''),onClick:()=>setViewMode('minute'),style:{fontSize:10,padding:'2px 8px'}},'Per Minute')
+        )
+      )
+    ),
+
+    loading?h('div',{style:{textAlign:'center',padding:40,color:'var(--jm-text-sec)',fontSize:13}},'Loading cycle data...'):
+
+    viewMode==='scatter'?h(React.Fragment,null,
+      // Scatter chart
+      scatterData.length>0?h(ResponsiveContainer,{width:'100%',height:280},
+        h(ScatterChart,{margin:{top:20,right:20,bottom:10,left:10}},
+          h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E7EB'}),
+          h(XAxis,{dataKey:'x',type:'number',domain:[0,3600],tick:{fontSize:10},tickFormatter:v=>{const m=Math.floor(v/60);return':'+String(m).padStart(2,'0');},label:{value:'Time in Hour',position:'bottom',fontSize:10,fill:'#9CA3AF'}}),
+          h(YAxis,{dataKey:'y',type:'number',tick:{fontSize:10},label:{value:'Seconds/Part',angle:-90,position:'insideLeft',fontSize:10,fill:'#9CA3AF'},
+            domain:[d=>Math.max(0,Math.floor(d*0.8)),d=>Math.ceil(d*1.2)]}),
+          h(Tooltip,{contentStyle:{borderRadius:8,fontSize:11,border:'1px solid #E5E7EB'},
+            formatter:(val,name)=>[parseFloat(val).toFixed(1)+'s',name==='y'?'Cycle Time':name],
+            labelFormatter:v=>{const m=Math.floor(v/60);const s=v%60;return fmtHour(clockHour).replace(':00',':'+String(m).padStart(2,'0'));}}),
+          stats.avg>0&&h(ReferenceLine,{y:stats.avg,stroke:'#1B3D6E',strokeWidth:2,strokeDasharray:'6 3',label:{value:'Avg: '+stats.avg.toFixed(1)+'s',position:'insideTopRight',fill:'#1B3D6E',fontSize:10,fontWeight:700}}),
+          stats.ucl>0&&h(ReferenceLine,{y:stats.ucl,stroke:'#DC2626',strokeWidth:1.5,strokeDasharray:'4 3',label:{value:'UCL: '+stats.ucl.toFixed(1)+'s',position:'insideTopRight',fill:'#DC2626',fontSize:9}}),
+          stats.lcl>0&&h(ReferenceLine,{y:stats.lcl,stroke:'#059669',strokeWidth:1.5,strokeDasharray:'4 3',label:{value:'LCL: '+stats.lcl.toFixed(1)+'s',position:'insideBottomRight',fill:'#059669',fontSize:9}}),
+          h(Scatter,{data:scatterData,fill:'#1B3D6E',fillOpacity:0.7,r:3},
+            scatterData.map((d,i)=>h(Cell,{key:i,fill:d.y>stats.ucl?'#DC2626':d.y<stats.lcl?'#059669':'#1B3D6E'}))
+          )
+        )
+      ):h('div',{style:{textAlign:'center',padding:40,color:'#9CA3AF',fontSize:13}},'No cycle time data for this hour'),
+
+      // Stats grid
+      stats.count>0&&h('div',{className:'ct-stats-grid'},
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Avg Cycle'),h('div',{className:'ct-stat-val'},stats.avg.toFixed(1)),h('div',{className:'ct-stat-unit'},'sec/part')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Min'),h('div',{className:'ct-stat-val',style:{color:'#059669'}},stats.min.toFixed(1)),h('div',{className:'ct-stat-unit'},'sec')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Max'),h('div',{className:'ct-stat-val',style:{color:'#DC2626'}},stats.max.toFixed(1)),h('div',{className:'ct-stat-unit'},'sec')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Std Dev'),h('div',{className:'ct-stat-val'},stats.stddev.toFixed(2)),h('div',{className:'ct-stat-unit'},'sec')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'UCL (3\u03C3)'),h('div',{className:'ct-stat-val',style:{color:'#DC2626'}},stats.ucl.toFixed(1)),h('div',{className:'ct-stat-unit'},'sec')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'LCL (3\u03C3)'),h('div',{className:'ct-stat-val',style:{color:'#059669'}},stats.lcl.toFixed(1)),h('div',{className:'ct-stat-unit'},'sec')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Samples'),h('div',{className:'ct-stat-val'},stats.count),h('div',{className:'ct-stat-unit'},'parts')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Parts/Min'),h('div',{className:'ct-stat-val',style:{color:'var(--jm-navy)'}},stats.avg>0?(60/stats.avg).toFixed(1):'—'),h('div',{className:'ct-stat-unit'},'rate'))
+      ),
+
+      // Legend
+      h('div',{className:'ct-legend'},
+        h('span',{className:'ct-legend-item'},h('span',{className:'ct-legend-dot',style:{background:'#1B3D6E'}}),'Normal'),
+        h('span',{className:'ct-legend-item'},h('span',{className:'ct-legend-dot',style:{background:'#DC2626'}}),'Above UCL'),
+        h('span',{className:'ct-legend-item'},h('span',{className:'ct-legend-dot',style:{background:'#059669'}}),'Below LCL')
+      )
+    ):
+
+    // Per-minute view
+    h(React.Fragment,null,
+      minuteBarData.length>0?h(ResponsiveContainer,{width:'100%',height:280},
+        h(ComposedChart,{data:minuteBarData,margin:{top:20,right:15,bottom:10,left:0}},
+          h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#E5E7EB',vertical:false}),
+          h(XAxis,{dataKey:'minute',tick:{fontSize:9},interval:4,label:{value:'Minute of Hour',position:'bottom',fontSize:10,fill:'#9CA3AF'}}),
+          h(YAxis,{tick:{fontSize:10},label:{value:'Parts',angle:-90,position:'insideLeft',fontSize:10,fill:'#9CA3AF'}}),
+          h(Tooltip,{contentStyle:{borderRadius:8,fontSize:11},formatter:(val)=>[val+' parts','Output'],labelFormatter:v=>fmtHour(clockHour).replace(':00',':'+v)}),
+          h(Bar,{dataKey:'count',fill:'#1B3D6E',radius:[2,2,0,0],maxBarSize:12})
+        )
+      ):h('div',{style:{textAlign:'center',padding:40,color:'#9CA3AF',fontSize:13}},'No minute-level data for this hour'),
+
+      // Summary stats for minute view
+      minuteBarData.length>0&&h('div',{className:'ct-stats-grid'},
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Total Parts'),h('div',{className:'ct-stat-val'},minuteBarData.reduce((s,m)=>s+m.count,0)),h('div',{className:'ct-stat-unit'},'this hour')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Peak Minute'),h('div',{className:'ct-stat-val'},Math.max(...minuteBarData.map(m=>m.count))),h('div',{className:'ct-stat-unit'},'parts')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Active Minutes'),h('div',{className:'ct-stat-val'},minuteBarData.filter(m=>m.count>0).length),h('div',{className:'ct-stat-unit'},'of 60')),
+        h('div',{className:'ct-stat-box'},h('div',{className:'ct-stat-label'},'Avg/Min'),h('div',{className:'ct-stat-val'},(()=>{const active=minuteBarData.filter(m=>m.count>0);return active.length>0?(active.reduce((s,m)=>s+m.count,0)/active.length).toFixed(1):'—';})()),h('div',{className:'ct-stat-unit'},'parts'))
+      )
+    )
+  );
+}
+
+// Helper: get shift info from clock hour (frontend version matching server logic)
+function getShiftForClockHour(clockHour){
+  if(clockHour>=5&&clockHour<=12)return{shiftNum:'1',hourIdx:clockHour-4};
+  if(clockHour>=13&&clockHour<=20)return{shiftNum:'2',hourIdx:clockHour-12};
+  if(clockHour>=21)return{shiftNum:'3',hourIdx:clockHour-20};
+  return{shiftNum:'3',hourIdx:clockHour+4};
+}
+
 function TVView({dataVersion,master}){
   const {ResponsiveContainer,BarChart,Bar,XAxis,YAxis,CartesianGrid,Cell,ReferenceLine,LabelList}=Recharts;
   const [processFilter,setProcessFilter]=useState('');
   const [timeRange,setTimeRange]=useState('today');
+  const [liveStatus,setLiveStatus]=useState(null);
   const processes=[...new Set(INIT_EQUIPMENT.map(e=>e.process))].sort();
   if(!processFilter&&processes.length>0)setTimeout(()=>setProcessFilter(processes[0]),0);
+
+  // Fetch live status every 30 seconds
+  useEffect(()=>{
+    function fetchLive(){API.mysqlLiveStatus().then(d=>{if(d)setLiveStatus(d);}).catch(()=>{});}
+    fetchLive();
+    const iv=setInterval(fetchLive,30000);
+    return()=>clearInterval(iv);
+  },[]);
 
   const todayStr=today();
   // Compute date range for WTD/MTD
@@ -5243,13 +5485,20 @@ function TVView({dataVersion,master}){
       h('p',{style:{color:'var(--jm-text-sec)',marginTop:8}},'No production data entered for ',processFilter,' today.')
     ):
     h('div',{className:'tv-grid',style:gridStyle},
-    equipData.map(eq=>h('div',{key:eq.ec,className:'tv-equip-card'},
+    equipData.map(eq=>{
+      const ls=liveStatus&&liveStatus.equipment&&liveStatus.equipment[eq.ec];
+      const isIdle=ls&&ls.idleSince;
+      const isActiveDT=ls&&ls.activeDowntime;
+      const liveCT=ls?ls.liveCycleTime:null;
+      return h('div',{key:eq.ec,className:'tv-equip-card'},
       // Equipment header with OEE pills — OEE stands out
-      h('div',{className:'tv-equip-header'},
+      h('div',{className:'tv-equip-header'+(isActiveDT||isIdle?' dt-active':'')},
         h('div',{className:'tv-equip-name'},
           h('div',{className:'tv-equip-title'},eq.name),
           eq.currentProduct&&h('div',{className:'tv-equip-product'},'Running: ',getProductName(eq.currentProduct)),
-          eq.currentOps&&eq.currentOps.length>0&&h('div',{className:'tv-equip-operators'},'\uD83D\uDC64 ',eq.currentOps.join(' \u2022 '))
+          eq.currentOps&&eq.currentOps.length>0&&h('div',{className:'tv-equip-operators'},'\uD83D\uDC64 ',eq.currentOps.join(' \u2022 ')),
+          liveCT&&h('div',{className:'tv-live-ct'},h('span',{className:'tv-live-ct-val'},liveCT+'s'),h('span',{className:'tv-live-ct-label'},'cycle time')),
+          isIdle&&!isActiveDT&&h('div',{className:'tv-idle-badge'},h('span',{className:'tv-idle-dot'}),'IDLE')
         ),
         h('div',{className:'tv-oee-pills'},
           h('div',{className:'tv-oee-pill oee-hero',style:{borderLeftColor:oeeColor(eq.oee)}},
@@ -5352,7 +5601,8 @@ function TVView({dataVersion,master}){
           )
         );
       })()
-    )))
+    );})
+    )
   );
 }
 
