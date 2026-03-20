@@ -1239,6 +1239,10 @@ input[type=number]{-moz-appearance:textfield}
 .scc-manual-status{font-size:10px;font-weight:600;display:flex;align-items:center;gap:4px}
 .scc-manual-status.needs{color:#D97706}
 .scc-manual-status.complete{color:#10B981}
+.scc-equip-product-select{width:100%;height:30px;border:1.5px solid var(--jm-border);border-radius:6px;padding:0 8px;font-size:11px;font-family:inherit;margin-bottom:8px;background:var(--jm-surface);color:var(--jm-text);cursor:pointer}
+.scc-equip-product-select:focus{border-color:var(--jm-navy);outline:none}
+.scc-proceed-bar{display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:16px 0;margin-top:8px;border-top:1px solid var(--jm-border)}
+.scc-proceed-btn{padding:12px 28px;font-size:14px;font-weight:700;border-radius:10px;letter-spacing:.3px}
 
 @media(max-width:768px){
   .scc-wrap{padding:12px 14px}
@@ -2238,7 +2242,10 @@ const API={
   async mysqlStatus(){const r=await fetch('/api/mysql/status');if(!r.ok)return{connected:false};return r.json();},
   async mysqlProduction(date){const r=await fetch('/api/mysql/production?date='+date);if(!r.ok)return null;return r.json();},
   async mysqlDowntime(date){const r=await fetch('/api/mysql/downtime?date='+date);if(!r.ok)return null;return r.json();},
-  async mysqlMerged(date){const r=await fetch('/api/mysql/merged?date='+date);if(!r.ok)return null;return r.json();},
+  async mysqlMerged(dateOrFrom,to){
+    const url=to?'/api/mysql/merged?from='+dateOrFrom+'&to='+to:'/api/mysql/merged?date='+dateOrFrom;
+    const r=await fetch(url);if(!r.ok)return null;return r.json();
+  },
   async mysqlClassifyDT(mysqlEventId,equipCode,dtCode,subItem,shiftDate,classifiedBy){
     const r=await fetch('/api/mysql/classify-downtime',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({mysqlEventId,equipCode,dtCode,subItem,shiftDate,classifiedBy})});
@@ -3048,16 +3055,39 @@ function Dashboard({dataVersion,master}){
   function setPreset(key){
     setActivePreset(key);
     const t=toET(new Date()),fmt=fmtDate;
-    if(key==='today'){setDateFrom(fmt(t));setDateTo(fmt(t));}
-    else if(key==='yesterday'){const y=new Date(t);y.setDate(y.getDate()-1);setDateFrom(fmt(y));setDateTo(fmt(y));}
-    else if(key==='7d'){const d=new Date(t);d.setDate(d.getDate()-6);setDateFrom(fmt(d));setDateTo(fmt(t));}
-    else if(key==='mtd'){const m=new Date(t.getFullYear(),t.getMonth(),1);setDateFrom(fmt(m));setDateTo(fmt(t));}
-    else if(key==='ytd'){const y=new Date(t.getFullYear(),0,1);setDateFrom(fmt(y));setDateTo(fmt(t));}
+    let newFrom,newTo=fmt(t);
+    if(key==='today'){newFrom=fmt(t);}
+    else if(key==='yesterday'){const y=new Date(t);y.setDate(y.getDate()-1);newFrom=fmt(y);newTo=fmt(y);}
+    else if(key==='7d'){const d=new Date(t);d.setDate(d.getDate()-6);newFrom=fmt(d);}
+    else if(key==='mtd'){newFrom=fmt(new Date(t.getFullYear(),t.getMonth(),1));}
+    else if(key==='ytd'){newFrom=fmt(new Date(t.getFullYear(),0,1));}
+    setDateFrom(newFrom);setDateTo(newTo);
+    // Fetch MySQL data for extended ranges (YTD, custom)
+    fetchMySQLRange(newFrom,newTo);
+  }
+  function fetchMySQLRange(from,to){
+    // Check if our current _mysqlMergedRecords cover this range
+    const existing=_mysqlMergedRecords;
+    const existingDates=new Set(existing.map(r=>r.date));
+    // If the from date is earlier than what we have, fetch the full range
+    const needFetch=!existingDates.has(from);
+    if(needFetch){
+      API.mysqlMerged(from,to).then(data=>{
+        if(data&&data.records){
+          // Merge with existing (keep newer records for overlapping dates)
+          const newByKey=new Map();
+          data.records.forEach(r=>{newByKey.set(r.date+'|'+r.shiftNum+'|'+r.equipCode+'|'+r.hourIdx,r);});
+          existing.forEach(r=>{newByKey.set(r.date+'|'+r.shiftNum+'|'+r.equipCode+'|'+r.hourIdx,r);});
+          _mysqlMergedRecords=Array.from(newByKey.values());
+          setDataVersion(v=>v+1);
+        }
+      }).catch(()=>{});
+    }
   }
   const dateFromRef=React.useRef(null);
   const dateToRef=React.useRef(null);
   function onDateFromChange(e){setDateFrom(e.target.value);setActivePreset(null);setTimeout(()=>{if(dateToRef.current)dateToRef.current.showPicker&&dateToRef.current.showPicker();},100);}
-  function onDateToChange(e){setDateTo(e.target.value);setActivePreset(null);}
+  function onDateToChange(e){setDateTo(e.target.value);setActivePreset(null);fetchMySQLRange(dateFrom,e.target.value);}
   // OEE loss bridge segments
   const lossBridge=useMemo(()=>{
     if(!hasData)return[];
@@ -3869,7 +3899,7 @@ function Dashboard({dataVersion,master}){
 // ═══════════════════════════════════════════════════════════════════════════════
 function isAutoEquip(code){const eq=INIT_EQUIPMENT.find(e=>e.code===code);return eq&&eq.autoData;}
 
-function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEquip,onAddEquip,onRemoveHoursFrom,onReorderEquip,onSubmit,operators}){
+function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEquip,onAddEquip,onRemoveHoursFrom,onReorderEquip,onSubmit,onNext,operators}){
   const [mode,setMode]=useState('overview'); // overview, classify, defects, operators, manual
   const [mysqlStatus,setMysqlStatus]=useState(null);
   const [autoProduction,setAutoProduction]=useState(null);
@@ -3882,6 +3912,7 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
   const [dtFilter,setDtFilter]=useState('unclassified'); // all, unclassified, classified
   const [batchCode,setBatchCode]=useState('');
   const [batchEquip,setBatchEquip]=useState('all');
+  const [autoProducts,setAutoProducts]=useState({}); // {equipCode: productCode} — what product each auto machine is running
 
   const today=shiftData.shiftDate||fmtDate(toET(new Date()));
   const shiftNum=shiftData.shiftNum||'1';
@@ -3927,7 +3958,7 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
       // Operators
       const ops=opAssignments.filter(a=>a.equip_code===eq.code).map(a=>a.operator_name);
       return{...eq,totalParts,shiftParts,dtEvents:eqDT,unclassified,operators:ops};
-    }).filter(eq=>eq.shiftParts>0||eq.dtEvents.length>0);
+    });
   },[autoEquip,autoProduction,autoDowntime,shiftNum,opAssignments]);
 
   const totalPending=autoSummary.reduce((s,eq)=>s+eq.unclassified,0);
@@ -3993,6 +4024,49 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
     return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'});
   }
 
+  // Build equipData entries from MySQL production for auto machines
+  function buildAutoEquipData(){
+    if(!autoProduction||!autoProduction.equipment)return;
+    const numH=parseInt(shiftData.shiftHrs)||8;
+    const tpl=getTemplate(shiftNum,shiftData.shiftHrs);
+    for(const eq of autoEquip){
+      const pc=autoProducts[eq.code];
+      if(!pc)continue; // No product assigned — skip
+      const data=autoProduction.equipment[eq.code];
+      if(!data)continue;
+      const shiftHours=(data.hours||[]).filter(h=>h.shiftNum===shiftNum);
+      if(shiftHours.length===0)continue;
+      // Build hourly records
+      const hrs=[];
+      for(let i=1;i<=numH;i++){
+        const sm=getScheduledMins(i,tpl);
+        const mySqlHr=shiftHours.find(h=>h.hourIdx===i);
+        const goodUnits=mySqlHr?mySqlHr.goodUnits:0;
+        // Downtime for this hour
+        const eqDT=autoDowntime?(autoDowntime.events||[]).filter(e=>e.equipCode===eq.code&&e.shiftNum===shiftNum):[];
+        const hourDT=eqDT.filter(e=>e.hourIdx===i);
+        const dtArr=hourDT.map(e=>({id:'mysql-'+e.id,mins:String(e.durationMins),dtCode:e.dtCode!==null?String(e.dtCode):'',subItem:e.subItem||'',autoDetected:true}));
+        // Operators for this hour
+        const ops=opAssignments.filter(a=>a.equip_code===eq.code).map(a=>a.operator_name);
+        hrs.push({hourIdx:i,productCode:pc,scheduledMins:sm,target:calcTarget(eq.code,pc,sm),goodUnits:String(goodUnits),downtime:dtArr,defects:[],submitted:false,operators:ops,autoData:true});
+      }
+      onUpdateEquip(eq.code,hrs);
+    }
+  }
+
+  // Client-side shift-hour mapping (mirrors server's getShiftForHour)
+  function getShiftForHourClient(clockHour){
+    if(clockHour>=5&&clockHour<=12)return{shiftNum:'1',hourIdx:clockHour-4};
+    if(clockHour>=13&&clockHour<=20)return{shiftNum:'2',hourIdx:clockHour-12};
+    if(clockHour>=21)return{shiftNum:'3',hourIdx:clockHour-20};
+    return{shiftNum:'3',hourIdx:clockHour+4};
+  }
+
+  function handleProceedToReview(){
+    buildAutoEquipData();
+    if(onNext)onNext();
+  }
+
   // ── RENDER ──
   const connected=mysqlStatus&&mysqlStatus.connected;
 
@@ -4015,6 +4089,14 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
 
     // ── OVERVIEW MODE ──
     mode==='overview'&&h('div',null,
+      // MySQL Status Banner
+      !connected&&h('div',{style:{background:'#FEF3C7',border:'1.5px solid #F59E0B',borderRadius:10,padding:'10px 16px',marginBottom:14,display:'flex',alignItems:'center',gap:10}},
+        h('span',{style:{fontSize:18}},'⚠'),
+        h('div',null,
+          h('div',{style:{fontSize:13,fontWeight:700,color:'#92400E'}},'MySQL Connection Offline'),
+          h('div',{style:{fontSize:11,color:'#A16207'}},'Auto equipment data will appear once the connection to JMWVL2 is restored. Manual equipment entry is still available.')
+        )
+      ),
       // Automated Equipment Section
       autoSummary.length>0&&h('div',{className:'scc-section'},
         h('div',{className:'scc-section-header'},
@@ -4026,19 +4108,32 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
         ),
         h('div',{className:'scc-equip-grid'},
           autoSummary.map(eq=>{
-            const pct=eq.shiftParts>0?Math.min((eq.shiftParts/(8*150))*100,100):0; // rough gauge
-            const barColor=eq.unclassified>0?'#F59E0B':'#10B981';
+            const assignedProd=autoProducts[eq.code]||'';
+            const targetPerHr=assignedProd?calcTarget(eq.code,assignedProd,0):0;
+            const shiftTarget=targetPerHr*8;
+            const pct=shiftTarget>0?Math.min((eq.shiftParts/shiftTarget)*100,100):(eq.shiftParts>0?50:0);
+            const barColor=eq.unclassified>0?'#F59E0B':pct>=90?'#10B981':pct>=70?'#3B82F6':'#F59E0B';
+            const eqProducts=getEquipProducts(eq.code,master);
             return h('div',{key:eq.code,className:'scc-equip-card'+(eq.unclassified>0?' has-pending':'')},
               h('div',{className:'scc-equip-card-head'},
                 h('span',{className:'scc-equip-name'},eq.name),
                 h('span',{className:'scc-equip-auto-badge'},'AUTO')
+              ),
+              // Product assignment
+              h('select',{className:'scc-equip-product-select',value:assignedProd,onChange:e=>setAutoProducts(p=>({...p,[eq.code]:e.target.value}))},
+                h('option',{value:''},'— Select product —'),
+                eqProducts.map(pc=>h('option',{key:pc,value:pc},getProductName(pc)))
               ),
               h('div',{className:'scc-equip-bar'},
                 h('div',{className:'scc-equip-bar-fill',style:{width:Math.min(pct,100)+'%',background:barColor}})
               ),
               h('div',{className:'scc-equip-stats'},
                 h('span',null,h('strong',null,eq.shiftParts.toLocaleString()),' parts'),
+                shiftTarget>0&&h('span',null,'/ ',shiftTarget.toLocaleString(),' target'),
                 h('span',null,h('strong',null,eq.dtEvents.length),' DT events')
+              ),
+              shiftTarget>0&&h('div',{style:{fontSize:10,color:pct>=90?'#10B981':pct>=70?'#3B82F6':'#D97706',fontWeight:700,marginTop:2}},
+                Math.round(pct)+'% of target'
               ),
               eq.unclassified>0&&h('div',{className:'scc-equip-pending'},
                 '⚠ ',eq.unclassified,' unclassified'
@@ -4074,6 +4169,14 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
               )
             );
           })
+        )
+      ),
+
+      // ── PROCEED TO REVIEW BUTTON ──
+      h('div',{className:'scc-proceed-bar'},
+        totalPending>0&&h('span',{style:{fontSize:12,color:'#D97706',fontWeight:600}},'⚠ '+totalPending+' downtime event'+(totalPending!==1?'s':'')+' still unclassified'),
+        h('button',{className:'btn btn-primary scc-proceed-btn',onClick:handleProceedToReview},
+          'Proceed to Review →'
         )
       )
     ),
@@ -4227,7 +4330,19 @@ function SixSigmaView({dataVersion,master}){
     dataQueue.forEach(entry=>{
       if(entry.shiftData&&entry.equipData){const sd=entry.shiftData;Object.keys(entry.equipData).forEach(ec=>{(entry.equipData[ec]||[]).forEach(hr=>{records.push({date:sd.shiftDate,shiftNum:sd.shiftNum,equipCode:ec,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});});});}
       if(entry.equipCode&&entry.hourData&&!entry.equipData){const hr=entry.hourData;const sd=entry.shiftData||{};records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});}
-    });return dedup(records);
+    });
+    // Merge MySQL automated records
+    const manualKeys=new Set(records.map(r=>r.date+'|'+r.shiftNum+'|'+r.equipCode+'|'+r.hourIdx));
+    (_mysqlMergedRecords||[]).forEach(mr=>{
+      const key=mr.date+'|'+mr.shiftNum+'|'+mr.equipCode+'|'+mr.hourIdx;
+      if(!manualKeys.has(key)){
+        records.push({date:mr.date,shiftNum:mr.shiftNum,equipCode:mr.equipCode,hourIdx:mr.hourIdx,
+          productCode:mr.productCode||'',scheduledMins:mr.scheduledMins||0,target:mr.target||0,
+          goodUnits:parseInt(mr.goodUnits)||0,downtime:mr.downtime||[],defects:mr.defects||[],
+          operators:mr.operators||[],autoData:true});
+      }
+    });
+    return dedup(records);
   },[dataVersion]);
   const filtered=useMemo(()=>allRecords.filter(r=>{
     if(r.date<dateFrom||r.date>dateTo)return false;
@@ -4366,6 +4481,17 @@ function AnalyticsView({dataVersion,master}){
       if(entry.equipCode&&entry.hourData&&!entry.equipData){
         const hr=entry.hourData;const sd=entry.shiftData||{};
         records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
+      }
+    });
+    // Merge MySQL automated records
+    const manualKeys=new Set(records.map(r=>r.date+'|'+r.shiftNum+'|'+r.equipCode+'|'+r.hourIdx));
+    (_mysqlMergedRecords||[]).forEach(mr=>{
+      const key=mr.date+'|'+mr.shiftNum+'|'+mr.equipCode+'|'+mr.hourIdx;
+      if(!manualKeys.has(key)){
+        records.push({date:mr.date,shiftNum:mr.shiftNum,equipCode:mr.equipCode,hourIdx:mr.hourIdx,
+          productCode:mr.productCode||'',scheduledMins:mr.scheduledMins||0,target:mr.target||0,
+          goodUnits:parseInt(mr.goodUnits)||0,downtime:mr.downtime||[],defects:mr.defects||[],
+          operators:mr.operators||[],autoData:true});
       }
     });
     return dedup(records);
@@ -4964,6 +5090,17 @@ function TVView({dataVersion,master}){
       if(entry.equipCode&&entry.hourData&&!entry.equipData){
         const hr=entry.hourData;const sd=entry.shiftData||{};
         records.push({date:sd.shiftDate||today(),shiftNum:sd.shiftNum||'',equipCode:entry.equipCode,hourIdx:hr.hourIdx,productCode:hr.productCode,scheduledMins:hr.scheduledMins,target:hr.target,goodUnits:parseInt(hr.goodUnits)||0,downtime:hr.downtime||[],defects:hr.defects||[],operators:hr.operators||[]});
+      }
+    });
+    // Merge MySQL automated records
+    const manualKeys=new Set(records.map(r=>r.date+'|'+r.shiftNum+'|'+r.equipCode+'|'+r.hourIdx));
+    (_mysqlMergedRecords||[]).forEach(mr=>{
+      const key=mr.date+'|'+mr.shiftNum+'|'+mr.equipCode+'|'+mr.hourIdx;
+      if(!manualKeys.has(key)){
+        records.push({date:mr.date,shiftNum:mr.shiftNum,equipCode:mr.equipCode,hourIdx:mr.hourIdx,
+          productCode:mr.productCode||'',scheduledMins:mr.scheduledMins||0,target:mr.target||0,
+          goodUnits:parseInt(mr.goodUnits)||0,downtime:mr.downtime||[],defects:mr.defects||[],
+          operators:mr.operators||[],autoData:true});
       }
     });
     return dedup(records);
@@ -6408,6 +6545,12 @@ function ProductionEntry({selectedEquip,shiftNum,shiftHrs,equipData,onUpdateEqui
 // ── REVIEW & SUBMIT ──
 function ReviewSubmit({shiftData,selectedEquip,equipData,onBack,onSubmit}){
   const [showConfirm,setShowConfirm]=useState(false);
+  // Combine selectedEquip with any auto equipment that has data in equipData
+  const allEquipCodes=useMemo(()=>{
+    const codes=[...selectedEquip];
+    Object.keys(equipData).forEach(ec=>{if(!codes.includes(ec))codes.push(ec);});
+    return codes;
+  },[selectedEquip,equipData]);
   return h('div',null,
     h('div',{className:'card'},
       h('div',{className:'card-title'},'Review & Submit'),h('div',{className:'card-sub'},'Review your complete shift data before final submission.'),
@@ -6418,13 +6561,18 @@ function ReviewSubmit({shiftData,selectedEquip,equipData,onBack,onSubmit}){
         h('div',null,h('div',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-sec)',textTransform:'uppercase'}},'Entered By'),h('div',{style:{fontWeight:600,fontSize:13}},shiftData.enteredBy))
       ),
       h('div',{className:'divider'}),
-      selectedEquip.map(ec=>{
-        const hrs=equipData[ec]||[];const tg=hrs.reduce((s,hx)=>s+parseInt(hx.goodUnits||0),0);const tt=hrs.reduce((s,hx)=>s+hx.target,0);const pct=tt>0?Math.round(tg/tt*100):0;
+      allEquipCodes.map(ec=>{
+        const hrs=equipData[ec]||[];if(hrs.length===0)return null;
+        const isAuto=hrs.some(hx=>hx.autoData);
+        const tg=hrs.reduce((s,hx)=>s+parseInt(hx.goodUnits||0),0);const tt=hrs.reduce((s,hx)=>s+hx.target,0);const pct=tt>0?Math.round(tg/tt*100):0;
         return h('div',{key:ec,style:{marginBottom:16,padding:12,border:'1px solid var(--jm-border-light)',borderRadius:10}},
-          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},h('strong',null,getEquipName(ec)),h('span',{style:{fontSize:13,color:'var(--jm-text-sec)'}},tg.toLocaleString(),' / ',tt.toLocaleString(),' units (',pct,'%)')),
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},
+            h('strong',null,getEquipName(ec),isAuto&&h('span',{style:{fontSize:9,fontWeight:700,background:'linear-gradient(135deg,#3B82F6,#6366F1)',color:'#fff',padding:'2px 6px',borderRadius:8,marginLeft:8,textTransform:'uppercase',letterSpacing:.5}},'AUTO')),
+            h('span',{style:{fontSize:13,color:'var(--jm-text-sec)'}},tg.toLocaleString(),' / ',tt.toLocaleString(),' units (',pct,'%)')
+          ),
           h('div',{className:'oee-bar'},h('div',{className:`oee-fill ${pct>=85?'oee-green':pct>=65?'oee-yellow':'oee-red'}`,style:{width:Math.min(pct,100)+'%'}}))
         );
-      })
+      }).filter(Boolean)
     ),
     h('div',{className:'nav-footer'},h('button',{className:'btn btn-secondary',onClick:onBack},'\u2190 Back'),h('button',{className:'btn btn-primary',onClick:()=>setShowConfirm(true)},h(Icon.check),' Submit Shift')),
     // CONFIRMATION MODAL
@@ -6639,8 +6787,10 @@ function App({authUser,onLogout}){
       }
     }).catch(e=>console.warn('Could not fetch server data:',e));
     // Fetch automated MySQL data (production + downtime from JMWVL2)
-    const today=fmtDate(toET(new Date()));
-    API.mysqlMerged(today).then(data=>{
+    // Fetch last 35 days to cover MTD; YTD fetched on-demand when preset changes
+    const todayDate=fmtDate(toET(new Date()));
+    const mtdStart=fmtDate(new Date(toET(new Date()).getFullYear(),toET(new Date()).getMonth(),1));
+    API.mysqlMerged(mtdStart,todayDate).then(data=>{
       if(data&&data.records){
         const oldLen=_mysqlMergedRecords.length;
         _mysqlMergedRecords=data.records;
@@ -6750,7 +6900,10 @@ function App({authUser,onLogout}){
     }
   }
   async function handleSubmit(){
-    queueData({shiftData,selectedEquip,equipData});setDataVersion(v=>v+1);
+    // Combine selectedEquip with any auto equipment that has data in equipData
+    const allSubmitEquip=[...selectedEquip];
+    Object.keys(equipData).forEach(ec=>{if(!allSubmitEquip.includes(ec))allSubmitEquip.push(ec);});
+    queueData({shiftData,selectedEquip:allSubmitEquip,equipData});setDataVersion(v=>v+1);
     // BDR detection per equipment — merge in-memory + server-stored hours
     const bdrDetected=[];
     // Build map of server-stored hours for this date/shift
@@ -6761,7 +6914,7 @@ function App({authUser,onLogout}){
         serverHours[entry.equipCode][entry.hourIdx||entry.hourData.hourIdx]=entry.hourData;
       }
     });
-    for(const ec of selectedEquip){
+    for(const ec of allSubmitEquip){
       const memHrs=equipData[ec]||[];
       const srvMap=serverHours[ec]||{};
       const merged={};
@@ -6855,7 +7008,7 @@ function App({authUser,onLogout}){
         }).flat()),
         step===1&&h(ShiftSetup,{data:shiftData,supervisors:master.supervisors,onChange:setShiftData,onNext:()=>setStep(2)}),
         step===2&&h(EquipmentSelect,{selected:selectedEquip,onToggle:toggleEquip,onBack:()=>setStep(1),onNext:handleEquipNext,master}),
-        step===3&&(hasAutoEquip?h(ShiftCommandCenter,{master,shiftData,selectedEquip,equipData,onUpdateEquip:handleUpdateEquip,onAddEquip:handleAddEquip,onRemoveHoursFrom:handleRemoveHoursFrom,onReorderEquip:handleReorderEquip,onSubmit:handleSubmit,operators:master.operators}):h(ProductionEntry,{selectedEquip,shiftNum:shiftData.shiftNum,shiftHrs:shiftData.shiftHrs,equipData,onUpdateEquip:handleUpdateEquip,onAddEquip:handleAddEquip,onRemoveHoursFrom:handleRemoveHoursFrom,onReorderEquip:handleReorderEquip,onBack:()=>setStep(2),onNext:()=>setStep(4),operators:master.operators,master})),
+        step===3&&(hasAutoEquip?h(ShiftCommandCenter,{master,shiftData,selectedEquip,equipData,onUpdateEquip:handleUpdateEquip,onAddEquip:handleAddEquip,onRemoveHoursFrom:handleRemoveHoursFrom,onReorderEquip:handleReorderEquip,onSubmit:handleSubmit,onNext:()=>setStep(4),operators:master.operators}):h(ProductionEntry,{selectedEquip,shiftNum:shiftData.shiftNum,shiftHrs:shiftData.shiftHrs,equipData,onUpdateEquip:handleUpdateEquip,onAddEquip:handleAddEquip,onRemoveHoursFrom:handleRemoveHoursFrom,onReorderEquip:handleReorderEquip,onBack:()=>setStep(2),onNext:()=>setStep(4),operators:master.operators,master})),
         step===4&&h(ReviewSubmit,{shiftData,selectedEquip,equipData,onBack:()=>setStep(3),onSubmit:handleSubmit})
       ),
       // BDR Notification Panel

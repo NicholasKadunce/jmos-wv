@@ -212,6 +212,39 @@ async function initDB() {
       notes TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_auto_def_shift ON auto_defect_reports(equip_code, shift_date);
+
+    -- Auto-production log: MySQL production data persisted to PG for historical access
+    CREATE TABLE IF NOT EXISTS auto_production_log (
+      id SERIAL PRIMARY KEY,
+      date VARCHAR(10) NOT NULL,
+      shift_num VARCHAR(2) NOT NULL,
+      equip_code VARCHAR(50) NOT NULL,
+      hour_idx INTEGER NOT NULL,
+      clock_hour INTEGER NOT NULL,
+      good_units INTEGER NOT NULL DEFAULT 0,
+      synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(date, equip_code, clock_hour)
+    );
+    CREATE INDEX IF NOT EXISTS idx_auto_prod_date ON auto_production_log(date);
+    CREATE INDEX IF NOT EXISTS idx_auto_prod_equip_date ON auto_production_log(equip_code, date);
+
+    -- Auto-downtime log: MySQL downtime events persisted to PG for historical access
+    CREATE TABLE IF NOT EXISTS auto_downtime_log (
+      id SERIAL PRIMARY KEY,
+      mysql_event_id BIGINT NOT NULL UNIQUE,
+      equip_code VARCHAR(50) NOT NULL,
+      date VARCHAR(10) NOT NULL,
+      shift_num VARCHAR(2) NOT NULL,
+      hour_idx INTEGER NOT NULL,
+      start_time TIMESTAMPTZ,
+      end_time TIMESTAMPTZ,
+      duration_mins INTEGER NOT NULL DEFAULT 0,
+      mysql_code VARCHAR(50),
+      mysql_desc TEXT,
+      synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_auto_dt_date ON auto_downtime_log(date);
+    CREATE INDEX IF NOT EXISTS idx_auto_dt_equip_date ON auto_downtime_log(equip_code, date);
   `);
 
   // One-time migration: reassign Pipe Assembly records from Landis to new Pipe Assembly equipment
@@ -1455,10 +1488,71 @@ RESPONSE STYLE:
       mysqlCache.production = hourlyProduction;
       mysqlCache.downtime = downtimeEvents;
       mysqlCache.lastRefresh = Date.now();
+
+      // ── Persist to PostgreSQL for historical access ──
+      persistToPostgres(hourlyProduction, downtimeEvents).catch(e =>
+        console.warn('PG persist warning:', e.message)
+      );
     } catch (err) {
       console.error('MySQL cache refresh error:', err.message);
     } finally {
       mysqlCache.refreshing = false;
+    }
+  }
+
+  // Persist MySQL data to PostgreSQL so historical queries don't need the tunnel
+  async function persistToPostgres(hourlyProduction, downtimeEvents) {
+    if (!pool) return;
+
+    // Batch upsert production records (up to 50 per query for efficiency)
+    const prodRows = [];
+    for (const [appCode, dateData] of Object.entries(hourlyProduction)) {
+      for (const [date, dayData] of Object.entries(dateData)) {
+        for (const [hrStr, count] of Object.entries(dayData.hourBuckets)) {
+          const clockHour = parseInt(hrStr);
+          const { shiftNum, hourIdx } = getShiftForHour(date, clockHour);
+          prodRows.push([date, shiftNum, appCode, hourIdx, clockHour, count]);
+        }
+      }
+    }
+    // Execute in batches
+    for (let i = 0; i < prodRows.length; i += 50) {
+      const batch = prodRows.slice(i, i + 50);
+      const values = [];
+      const placeholders = batch.map((row, idx) => {
+        const base = idx * 6;
+        values.push(...row);
+        return `($${base+1}, $${base+2}, $${base+3}, $${base+4}, $${base+5}, $${base+6}, NOW())`;
+      }).join(',');
+      await pool.query(
+        `INSERT INTO auto_production_log (date, shift_num, equip_code, hour_idx, clock_hour, good_units, synced_at)
+         VALUES ${placeholders}
+         ON CONFLICT (date, equip_code, clock_hour)
+         DO UPDATE SET good_units = EXCLUDED.good_units, shift_num = EXCLUDED.shift_num, hour_idx = EXCLUDED.hour_idx, synced_at = NOW()`,
+        values
+      );
+    }
+
+    // Batch upsert downtime events
+    for (let i = 0; i < downtimeEvents.length; i += 25) {
+      const batch = downtimeEvents.slice(i, i + 25);
+      const values = [];
+      const placeholders = batch.map((evt, idx) => {
+        const base = idx * 10;
+        const { shiftNum, hourIdx } = getShiftForHour(evt.date, new Date(evt.startTime).getHours());
+        values.push(evt.id, evt.equipCode, evt.date, shiftNum, hourIdx, evt.startTime, evt.endTime, evt.durationMins, evt.mysqlCode || null, evt.mysqlDesc || null);
+        return `($${base+1}, $${base+2}, $${base+3}, $${base+4}, $${base+5}, $${base+6}, $${base+7}, $${base+8}, $${base+9}, $${base+10}, NOW())`;
+      }).join(',');
+      await pool.query(
+        `INSERT INTO auto_downtime_log (mysql_event_id, equip_code, date, shift_num, hour_idx, start_time, end_time, duration_mins, mysql_code, mysql_desc, synced_at)
+         VALUES ${placeholders}
+         ON CONFLICT (mysql_event_id)
+         DO UPDATE SET duration_mins = EXCLUDED.duration_mins, end_time = EXCLUDED.end_time, synced_at = NOW()`,
+        values
+      );
+    }
+    if (prodRows.length > 0 || downtimeEvents.length > 0) {
+      console.log(`PG sync: ${prodRows.length} prod rows, ${downtimeEvents.length} DT events persisted`);
     }
   }
 
@@ -1714,84 +1808,174 @@ RESPONSE STYLE:
   });
 
   // ── API: Merged records (combined production + downtime + classifications) ──
+  // Supports: ?date=2026-03-20 (single day) or ?from=2026-03-01&to=2026-03-20 (range)
+  // For today/yesterday: uses live MySQL cache. For older dates: queries PostgreSQL history.
   app.get('/api/mysql/merged', async (req, res) => {
-    if (!mysqlPool) return res.status(503).json({ error: 'MySQL not connected' });
-    const date = req.query.date;
-    if (!date) return res.status(400).json({ error: 'date parameter required' });
-
     try {
-      const prod = mysqlCache.production || {};
-      const dtEvents = (mysqlCache.downtime || []).filter(e => e.date === date);
+      const now = new Date(new Date().toLocaleString('en-US', { timeZone: process.env.TZ || 'America/New_York' }));
+      const todayStr = now.toISOString().slice(0, 10);
+      const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
 
-      // Get operator assignments for this date
-      const { rows: assignments } = await pool.query(
-        'SELECT * FROM operator_assignments WHERE shift_date = $1', [date]
-      );
-      // Get defect reports for this date
-      const { rows: defects } = await pool.query(
-        'SELECT * FROM auto_defect_reports WHERE shift_date = $1', [date]
-      );
+      // Determine date range
+      let dateFrom, dateTo;
+      if (req.query.from && req.query.to) {
+        dateFrom = req.query.from;
+        dateTo = req.query.to;
+      } else if (req.query.date) {
+        dateFrom = req.query.date;
+        dateTo = req.query.date;
+      } else {
+        return res.status(400).json({ error: 'date or from+to parameters required' });
+      }
 
-      // Build merged records per equipment per shift per hour
-      const records = [];
-      for (const [appCode, dateData] of Object.entries(prod)) {
-        const dayData = dateData[date];
-        if (!dayData) continue;
+      const allRecords = [];
+      let totalEvents = 0, totalUnclassified = 0;
 
-        for (const [hrStr, count] of Object.entries(dayData.hourBuckets)) {
-          const clockHour = parseInt(hrStr);
-          if (count === 0) continue; // Skip hours with no production records at all
-          const { shiftNum, hourIdx } = getShiftForHour(date, clockHour);
+      // Split dates into "live" (today/yesterday from cache) and "historical" (from PG)
+      const liveDates = [];
+      const histDates = [];
 
-          // Downtime events for this equipment + hour
-          const hourDT = dtEvents.filter(e => e.equipCode === appCode && e.startHour === clockHour);
-          const dtArray = hourDT.map(e => ({
-            id: 'mysql-' + e.id,
-            mysqlEventId: e.id,
-            mins: String(e.durationMins),
-            dtCode: e.dtCode !== null ? String(e.dtCode) : '',
-            subItem: e.subItem || '',
-            startTime: e.startTime,
-            endTime: e.endTime,
-            classified: e.classified,
+      // Generate date list
+      const dateList = [];
+      for (let d = new Date(dateFrom + 'T12:00:00Z'); d <= new Date(dateTo + 'T12:00:00Z'); d.setDate(d.getDate() + 1)) {
+        dateList.push(d.toISOString().slice(0, 10));
+      }
+
+      for (const date of dateList) {
+        if ((date === todayStr || date === yesterdayStr) && mysqlPool && mysqlCache.production) {
+          liveDates.push(date);
+        } else {
+          histDates.push(date);
+        }
+      }
+
+      // ── LIVE DATES: Build from MySQL cache ──
+      for (const date of liveDates) {
+        const prod = mysqlCache.production || {};
+        const dtEvents = (mysqlCache.downtime || []).filter(e => e.date === date);
+
+        const { rows: assignments } = await pool.query(
+          'SELECT * FROM operator_assignments WHERE shift_date = $1', [date]
+        );
+        const { rows: defects } = await pool.query(
+          'SELECT * FROM auto_defect_reports WHERE shift_date = $1', [date]
+        );
+
+        for (const [appCode, dateData] of Object.entries(prod)) {
+          const dayData = dateData[date];
+          if (!dayData) continue;
+
+          for (const [hrStr, count] of Object.entries(dayData.hourBuckets)) {
+            const clockHour = parseInt(hrStr);
+            if (count === 0) continue;
+            const { shiftNum, hourIdx } = getShiftForHour(date, clockHour);
+
+            const hourDT = dtEvents.filter(e => e.equipCode === appCode && e.startHour === clockHour);
+            const dtArray = hourDT.map(e => ({
+              id: 'mysql-' + e.id, mysqlEventId: e.id, mins: String(e.durationMins),
+              dtCode: e.dtCode !== null ? String(e.dtCode) : '', subItem: e.subItem || '',
+              startTime: e.startTime, endTime: e.endTime, classified: e.classified, autoDetected: true
+            }));
+
+            const shiftOps = assignments.filter(a =>
+              a.equip_code === appCode && a.shift_num === shiftNum &&
+              a.start_hour <= hourIdx && (a.end_hour === null || a.end_hour >= hourIdx)
+            ).map(a => a.operator_name);
+
+            const hourDefs = defects.filter(d =>
+              d.equip_code === appCode && d.shift_num === shiftNum &&
+              (d.hour_idx === hourIdx || d.hour_idx === null)
+            ).map(d => ({ id: 'autodef-' + d.id, qty: String(d.quantity), defCode: String(d.def_code) }));
+
+            const totalDTMins = dtArray.reduce((s, d) => s + parseInt(d.mins || 0), 0);
+            allRecords.push({
+              date, shiftNum, equipCode: appCode, hourIdx, clockHour,
+              productCode: '', scheduledMins: 0, target: 0,
+              goodUnits: count, downtime: dtArray, defects: hourDefs,
+              operators: shiftOps, autoData: true, totalDTMins
+            });
+          }
+        }
+        totalEvents += dtEvents.length;
+        totalUnclassified += dtEvents.filter(e => !e.classified).length;
+      }
+
+      // ── HISTORICAL DATES: Query PostgreSQL ──
+      if (histDates.length > 0) {
+        const hFrom = histDates[0], hTo = histDates[histDates.length - 1];
+
+        // Production from PG
+        const { rows: prodRows } = await pool.query(
+          'SELECT date, shift_num, equip_code, hour_idx, clock_hour, good_units FROM auto_production_log WHERE date >= $1 AND date <= $2 ORDER BY date, equip_code, clock_hour',
+          [hFrom, hTo]
+        );
+
+        // Downtime from PG (joined with classifications)
+        const { rows: dtRows } = await pool.query(
+          `SELECT d.mysql_event_id, d.equip_code, d.date, d.shift_num, d.hour_idx,
+                  d.start_time, d.end_time, d.duration_mins, d.mysql_code, d.mysql_desc,
+                  c.dt_code, c.sub_item, c.classified_by
+           FROM auto_downtime_log d
+           LEFT JOIN downtime_classifications c ON c.mysql_event_id = d.mysql_event_id
+           WHERE d.date >= $1 AND d.date <= $2
+           ORDER BY d.date, d.equip_code, d.start_time`,
+          [hFrom, hTo]
+        );
+
+        // Operator assignments
+        const { rows: assignments } = await pool.query(
+          'SELECT * FROM operator_assignments WHERE shift_date >= $1 AND shift_date <= $2', [hFrom, hTo]
+        );
+
+        // Defect reports
+        const { rows: defects } = await pool.query(
+          'SELECT * FROM auto_defect_reports WHERE shift_date >= $1 AND shift_date <= $2', [hFrom, hTo]
+        );
+
+        // Build records from PG data
+        for (const row of prodRows) {
+          const { date, shift_num: shiftNum, equip_code: equipCode, hour_idx: hourIdx, clock_hour: clockHour, good_units: goodUnits } = row;
+
+          // Downtime for this hour
+          const hourDT = dtRows.filter(d => d.equip_code === equipCode && d.date === date && d.hour_idx === hourIdx);
+          const dtArray = hourDT.map(d => ({
+            id: 'mysql-' + d.mysql_event_id, mysqlEventId: d.mysql_event_id,
+            mins: String(d.duration_mins),
+            dtCode: d.dt_code !== null && d.dt_code !== undefined ? String(d.dt_code) : '',
+            subItem: d.sub_item || '',
+            startTime: d.start_time, endTime: d.end_time,
+            classified: d.dt_code !== null && d.dt_code !== undefined,
             autoDetected: true
           }));
 
-          // Operators for this equipment + shift + hour
+          // Operators
           const shiftOps = assignments.filter(a =>
-            a.equip_code === appCode && a.shift_num === shiftNum &&
+            a.equip_code === equipCode && a.shift_date === date && a.shift_num === shiftNum &&
             a.start_hour <= hourIdx && (a.end_hour === null || a.end_hour >= hourIdx)
           ).map(a => a.operator_name);
 
-          // Defects for this equipment + shift + hour
+          // Defects
           const hourDefs = defects.filter(d =>
-            d.equip_code === appCode && d.shift_num === shiftNum &&
+            d.equip_code === equipCode && d.shift_date === date && d.shift_num === shiftNum &&
             (d.hour_idx === hourIdx || d.hour_idx === null)
-          ).map(d => ({
-            id: 'autodef-' + d.id,
-            qty: String(d.quantity),
-            defCode: String(d.def_code)
-          }));
+          ).map(d => ({ id: 'autodef-' + d.id, qty: String(d.quantity), defCode: String(d.def_code) }));
 
-          // Total downtime minutes
           const totalDTMins = dtArray.reduce((s, d) => s + parseInt(d.mins || 0), 0);
-
-          records.push({
-            date, shiftNum, equipCode: appCode, hourIdx,
-            clockHour,
-            productCode: '', // Must be set by operator
-            scheduledMins: 0,
-            target: 0, // Frontend computes from TARGET_RATES
-            goodUnits: count,
-            downtime: dtArray,
-            defects: hourDefs,
-            operators: shiftOps,
-            autoData: true,
-            totalDTMins
+          allRecords.push({
+            date, shiftNum, equipCode, hourIdx, clockHour,
+            productCode: '', scheduledMins: 0, target: 0,
+            goodUnits, downtime: dtArray, defects: hourDefs,
+            operators: shiftOps, autoData: true, totalDTMins
           });
         }
+        // Count historical DT events
+        const histDTCount = dtRows.length;
+        const histUnclassified = dtRows.filter(d => d.dt_code === null || d.dt_code === undefined).length;
+        totalEvents += histDTCount;
+        totalUnclassified += histUnclassified;
       }
-      res.json({ date, records, eventCount: dtEvents.length, unclassified: dtEvents.filter(e => !e.classified).length });
+
+      res.json({ dateFrom, dateTo, records: allRecords, eventCount: totalEvents, unclassified: totalUnclassified });
     } catch (err) {
       console.error('Merged records error:', err);
       res.status(500).json({ error: 'Failed to build merged records' });
