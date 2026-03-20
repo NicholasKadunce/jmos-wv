@@ -1165,6 +1165,8 @@ input[type=number]{-moz-appearance:textfield}
 /* ── Shift Command Center ── */
 @keyframes sccFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes sccPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0)}}
+@keyframes sccExpand{from{opacity:0;max-height:0}to{opacity:1;max-height:800px}}
+@keyframes sccChipIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
 .scc-wrap{padding:16px 20px;max-width:1200px;margin:0 auto;animation:sccFadeIn .3s ease-out}
 .scc-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
 .scc-header h2{font-size:20px;font-weight:900;color:var(--jm-navy);margin:0;letter-spacing:-.5px;display:flex;align-items:center;gap:8px}
@@ -1178,40 +1180,84 @@ input[type=number]{-moz-appearance:textfield}
 .scc-section-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--jm-text-ter);display:flex;align-items:center;gap:8px}
 .scc-section-title svg{width:16px;height:16px}
 .scc-pending-badge{font-size:11px;font-weight:700;background:#FEF3C7;color:#92400E;padding:2px 10px;border-radius:20px;animation:sccPulse 2s ease-in-out infinite}
-.scc-equip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-.scc-equip-card{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:var(--radius-md);padding:14px 16px;transition:all .2s;cursor:default;position:relative;overflow:hidden}
+
+/* Toolbar row — batch classify + copy last shift */
+.scc-toolbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--jm-bg);border-radius:var(--radius-md);margin-bottom:14px;flex-wrap:wrap}
+.scc-toolbar-label{font-size:11px;font-weight:700;color:var(--jm-text);white-space:nowrap;text-transform:uppercase;letter-spacing:.5px}
+.scc-toolbar select{height:32px;border:1.5px solid var(--jm-border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;min-width:140px;background:var(--jm-surface)}
+.scc-toolbar-btn{height:32px;padding:0 14px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap}
+.scc-toolbar-btn.primary{background:var(--jm-navy);color:#fff}
+.scc-toolbar-btn.primary:hover{background:#14305A}
+.scc-toolbar-btn.secondary{background:var(--jm-surface);color:var(--jm-navy);border:1.5px solid var(--jm-border)}
+.scc-toolbar-btn.secondary:hover{border-color:var(--jm-navy)}
+.scc-toolbar-sep{width:1px;height:24px;background:var(--jm-border);margin:0 4px}
+
+/* Equipment grid — expandable cards */
+.scc-equip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.scc-equip-card{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:var(--radius-md);padding:14px 16px;transition:all .25s;cursor:pointer;position:relative;overflow:hidden}
+.scc-equip-card:hover{border-color:rgba(27,61,110,.3);box-shadow:0 2px 12px rgba(27,61,110,.06)}
+.scc-equip-card.expanded{cursor:default;border-color:var(--jm-navy);box-shadow:0 4px 20px rgba(27,61,110,.1);grid-column:1/-1}
 .scc-equip-card.has-pending{border-color:#F59E0B}
+.scc-equip-card.all-clear{border-color:#10B981}
 .scc-equip-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .scc-equip-name{font-size:13px;font-weight:700;color:var(--jm-text)}
+.scc-equip-badges{display:flex;align-items:center;gap:6px}
 .scc-equip-auto-badge{font-size:9px;font-weight:700;background:linear-gradient(135deg,#3B82F6,#6366F1);color:#fff;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px}
+.scc-equip-expand-icon{font-size:12px;color:var(--jm-text-ter);transition:transform .2s}
+.scc-equip-card.expanded .scc-equip-expand-icon{transform:rotate(180deg)}
 .scc-equip-bar{height:6px;background:var(--jm-bg);border-radius:3px;overflow:hidden;margin-bottom:6px}
 .scc-equip-bar-fill{height:100%;border-radius:3px;transition:width .5s ease-out}
 .scc-equip-stats{display:flex;gap:12px;font-size:11px;color:var(--jm-text-sec)}
 .scc-equip-stats strong{color:var(--jm-text);font-weight:700}
-.scc-equip-pending{font-size:10px;color:#D97706;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:4px}
-.scc-equip-ops{font-size:10px;color:var(--jm-text-ter);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scc-equip-summary{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.scc-equip-pending{font-size:10px;color:#D97706;font-weight:600;display:flex;align-items:center;gap:4px}
 
-/* DT Classification Queue */
-.scc-dt-queue{display:flex;flex-direction:column;gap:8px}
-.scc-dt-card{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:var(--radius-md);padding:14px 16px;animation:sccFadeIn .3s ease-out both;transition:all .2s}
+/* Collapsed card operator chips */
+.scc-equip-ops-row{display:flex;align-items:center;gap:4px;margin-top:6px;flex-wrap:wrap}
+.scc-op-chip-sm{font-size:9px;font-weight:600;color:var(--jm-text-sec);background:var(--jm-bg);padding:2px 8px;border-radius:10px;white-space:nowrap}
+
+/* Expanded card sections */
+.scc-card-body{margin-top:14px;border-top:1px solid var(--jm-bg);padding-top:14px;animation:sccFadeIn .25s ease-out}
+.scc-card-section{margin-bottom:16px}
+.scc-card-section:last-child{margin-bottom:0}
+.scc-card-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--jm-text-ter);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.scc-card-section-title .scc-count-badge{font-size:9px;font-weight:700;background:#FEF3C7;color:#92400E;padding:1px 6px;border-radius:8px}
+.scc-card-section-title .scc-ok-badge{font-size:9px;font-weight:700;background:#D1FAE5;color:#065F46;padding:1px 6px;border-radius:8px}
+
+/* Product selector in expanded card */
+.scc-equip-product-select{width:100%;height:34px;border:1.5px solid var(--jm-border);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;background:var(--jm-surface);color:var(--jm-text);cursor:pointer;transition:border-color .15s}
+.scc-equip-product-select:focus{border-color:var(--jm-navy);outline:none}
+
+/* Operator chips in expanded card */
+.scc-op-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.scc-op-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--jm-bg);border:1px solid var(--jm-border);border-radius:20px;font-size:11px;font-weight:600;color:var(--jm-text);animation:sccChipIn .2s ease-out}
+.scc-op-chip .scc-op-hrs{font-size:9px;font-weight:600;color:var(--jm-text-ter);background:var(--jm-surface);padding:1px 6px;border-radius:8px}
+.scc-op-chip .scc-op-x{width:16px;height:16px;border-radius:50%;border:none;background:transparent;color:var(--jm-text-ter);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;padding:0;transition:all .15s;font-family:inherit;line-height:1}
+.scc-op-chip .scc-op-x:hover{background:rgba(239,68,68,.1);color:#EF4444}
+
+/* Add operator inline form */
+.scc-add-op-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.scc-add-op-row select,.scc-add-op-row input{height:30px;border:1.5px solid var(--jm-border);border-radius:6px;padding:0 8px;font-size:11px;font-family:inherit;background:var(--jm-surface)}
+.scc-add-op-row select{min-width:140px;flex:1}
+.scc-add-op-row .scc-hr-select{width:68px;min-width:68px;flex:none}
+.scc-add-op-btn{height:30px;padding:0 12px;border:none;border-radius:6px;background:var(--jm-navy);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap}
+.scc-add-op-btn:hover{background:#14305A}
+.scc-add-op-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Inline downtime events in expanded card */
+.scc-dt-inline{display:flex;flex-direction:column;gap:6px}
+.scc-dt-card{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:10px;padding:10px 14px;transition:all .2s}
 .scc-dt-card.classified{border-color:#10B981;background:rgba(16,185,129,.03)}
 .scc-dt-card.unclassified{border-color:#F59E0B;border-left:4px solid #F59E0B}
-.scc-dt-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.scc-dt-equip{font-size:12px;font-weight:700;color:var(--jm-text)}
+.scc-dt-card-head{display:flex;align-items:center;justify-content:space-between}
 .scc-dt-time{font-size:11px;color:var(--jm-text-sec);font-variant-numeric:tabular-nums}
-.scc-dt-duration{font-size:18px;font-weight:800;color:var(--jm-navy);letter-spacing:-1px}
-.scc-dt-duration small{font-size:11px;font-weight:600;color:var(--jm-text-ter);margin-left:2px}
-.scc-dt-quick-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.scc-dt-quick-btn{padding:6px 14px;border:1.5px solid var(--jm-border);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--jm-surface);color:var(--jm-text-sec);font-family:inherit}
+.scc-dt-duration{font-size:16px;font-weight:800;color:var(--jm-navy);letter-spacing:-1px}
+.scc-dt-duration small{font-size:10px;font-weight:600;color:var(--jm-text-ter);margin-left:2px}
+.scc-dt-quick-btns{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.scc-dt-quick-btn{padding:5px 12px;border:1.5px solid var(--jm-border);border-radius:20px;font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--jm-surface);color:var(--jm-text-sec);font-family:inherit}
 .scc-dt-quick-btn:hover{border-color:var(--jm-navy);color:var(--jm-navy);background:rgba(27,61,110,.04)}
-.scc-dt-quick-btn.selected{background:var(--jm-navy);color:#fff;border-color:var(--jm-navy)}
-.scc-dt-more-btn{padding:6px 14px;border:1.5px dashed var(--jm-border);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;background:transparent;color:var(--jm-text-ter);font-family:inherit}
-.scc-dt-batch-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--jm-bg);border-radius:var(--radius-md);margin-bottom:10px}
-.scc-dt-batch-bar select{height:32px;border:1.5px solid var(--jm-border);border-radius:6px;padding:0 8px;font-size:12px;font-family:inherit;flex:1;max-width:200px}
-.scc-dt-batch-bar button{padding:7px 16px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
-.scc-dt-apply-btn{background:var(--jm-navy);color:#fff}
-.scc-dt-apply-btn:hover{background:#14305A}
-.scc-dt-classified-check{color:#10B981;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
+.scc-dt-more-btn{padding:5px 12px;border:1.5px dashed var(--jm-border);border-radius:20px;font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;background:transparent;color:var(--jm-text-ter);font-family:inherit}
+.scc-dt-classified-check{color:#10B981;font-size:10px;font-weight:600;display:flex;align-items:center;gap:3px}
 
 /* Quick Defect Reporter */
 .scc-defect-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border:none;box-shadow:0 4px 16px rgba(239,68,68,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:100;font-size:22px;font-weight:700}
@@ -1223,15 +1269,6 @@ input[type=number]{-moz-appearance:textfield}
 .scc-defect-submit{width:100%;padding:10px;border:none;border-radius:8px;background:var(--jm-navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
 .scc-defect-submit:hover{background:#14305A}
 
-/* Operator assignment */
-.scc-op-panel{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px}
-.scc-op-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--jm-bg)}
-.scc-op-row:last-child{border-bottom:none}
-.scc-op-name{font-size:12px;font-weight:600;color:var(--jm-text);flex:1}
-.scc-op-equip{font-size:11px;color:var(--jm-text-sec);background:var(--jm-bg);padding:3px 8px;border-radius:12px}
-.scc-op-move-btn{padding:4px 10px;border:1px solid var(--jm-border);border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:var(--jm-surface);color:var(--jm-text-sec);font-family:inherit;transition:all .15s}
-.scc-op-move-btn:hover{border-color:var(--jm-navy);color:var(--jm-navy)}
-
 /* Manual equipment mini-cards */
 .scc-manual-card{background:var(--jm-surface);border:1.5px solid var(--jm-border);border-radius:var(--radius-md);padding:12px 14px;cursor:pointer;transition:all .2s}
 .scc-manual-card:hover{border-color:var(--jm-navy);box-shadow:var(--shadow-sm)}
@@ -1239,19 +1276,23 @@ input[type=number]{-moz-appearance:textfield}
 .scc-manual-status{font-size:10px;font-weight:600;display:flex;align-items:center;gap:4px}
 .scc-manual-status.needs{color:#D97706}
 .scc-manual-status.complete{color:#10B981}
-.scc-equip-product-select{width:100%;height:30px;border:1.5px solid var(--jm-border);border-radius:6px;padding:0 8px;font-size:11px;font-family:inherit;margin-bottom:8px;background:var(--jm-surface);color:var(--jm-text);cursor:pointer}
-.scc-equip-product-select:focus{border-color:var(--jm-navy);outline:none}
 .scc-proceed-bar{display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:16px 0;margin-top:8px;border-top:1px solid var(--jm-border)}
 .scc-proceed-btn{padding:12px 28px;font-size:14px;font-weight:700;border-radius:10px;letter-spacing:.3px}
+.scc-all-clear{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#D1FAE5;border-radius:10px;color:#065F46;font-size:12px;font-weight:700;animation:sccFadeIn .3s ease-out}
 
 @media(max-width:768px){
   .scc-wrap{padding:12px 14px}
   .scc-equip-grid{grid-template-columns:1fr}
+  .scc-equip-card.expanded{grid-column:1}
   .scc-header{flex-direction:column;align-items:flex-start}
   .scc-defect-modal{right:12px;left:12px;width:auto;bottom:80px}
   .scc-defect-fab{bottom:16px;right:16px;width:48px;height:48px}
   .scc-dt-quick-btns{gap:4px}
-  .scc-dt-quick-btn{padding:5px 10px;font-size:10px}
+  .scc-dt-quick-btn{padding:4px 9px;font-size:9px}
+  .scc-toolbar{flex-direction:column;align-items:stretch}
+  .scc-toolbar-sep{display:none}
+  .scc-add-op-row{flex-direction:column}
+  .scc-add-op-row select,.scc-add-op-row .scc-hr-select{width:100%;min-width:0}
 }
 .login-card{position:relative;z-index:1;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-radius:24px;padding:48px 40px 40px;width:100%;max-width:400px;box-shadow:0 25px 80px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.05),inset 0 1px 0 rgba(255,255,255,.8);text-align:center;animation:login-fade-in .6s ease-out}
 .login-logo{height:56px;margin-bottom:16px;filter:drop-shadow(0 2px 8px rgba(27,61,110,.15))}
@@ -2302,6 +2343,10 @@ const API={
   async mysqlGetOperators(date,shift){const url='/api/mysql/operators?date='+date+(shift?'&shift='+shift:'');const r=await fetch(url);if(!r.ok)return{assignments:[]};return r.json();},
   async mysqlMoveOperator(data){
     const r=await fetch('/api/mysql/operator-move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
+  },
+  async mysqlRemoveOperator(data){
+    const r=await fetch('/api/mysql/operator-remove',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
     const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d;
   },
   // Cycle time & live monitoring
@@ -3965,7 +4010,7 @@ function Dashboard({dataVersion,master}){
 function isAutoEquip(code){const eq=INIT_EQUIPMENT.find(e=>e.code===code);return eq&&eq.autoData;}
 
 function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEquip,onAddEquip,onRemoveHoursFrom,onReorderEquip,onSubmit,onNext,operators}){
-  const [mode,setMode]=useState('overview'); // overview, classify, defects, operators, manual
+  const [mode,setMode]=useState('overview'); // overview, manual
   const [mysqlStatus,setMysqlStatus]=useState(null);
   const [autoProduction,setAutoProduction]=useState(null);
   const [autoDowntime,setAutoDowntime]=useState(null);
@@ -3974,10 +4019,13 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
   const [defectCode,setDefectCode]=useState('');
   const [defectQty,setDefectQty]=useState('1');
   const [opAssignments,setOpAssignments]=useState([]);
-  const [dtFilter,setDtFilter]=useState('unclassified'); // all, unclassified, classified
   const [batchCode,setBatchCode]=useState('');
   const [batchEquip,setBatchEquip]=useState('all');
   const [autoProducts,setAutoProducts]=useState({}); // {equipCode: productCode} — what product each auto machine is running
+  const [expandedCard,setExpandedCard]=useState(null); // equipCode of expanded card
+  const [addOpName,setAddOpName]=useState('');
+  const [addOpFrom,setAddOpFrom]=useState('');
+  const [addOpTo,setAddOpTo]=useState('');
 
   const today=shiftData.shiftDate||fmtDate(toET(new Date()));
   const shiftNum=shiftData.shiftNum||'1';
@@ -4029,15 +4077,14 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
   const totalPending=autoSummary.reduce((s,eq)=>s+eq.unclassified,0);
   const allDTEvents=useMemo(()=>{
     if(!autoDowntime)return[];
-    const events=(autoDowntime.events||[]).filter(e=>e.shiftNum===shiftNum);
-    if(dtFilter==='unclassified')return events.filter(e=>!e.classified);
-    if(dtFilter==='classified')return events.filter(e=>e.classified);
-    return events;
-  },[autoDowntime,shiftNum,dtFilter]);
+    return (autoDowntime.events||[]).filter(e=>e.shiftNum===shiftNum);
+  },[autoDowntime,shiftNum]);
 
-  const filteredDT=useMemo(()=>{
-    if(batchEquip==='all')return allDTEvents;
-    return allDTEvents.filter(e=>e.equipCode===batchEquip);
+  // For batch classify toolbar — filter by selected equipment
+  const batchDT=useMemo(()=>{
+    const unclassified=allDTEvents.filter(e=>!e.classified);
+    if(batchEquip==='all')return unclassified;
+    return unclassified.filter(e=>e.equipCode===batchEquip);
   },[allDTEvents,batchEquip]);
 
   // Quick classify handler
@@ -4053,7 +4100,7 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
   // Batch classify
   async function batchClassify(){
     if(!batchCode)return;
-    const toClassify=filteredDT.filter(e=>!e.classified);
+    const toClassify=batchDT;
     if(toClassify.length===0)return;
     try{
       await API.mysqlClassifyDTBatch(toClassify.map(e=>({
@@ -4087,6 +4134,57 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
     if(!isoStr)return'';
     const d=new Date(isoStr);
     return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'});
+  }
+
+  // Remove operator assignment
+  async function removeOperator(equipCode,operatorName){
+    try{
+      await API.mysqlRemoveOperator({shiftDate:today,shiftNum,equipCode,operatorName});
+      const ops=await API.mysqlGetOperators(today,shiftNum);
+      setOpAssignments(ops.assignments||[]);
+    }catch(e){console.error('Remove operator error:',e);}
+  }
+
+  // Assign operator with hour range
+  async function assignOperator(equipCode){
+    if(!addOpName)return;
+    const startH=parseInt(addOpFrom)||1;
+    const endH=addOpTo?parseInt(addOpTo):null;
+    try{
+      await API.mysqlAssignOperator({shiftDate:today,shiftNum,equipCode,operatorName:addOpName,startHour:startH,endHour:endH,assignedBy:shiftData.enteredBy||''});
+      const ops=await API.mysqlGetOperators(today,shiftNum);
+      setOpAssignments(ops.assignments||[]);
+      setAddOpName('');setAddOpFrom('');setAddOpTo('');
+      showToast(addOpName.split(',')[0]+' → '+(INIT_EQUIPMENT.find(e=>e.code===equipCode)||{}).name);
+    }catch(e){console.error('Assign operator error:',e);}
+  }
+
+  // Copy operator assignments from previous shift
+  async function copyLastShift(){
+    try{
+      // Determine previous shift date+num
+      let prevDate=today,prevShift;
+      if(shiftNum==='1'){prevDate=fmtDate(new Date(new Date(today+'T12:00:00').getTime()-86400000));prevShift='3';}
+      else if(shiftNum==='2')prevShift='1';
+      else prevShift='2';
+      const prev=await API.mysqlGetOperators(prevDate,prevShift);
+      if(!prev.assignments||prev.assignments.length===0){showToast('No assignments found from previous shift');return;}
+      // Assign each operator to the same equipment
+      for(const a of prev.assignments){
+        await API.mysqlAssignOperator({shiftDate:today,shiftNum,equipCode:a.equip_code,operatorName:a.operator_name,startHour:1,endHour:null,assignedBy:shiftData.enteredBy||''});
+      }
+      const ops=await API.mysqlGetOperators(today,shiftNum);
+      setOpAssignments(ops.assignments||[]);
+      showToast('Copied '+prev.assignments.length+' assignments from previous shift');
+    }catch(e){console.error('Copy last shift error:',e);}
+  }
+
+  // Get current shift hour index (1-based)
+  function getCurrentHourIdx(){
+    const now=new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+    const ch=now.getHours();
+    const info=getShiftForHourClient(ch);
+    return info.shiftNum===shiftNum?info.hourIdx:1;
   }
 
   // Build equipData entries from MySQL production for auto machines
@@ -4134,83 +4232,224 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
 
   // ── RENDER ──
   const connected=mysqlStatus&&mysqlStatus.connected;
+  const numH=parseInt(shiftData.shiftHrs)||8;
+  const hrOpts=[];for(let i=1;i<=numH;i++)hrOpts.push(i);
+  const allOps=master.operators||INIT_OPERATORS;
+  const allClear=totalPending===0&&autoSummary.every(eq=>{
+    const ops=opAssignments.filter(a=>a.equip_code===eq.code);
+    return ops.length>0&&(autoProducts[eq.code]||'');
+  });
+
+  // Render a single equipment card (collapsed or expanded)
+  function renderEquipCard(eq){
+    const isExpanded=expandedCard===eq.code;
+    const assignedProd=autoProducts[eq.code]||'';
+    const targetPerHr=assignedProd?calcTarget(eq.code,assignedProd,0):0;
+    const shiftTarget=targetPerHr*numH;
+    const pct=shiftTarget>0?Math.min((eq.shiftParts/shiftTarget)*100,100):(eq.shiftParts>0?50:0);
+    const eqOps=opAssignments.filter(a=>a.equip_code===eq.code);
+    const eqDT=allDTEvents.filter(e=>e.equipCode===eq.code);
+    const eqUnclassified=eqDT.filter(e=>!e.classified);
+    const eqClassified=eqDT.filter(e=>e.classified);
+    const cardDone=eqUnclassified.length===0&&eqOps.length>0&&assignedProd;
+    const barColor=eq.unclassified>0?'#F59E0B':pct>=90?'#10B981':pct>=70?'#3B82F6':'#F59E0B';
+    const eqProducts=getEquipProducts(eq.code,master);
+    const topCodes=getTopCodes(eq.code);
+
+    return h('div',{key:eq.code,className:'scc-equip-card'+(isExpanded?' expanded':'')+(eq.unclassified>0?' has-pending':'')+(cardDone&&!isExpanded?' all-clear':''),
+      onClick:isExpanded?undefined:()=>{setExpandedCard(eq.code);setAddOpName('');setAddOpFrom('');setAddOpTo('');}},
+
+      // ── CARD HEADER (always visible) ──
+      h('div',{className:'scc-equip-card-head'},
+        h('span',{className:'scc-equip-name'},eq.name),
+        h('div',{className:'scc-equip-badges'},
+          h('span',{className:'scc-equip-auto-badge'},'AUTO'),
+          h('span',{className:'scc-equip-expand-icon'},isExpanded?'▲':'▼')
+        )
+      ),
+
+      // Progress bar
+      h('div',{className:'scc-equip-bar'},
+        h('div',{className:'scc-equip-bar-fill',style:{width:Math.min(pct,100)+'%',background:barColor}})
+      ),
+
+      // Stats row
+      h('div',{className:'scc-equip-stats'},
+        h('span',null,h('strong',null,eq.shiftParts.toLocaleString()),' parts'),
+        shiftTarget>0&&h('span',null,'/ ',shiftTarget.toLocaleString()),
+        shiftTarget>0&&h('span',{style:{color:pct>=90?'#10B981':pct>=70?'#3B82F6':'#D97706',fontWeight:700}},Math.round(pct)+'%'),
+        eqDT.length>0&&h('span',null,h('strong',null,eqDT.length),' DT')
+      ),
+
+      // Collapsed summary: operators + pending badge
+      !isExpanded&&h('div',{className:'scc-equip-summary'},
+        eqUnclassified.length>0&&h('div',{className:'scc-equip-pending'},'⚠ ',eqUnclassified.length,' unclassified'),
+        !assignedProd&&h('span',{style:{fontSize:10,color:'#D97706',fontWeight:600}},'No product'),
+        eqOps.length===0&&h('span',{style:{fontSize:10,color:'#D97706',fontWeight:600}},'No operators')
+      ),
+      !isExpanded&&eqOps.length>0&&h('div',{className:'scc-equip-ops-row'},
+        eqOps.map(a=>h('span',{key:a.operator_name,className:'scc-op-chip-sm'},
+          a.operator_name.split(',')[0]+(a.start_hour?' Hr'+a.start_hour+(a.end_hour?'-'+a.end_hour:'+'):'')
+        ))
+      ),
+
+      // ── EXPANDED CARD BODY ──
+      isExpanded&&h('div',{className:'scc-card-body'},
+
+        // ── PRODUCT SECTION ──
+        h('div',{className:'scc-card-section'},
+          h('div',{className:'scc-card-section-title'},'Product'),
+          h('select',{className:'scc-equip-product-select',value:assignedProd,
+            onClick:e=>e.stopPropagation(),
+            onChange:e=>{e.stopPropagation();setAutoProducts(p=>({...p,[eq.code]:e.target.value}));}},
+            h('option',{value:''},'— Select product —'),
+            eqProducts.map(pc=>h('option',{key:pc,value:pc},getProductName(pc)))
+          )
+        ),
+
+        // ── OPERATORS SECTION ──
+        h('div',{className:'scc-card-section'},
+          h('div',{className:'scc-card-section-title'},
+            'Operators',
+            eqOps.length>0?h('span',{className:'scc-ok-badge'},eqOps.length+' assigned'):h('span',{className:'scc-count-badge'},'None')
+          ),
+          // Existing operators as removable chips with hour ranges
+          eqOps.length>0&&h('div',{className:'scc-op-chips'},
+            eqOps.map(a=>h('div',{key:a.operator_name,className:'scc-op-chip'},
+              h('span',null,a.operator_name),
+              a.start_hour&&h('span',{className:'scc-op-hrs'},'Hr '+a.start_hour+(a.end_hour?'–'+a.end_hour:'+')),
+              h('button',{className:'scc-op-x',title:'Remove',onClick:e=>{e.stopPropagation();removeOperator(eq.code,a.operator_name);}},'×')
+            ))
+          ),
+          // Add operator inline
+          h('div',{className:'scc-add-op-row',onClick:e=>e.stopPropagation()},
+            h('select',{value:addOpName,onChange:e=>setAddOpName(e.target.value)},
+              h('option',{value:''},'+ Add operator...'),
+              allOps.filter(op=>!eqOps.find(a=>a.operator_name===op)).map(op=>h('option',{key:op,value:op},op))
+            ),
+            addOpName&&h('select',{className:'scc-hr-select',value:addOpFrom,onChange:e=>setAddOpFrom(e.target.value)},
+              h('option',{value:''},'From'),
+              hrOpts.map(i=>h('option',{key:i,value:String(i)},'Hr '+i))
+            ),
+            addOpName&&h('select',{className:'scc-hr-select',value:addOpTo,onChange:e=>setAddOpTo(e.target.value)},
+              h('option',{value:''},'End'),
+              hrOpts.map(i=>h('option',{key:i,value:String(i)},'Hr '+i))
+            ),
+            addOpName&&h('button',{className:'scc-add-op-btn',onClick:e=>{e.stopPropagation();assignOperator(eq.code);}},'Assign')
+          )
+        ),
+
+        // ── DOWNTIME SECTION ──
+        eqDT.length>0&&h('div',{className:'scc-card-section'},
+          h('div',{className:'scc-card-section-title'},
+            'Downtime',
+            eqUnclassified.length>0?h('span',{className:'scc-count-badge'},eqUnclassified.length+' unclassified'):h('span',{className:'scc-ok-badge'},'All classified')
+          ),
+          h('div',{className:'scc-dt-inline'},
+            // Show unclassified first, then classified
+            [...eqUnclassified,...eqClassified].map(evt=>
+              h('div',{key:evt.id,className:'scc-dt-card '+(evt.classified?'classified':'unclassified')},
+                h('div',{className:'scc-dt-card-head'},
+                  h('div',null,
+                    h('div',{className:'scc-dt-time'},fmtTime(evt.startTime),' → ',fmtTime(evt.endTime))
+                  ),
+                  h('div',{style:{textAlign:'right'}},
+                    h('div',{className:'scc-dt-duration'},evt.durationMins,h('small',null,' min')),
+                    evt.classified&&h('div',{className:'scc-dt-classified-check'},'✓ ',DT_CODES[evt.dtCode]||'Code '+evt.dtCode)
+                  )
+                ),
+                !evt.classified&&h('div',{className:'scc-dt-quick-btns',onClick:e=>e.stopPropagation()},
+                  topCodes.map(code=>
+                    h('button',{key:code,className:'scc-dt-quick-btn',onClick:()=>classifyEvent(evt,code)},DT_CODES[code])
+                  ),
+                  h('button',{className:'scc-dt-more-btn',onClick:()=>{
+                    const code=prompt('Enter DT code number (1-'+Object.keys(DT_CODES).length+'):\n'+Object.entries(DT_CODES).map(([k,v])=>k+' = '+v).join('\n'));
+                    if(code&&DT_CODES[parseInt(code)])classifyEvent(evt,parseInt(code));
+                  }},'More...')
+                )
+              )
+            )
+          )
+        ),
+
+        // Collapse button
+        h('div',{style:{textAlign:'center',marginTop:10}},
+          h('button',{style:{padding:'6px 20px',border:'1.5px solid var(--jm-border)',borderRadius:8,background:'var(--jm-surface)',color:'var(--jm-text-sec)',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'},
+            onClick:e=>{e.stopPropagation();setExpandedCard(null);}},'Collapse ▲')
+        )
+      )
+    );
+  }
 
   return h('div',{className:'scc-wrap'},
-    // Header
+    // ── HEADER ──
     h('div',{className:'scc-header'},
-      h('h2',null,'Shift Command Center',
+      h('h2',null,'Shift Operations',
         h('span',{className:'scc-shift-badge'},'Shift '+shiftNum),
         !connected&&h('span',{style:{fontSize:10,color:'#EF4444',fontWeight:600,marginLeft:8}},'⚠ Offline')
       ),
-      h('div',{className:'scc-mode-tabs'},
-        h('button',{className:'scc-mode-tab'+(mode==='overview'?' active':''),onClick:()=>setMode('overview')},'Overview'),
-        h('button',{className:'scc-mode-tab'+(mode==='classify'?' active':''),onClick:()=>setMode('classify')},
-          'Classify',totalPending>0&&h('span',{style:{marginLeft:6,background:'#F59E0B',color:'#fff',borderRadius:10,padding:'1px 7px',fontSize:10,fontWeight:700}},totalPending)
-        ),
-        h('button',{className:'scc-mode-tab'+(mode==='operators'?' active':''),onClick:()=>setMode('operators')},'Operators'),
-        manualEquip.length>0&&h('button',{className:'scc-mode-tab'+(mode==='manual'?' active':''),onClick:()=>setMode('manual')},'Manual Entry')
+      manualEquip.length>0&&h('div',{className:'scc-mode-tabs'},
+        h('button',{className:'scc-mode-tab'+(mode==='overview'?' active':''),onClick:()=>setMode('overview')},'Auto Equipment'),
+        h('button',{className:'scc-mode-tab'+(mode==='manual'?' active':''),onClick:()=>setMode('manual')},'Manual Entry')
       )
     ),
 
-    // ── OVERVIEW MODE ──
+    // ── OVERVIEW MODE (unified) ──
     mode==='overview'&&h('div',null,
-      // MySQL Status Banner
+      // MySQL offline banner
       !connected&&h('div',{style:{background:'#FEF3C7',border:'1.5px solid #F59E0B',borderRadius:10,padding:'10px 16px',marginBottom:14,display:'flex',alignItems:'center',gap:10}},
         h('span',{style:{fontSize:18}},'⚠'),
         h('div',null,
           h('div',{style:{fontSize:13,fontWeight:700,color:'#92400E'}},'MySQL Connection Offline'),
-          h('div',{style:{fontSize:11,color:'#A16207'}},'Auto equipment data will appear once the connection to JMWVL2 is restored. Manual equipment entry is still available.')
-        )
-      ),
-      // Automated Equipment Section
-      autoSummary.length>0&&h('div',{className:'scc-section'},
-        h('div',{className:'scc-section-header'},
-          h('div',{className:'scc-section-title'},
-            h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M13 2L3 14h9l-1 8 10-12h-9l1-8'})),
-            'Automated Equipment'
-          ),
-          totalPending>0&&h('span',{className:'scc-pending-badge'},totalPending+' event'+(totalPending!==1?'s':'')+' need classification')
-        ),
-        h('div',{className:'scc-equip-grid'},
-          autoSummary.map(eq=>{
-            const assignedProd=autoProducts[eq.code]||'';
-            const targetPerHr=assignedProd?calcTarget(eq.code,assignedProd,0):0;
-            const shiftTarget=targetPerHr*8;
-            const pct=shiftTarget>0?Math.min((eq.shiftParts/shiftTarget)*100,100):(eq.shiftParts>0?50:0);
-            const barColor=eq.unclassified>0?'#F59E0B':pct>=90?'#10B981':pct>=70?'#3B82F6':'#F59E0B';
-            const eqProducts=getEquipProducts(eq.code,master);
-            return h('div',{key:eq.code,className:'scc-equip-card'+(eq.unclassified>0?' has-pending':'')},
-              h('div',{className:'scc-equip-card-head'},
-                h('span',{className:'scc-equip-name'},eq.name),
-                h('span',{className:'scc-equip-auto-badge'},'AUTO')
-              ),
-              // Product assignment
-              h('select',{className:'scc-equip-product-select',value:assignedProd,onChange:e=>setAutoProducts(p=>({...p,[eq.code]:e.target.value}))},
-                h('option',{value:''},'— Select product —'),
-                eqProducts.map(pc=>h('option',{key:pc,value:pc},getProductName(pc)))
-              ),
-              h('div',{className:'scc-equip-bar'},
-                h('div',{className:'scc-equip-bar-fill',style:{width:Math.min(pct,100)+'%',background:barColor}})
-              ),
-              h('div',{className:'scc-equip-stats'},
-                h('span',null,h('strong',null,eq.shiftParts.toLocaleString()),' parts'),
-                shiftTarget>0&&h('span',null,'/ ',shiftTarget.toLocaleString(),' target'),
-                h('span',null,h('strong',null,eq.dtEvents.length),' DT events')
-              ),
-              shiftTarget>0&&h('div',{style:{fontSize:10,color:pct>=90?'#10B981':pct>=70?'#3B82F6':'#D97706',fontWeight:700,marginTop:2}},
-                Math.round(pct)+'% of target'
-              ),
-              eq.unclassified>0&&h('div',{className:'scc-equip-pending'},
-                '⚠ ',eq.unclassified,' unclassified'
-              ),
-              eq.operators.length>0&&h('div',{className:'scc-equip-ops'},'👤 ',eq.operators.join(', '))
-            );
-          })
+          h('div',{style:{fontSize:11,color:'#A16207'}},'Auto equipment data will appear once JMWVL2 connection is restored.')
         )
       ),
 
-      // Manual Equipment Section
-      manualEquip.length>0&&h('div',{className:'scc-section',style:{animationDelay:'.1s'}},
+      // ── TOOLBAR: Batch Classify + Copy Last Shift ──
+      (totalPending>1||opAssignments.length===0)&&h('div',{className:'scc-toolbar'},
+        // Batch classify section
+        totalPending>1&&h(React.Fragment,null,
+          h('span',{className:'scc-toolbar-label'},'Batch Classify'),
+          h('select',{value:batchEquip,onChange:e=>setBatchEquip(e.target.value)},
+            h('option',{value:'all'},'All Equipment'),
+            ...autoEquip.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name))
+          ),
+          h('select',{value:batchCode,onChange:e=>setBatchCode(e.target.value)},
+            h('option',{value:''},'DT Code...'),
+            ...Object.entries(DT_CODES).map(([k,v])=>h('option',{key:k,value:k},v))
+          ),
+          h('button',{className:'scc-toolbar-btn primary',onClick:batchClassify,disabled:!batchCode},
+            'Apply to ',batchDT.length,' events'
+          )
+        ),
+        // Separator
+        totalPending>1&&opAssignments.length===0&&h('div',{className:'scc-toolbar-sep'}),
+        // Copy last shift
+        opAssignments.length===0&&h(React.Fragment,null,
+          h('span',{className:'scc-toolbar-label'},'Operators'),
+          h('button',{className:'scc-toolbar-btn secondary',onClick:copyLastShift},'Copy From Last Shift')
+        )
+      ),
+
+      // ── STATUS SUMMARY ──
+      h('div',{className:'scc-section-header',style:{marginTop:4}},
+        h('div',{className:'scc-section-title'},
+          h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M13 2L3 14h9l-1 8 10-12h-9l1-8'})),
+          'Automated Equipment'
+        ),
+        h('div',{style:{display:'flex',gap:8,alignItems:'center'}},
+          totalPending>0&&h('span',{className:'scc-pending-badge'},totalPending+' unclassified'),
+          opAssignments.length>0&&h('span',{style:{fontSize:11,fontWeight:600,color:'var(--jm-text-ter)'}},opAssignments.length+' operator'+(opAssignments.length!==1?'s':''))
+        )
+      ),
+
+      // ── EQUIPMENT GRID ──
+      h('div',{className:'scc-equip-grid'},
+        autoSummary.map(eq=>renderEquipCard(eq))
+      ),
+
+      // ── MANUAL EQUIPMENT SECTION ──
+      manualEquip.length>0&&h('div',{className:'scc-section',style:{marginTop:20}},
         h('div',{className:'scc-section-header'},
           h('div',{className:'scc-section-title'},
             h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},h('path',{d:'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'})),
@@ -4222,7 +4461,7 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
           manualEquip.map(code=>{
             const eq=INIT_EQUIPMENT.find(e=>e.code===code);
             const hrs=equipData[code]||[];
-            const submitted=hrs.filter(h=>h.submitted).length;
+            const submitted=hrs.filter(hr=>hr.submitted).length;
             const total=hrs.length;
             const done=total>0&&submitted===total;
             return h('div',{key:code,className:'scc-manual-card'+(done?' done':''),onClick:()=>setMode('manual')},
@@ -4237,118 +4476,17 @@ function ShiftCommandCenter({master,shiftData,selectedEquip,equipData,onUpdateEq
         )
       ),
 
-      // ── PROCEED TO REVIEW BUTTON ──
+      // ── PROCEED TO REVIEW ──
       h('div',{className:'scc-proceed-bar'},
-        totalPending>0&&h('span',{style:{fontSize:12,color:'#D97706',fontWeight:600}},'⚠ '+totalPending+' downtime event'+(totalPending!==1?'s':'')+' still unclassified'),
+        allClear&&h('div',{className:'scc-all-clear'},'✓ All equipment has product, operators, and classified downtime'),
+        !allClear&&totalPending>0&&h('span',{style:{fontSize:12,color:'#D97706',fontWeight:600}},'⚠ '+totalPending+' downtime event'+(totalPending!==1?'s':'')+' unclassified'),
         h('button',{className:'btn btn-primary scc-proceed-btn',onClick:handleProceedToReview},
           'Proceed to Review →'
         )
       )
     ),
 
-    // ── CLASSIFY MODE ──
-    mode==='classify'&&h('div',null,
-      h('div',{className:'scc-section'},
-        h('div',{className:'scc-section-header'},
-          h('div',{className:'scc-section-title'},'Downtime Classification Queue'),
-          h('div',{style:{display:'flex',gap:6}},
-            ['unclassified','classified','all'].map(f=>
-              h('button',{key:f,className:'scc-mode-tab'+(dtFilter===f?' active':''),onClick:()=>setDtFilter(f),style:{padding:'4px 10px',fontSize:11}},
-                f.charAt(0).toUpperCase()+f.slice(1)
-              )
-            )
-          )
-        ),
-
-        // Batch classify bar
-        filteredDT.filter(e=>!e.classified).length>1&&h('div',{className:'scc-dt-batch-bar'},
-          h('span',{style:{fontSize:12,fontWeight:700,color:'var(--jm-text)',whiteSpace:'nowrap'}},'Batch: '),
-          h('select',{value:batchEquip,onChange:e=>setBatchEquip(e.target.value)},
-            h('option',{value:'all'},'All Equipment'),
-            ...autoEquip.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name))
-          ),
-          h('select',{value:batchCode,onChange:e=>setBatchCode(e.target.value)},
-            h('option',{value:''},'Select code...'),
-            ...Object.entries(DT_CODES).map(([k,v])=>h('option',{key:k,value:k},v))
-          ),
-          h('button',{className:'scc-dt-apply-btn',onClick:batchClassify,disabled:!batchCode},
-            'Apply to ',filteredDT.filter(e=>!e.classified).length,' events'
-          )
-        ),
-
-        // Event cards
-        h('div',{className:'scc-dt-queue'},
-          filteredDT.length===0&&h('div',{style:{textAlign:'center',padding:40,color:'var(--jm-text-ter)',fontSize:13}},
-            dtFilter==='unclassified'?'✓ All downtime events classified!':'No events found'
-          ),
-          filteredDT.map((evt,i)=>{
-            const topCodes=getTopCodes(evt.equipCode);
-            const eqName=(INIT_EQUIPMENT.find(e=>e.code===evt.equipCode)||{}).name||evt.equipCode;
-            return h('div',{key:evt.id,className:'scc-dt-card '+(evt.classified?'classified':'unclassified'),style:{animationDelay:(i*.05)+'s'}},
-              h('div',{className:'scc-dt-card-head'},
-                h('div',null,
-                  h('div',{className:'scc-dt-equip'},eqName),
-                  h('div',{className:'scc-dt-time'},fmtTime(evt.startTime),' → ',fmtTime(evt.endTime))
-                ),
-                h('div',{style:{textAlign:'right'}},
-                  h('div',{className:'scc-dt-duration'},evt.durationMins,h('small',null,' min')),
-                  evt.classified&&h('div',{className:'scc-dt-classified-check'},'✓ ',DT_CODES[evt.dtCode]||'Code '+evt.dtCode)
-                )
-              ),
-              !evt.classified&&h('div',{className:'scc-dt-quick-btns'},
-                topCodes.map(code=>
-                  h('button',{key:code,className:'scc-dt-quick-btn',onClick:()=>classifyEvent(evt,code)},DT_CODES[code])
-                ),
-                h('button',{className:'scc-dt-more-btn',onClick:()=>{
-                  const code=prompt('Enter DT code number (1-'+Object.keys(DT_CODES).length+'):\n'+Object.entries(DT_CODES).map(([k,v])=>k+' = '+v).join('\n'));
-                  if(code&&DT_CODES[parseInt(code)])classifyEvent(evt,parseInt(code));
-                }},'More...')
-              )
-            );
-          })
-        )
-      )
-    ),
-
-    // ── OPERATORS MODE ──
-    mode==='operators'&&h('div',null,
-      h('div',{className:'scc-section'},
-        h('div',{className:'scc-section-title',style:{marginBottom:14}},'Operator Assignments'),
-        h('div',{className:'scc-op-panel'},
-          h('div',{style:{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}},
-            h('select',{id:'scc-op-name',style:{height:36,border:'1.5px solid var(--jm-border)',borderRadius:8,padding:'0 10px',fontSize:12,fontFamily:'inherit',flex:1,minWidth:180}},
-              h('option',{value:''},'Select operator...'),
-              ...(master.operators||INIT_OPERATORS).map(op=>h('option',{key:op,value:op},op))
-            ),
-            h('select',{id:'scc-op-equip',style:{height:36,border:'1.5px solid var(--jm-border)',borderRadius:8,padding:'0 10px',fontSize:12,fontFamily:'inherit',flex:1,minWidth:160}},
-              h('option',{value:''},'Select equipment...'),
-              ...autoEquip.map(eq=>h('option',{key:eq.code,value:eq.code},eq.name)),
-              ...manualEquip.map(code=>{const eq=INIT_EQUIPMENT.find(e=>e.code===code);return h('option',{key:code,value:code},eq?eq.name:code);})
-            ),
-            h('button',{style:{height:36,padding:'0 16px',border:'none',borderRadius:8,background:'var(--jm-navy)',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'},onClick:async()=>{
-              const name=document.getElementById('scc-op-name').value;
-              const equip=document.getElementById('scc-op-equip').value;
-              if(!name||!equip)return;
-              await API.mysqlAssignOperator({shiftDate:today,shiftNum,equipCode:equip,operatorName:name,assignedBy:shiftData.enteredBy||''});
-              const ops=await API.mysqlGetOperators(today,shiftNum);
-              setOpAssignments(ops.assignments||[]);
-              showToast(name.split(',')[0]+' → '+(INIT_EQUIPMENT.find(e=>e.code===equip)||{}).name);
-            }},'Assign')
-          ),
-          opAssignments.length===0&&h('div',{style:{textAlign:'center',padding:20,color:'var(--jm-text-ter)',fontSize:12}},'No operators assigned yet. Assign operators to equipment above.'),
-          opAssignments.map(a=>{
-            const eqName=(INIT_EQUIPMENT.find(e=>e.code===a.equip_code)||{}).name||a.equip_code;
-            return h('div',{key:a.equip_code+'-'+a.operator_name,className:'scc-op-row'},
-              h('span',{className:'scc-op-name'},a.operator_name),
-              h('span',{className:'scc-op-equip'},eqName),
-              a.start_hour&&h('span',{style:{fontSize:10,color:'var(--jm-text-ter)'}},'Hr '+a.start_hour+(a.end_hour?'-'+a.end_hour:'+'))
-            );
-          })
-        )
-      )
-    ),
-
-    // ── MANUAL ENTRY MODE — delegates to existing ProductionEntry ──
+    // ── MANUAL ENTRY MODE ──
     mode==='manual'&&manualEquip.length>0&&h(ProductionEntry,{
       selectedEquip:manualEquip,shiftNum,shiftHrs:shiftData.shiftHrs,equipData,
       onUpdateEquip,onAddEquip,onRemoveHoursFrom,onReorderEquip,

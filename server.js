@@ -2118,6 +2118,24 @@ RESPONSE STYLE:
     }
   });
 
+  // ── API: Remove operator assignment ──
+  app.post('/api/mysql/operator-remove', async (req, res) => {
+    try {
+      const { shiftDate, shiftNum, equipCode, operatorName } = req.body;
+      if (!shiftDate || !shiftNum || !equipCode || !operatorName) {
+        return res.status(400).json({ error: 'shiftDate, shiftNum, equipCode, operatorName required' });
+      }
+      await pool.query(
+        `DELETE FROM operator_assignments WHERE shift_date = $1 AND shift_num = $2 AND equip_code = $3 AND operator_name = $4`,
+        [shiftDate, shiftNum, equipCode, operatorName]
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('Operator remove error:', err);
+      res.status(500).json({ error: 'Failed to remove operator' });
+    }
+  });
+
   // ── API: Merged records (combined production + downtime + classifications) ──
   // Supports: ?date=2026-03-20 (single day) or ?from=2026-03-01&to=2026-03-20 (range)
   // For today/yesterday: uses live MySQL cache. For older dates: queries PostgreSQL history.
