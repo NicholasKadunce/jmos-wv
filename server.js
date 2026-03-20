@@ -1298,7 +1298,118 @@ RULES:
         `  ${ec}: ${e.good} good/${e.target} target, ${e.dt}min DT, ${e.defects} def, ${e.hours}hrs, products: ${[...e.products].join(',')}, operators: ${[...e.operators].join(', ') || 'none'}`
       );
 
-      return `DATABASE (${rows.length} records, ${dateFrom || 'all'} to ${dateTo || 'all'}, shift: ${shift || 'all'}):\n\nDAILY SUMMARY:\n${summary.join('\n')}\n\nLATEST DATE (${latestDate}) EQUIPMENT+OPERATOR BREAKDOWN:\n${equipLines.join('\n')}\n\nALL OPERATORS IN RANGE: ${[...allOperators].join(', ') || 'none'}`;
+      let manualSection = `MANUAL ENTRIES (${rows.length} records, ${dateFrom || 'all'} to ${dateTo || 'all'}, shift: ${shift || 'all'}):\n\nDAILY SUMMARY:\n${summary.join('\n')}\n\nLATEST DATE (${latestDate}) EQUIPMENT+OPERATOR BREAKDOWN:\n${equipLines.join('\n')}\n\nALL OPERATORS IN RANGE: ${[...allOperators].join(', ') || 'none'}`;
+
+      // ── AUTO-EQUIPMENT DATA (MySQL-sourced, persisted to PG) ──
+      let autoSection = '';
+      try {
+        const autoParams = [];
+        let autoDateFilter = '';
+        if (dateFrom) { autoParams.push(dateFrom); autoDateFilter += ` AND date >= $${autoParams.length}`; }
+        if (dateTo) { autoParams.push(dateTo); autoDateFilter += ` AND date <= $${autoParams.length}`; }
+
+        // Auto production totals by date + equipment
+        const { rows: autoProd } = await pool.query(
+          `SELECT date, equip_code, SUM(good_units) as total_parts, COUNT(*) as hour_count
+           FROM auto_production_log WHERE 1=1 ${autoDateFilter}
+           GROUP BY date, equip_code ORDER BY date DESC, equip_code`,
+          autoParams
+        );
+
+        // Auto downtime totals by date + equipment
+        const { rows: autoDT } = await pool.query(
+          `SELECT d.date, d.equip_code, COUNT(*) as events, SUM(d.duration_mins) as total_mins,
+                  COUNT(CASE WHEN c.dt_code IS NOT NULL THEN 1 END) as classified
+           FROM auto_downtime_log d
+           LEFT JOIN downtime_classifications c ON c.mysql_event_id = d.mysql_event_id
+           WHERE 1=1 ${autoDateFilter.replace(/date/g, 'd.date')}
+           GROUP BY d.date, d.equip_code ORDER BY d.date DESC`,
+          autoParams
+        );
+
+        // Operator assignments
+        const { rows: autoOps } = await pool.query(
+          `SELECT shift_date, equip_code, operator_name
+           FROM operator_assignments WHERE 1=1 ${autoDateFilter.replace(/date/g, 'shift_date')}
+           ORDER BY shift_date DESC`,
+          autoParams
+        );
+
+        // Cycle time stats (latest date only for brevity)
+        const latestAutoDate = autoProd.length > 0 ? autoProd[0].date : null;
+        let ctLines = [];
+        if (latestAutoDate) {
+          const { rows: ctStats } = await pool.query(
+            `SELECT equip_code, clock_hour, avg_ct, min_ct, max_ct, stddev_ct, sample_count, ucl, lcl
+             FROM auto_cycle_time_stats WHERE date = $1 ORDER BY equip_code, clock_hour`,
+            [latestAutoDate]
+          );
+          // Summarize by equipment
+          const ctByEquip = {};
+          ctStats.forEach(r => {
+            if (!ctByEquip[r.equip_code]) ctByEquip[r.equip_code] = { hours: 0, totalAvg: 0, minCT: Infinity, maxCT: 0, totalSamples: 0 };
+            const e = ctByEquip[r.equip_code];
+            e.hours++;
+            e.totalAvg += parseFloat(r.avg_ct) * r.sample_count;
+            e.totalSamples += r.sample_count;
+            e.minCT = Math.min(e.minCT, parseFloat(r.min_ct));
+            e.maxCT = Math.max(e.maxCT, parseFloat(r.max_ct));
+          });
+          ctLines = Object.entries(ctByEquip).map(([ec, e]) => {
+            const wAvg = e.totalSamples > 0 ? (e.totalAvg / e.totalSamples).toFixed(1) : '?';
+            return `  ${ec}: avg ${wAvg}s/part, min ${e.minCT.toFixed(1)}s, max ${e.maxCT.toFixed(1)}s, ${e.totalSamples} samples across ${e.hours} hours`;
+          });
+        }
+
+        if (autoProd.length > 0) {
+          // Summarize auto production by date
+          const autoByDate = {};
+          autoProd.forEach(r => {
+            if (!autoByDate[r.date]) autoByDate[r.date] = { parts: 0, equip: new Set() };
+            autoByDate[r.date].parts += parseInt(r.total_parts);
+            autoByDate[r.date].equip.add(r.equip_code);
+          });
+          const autoDTByDate = {};
+          autoDT.forEach(r => {
+            if (!autoDTByDate[r.date]) autoDTByDate[r.date] = { events: 0, mins: 0, classified: 0 };
+            autoDTByDate[r.date].events += parseInt(r.events);
+            autoDTByDate[r.date].mins += parseInt(r.total_mins);
+            autoDTByDate[r.date].classified += parseInt(r.classified);
+          });
+          const autoOpsByEquip = {};
+          autoOps.forEach(r => {
+            const key = r.equip_code;
+            if (!autoOpsByEquip[key]) autoOpsByEquip[key] = new Set();
+            autoOpsByEquip[key].add(r.operator_name);
+          });
+
+          const autoDates = Object.keys(autoByDate).sort().reverse();
+          const autoSummary = autoDates.map(dt => {
+            const p = autoByDate[dt];
+            const d = autoDTByDate[dt] || { events: 0, mins: 0, classified: 0 };
+            return `${dt}: ${p.parts} parts from ${p.equip.size} machines, ${d.events} DT events (${d.mins}min total, ${d.classified} classified)`;
+          });
+
+          // Per-equipment breakdown for latest auto date
+          const latestAutoProd = autoProd.filter(r => r.date === latestAutoDate);
+          const latestAutoDT = autoDT.filter(r => r.date === latestAutoDate);
+          const autoEquipLines = latestAutoProd.map(r => {
+            const dt = latestAutoDT.find(d => d.equip_code === r.equip_code);
+            const ops = autoOpsByEquip[r.equip_code] ? [...autoOpsByEquip[r.equip_code]].join(', ') : 'none assigned';
+            const eqName = EQUIP_NAMES[r.equip_code] || r.equip_code;
+            return `  ${eqName} (${r.equip_code}): ${r.total_parts} parts, ${r.hour_count} active hours, ${dt ? dt.total_mins + 'min DT (' + dt.events + ' events)' : 'no DT'}, operators: ${ops}`;
+          });
+
+          autoSection = `\n\nAUTO-EQUIPMENT DATA (MySQL-sourced, ${autoProd.length} equip-date combos):\n\nDAILY SUMMARY:\n${autoSummary.join('\n')}\n\nLATEST DATE (${latestAutoDate}) AUTO EQUIPMENT BREAKDOWN:\n${autoEquipLines.join('\n')}`;
+          if (ctLines.length > 0) {
+            autoSection += `\n\nCYCLE TIME STATS (${latestAutoDate}):\n${ctLines.join('\n')}`;
+          }
+        }
+      } catch (autoErr) {
+        console.warn('Auto-equipment AI context error:', autoErr.message);
+      }
+
+      return manualSection + autoSection;
     } catch (err) {
       console.error('DB context error:', err);
       return 'Could not load database context.';
